@@ -1,0 +1,730 @@
+#LyX 1.6.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\pdf_quoted_options "linkcolor=blue, citecolor=black, urlcolor=blue, filecolor=blue, pdftex"
+\papersize a4paper
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip bigskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Improving Drupal's page loading performance
+\end_layout
+
+\begin_layout Author
+Wim Leers
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\shape italic
+Promotor
+\shape default
+: Wim Lamotte
+\begin_inset Newline newline
+\end_inset
+
+
+\shape italic
+Mentor
+\shape default
+s: Stijn Agten & Maarten Wijnants
+\end_layout
+
+\begin_layout Date
+Hasselt University
+\begin_inset Newline newline
+\end_inset
+
+Academic year 2008-2009
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+thispagestyle{empty}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Abstract
+\end_layout
+
+\begin_layout Section
+Terminology
+\end_layout
+
+\begin_layout Description
+browser
+\end_layout
+
+\begin_layout Description
+component
+\end_layout
+
+\begin_layout Description
+page
+\begin_inset space ~
+\end_inset
+
+rendering
+\begin_inset space ~
+\end_inset
+
+performance
+\end_layout
+
+\begin_layout Description
+page
+\begin_inset space ~
+\end_inset
+
+loading
+\begin_inset space ~
+\end_inset
+
+performance
+\end_layout
+
+\begin_layout Section
+Definition
+\end_layout
+
+\begin_layout Section
+Why it matters
+\end_layout
+
+\begin_layout Section
+Existing solutions
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Profiling tools
+\end_layout
+
+\begin_layout Quote
+
+\emph on
+If you can not measure it, you can not improve it.
+\end_layout
+
+\begin_layout Quote
+Lord Kelvin
+\end_layout
+
+\begin_layout Standard
+The same applies to page loading performance: if you can't measure it, you
+ can't know which parts have the biggest effect and thus deserve your focus.
+ So before doing any real work, we'll have to figure out which tools can
+ help us analyzing page loading performance.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+profiling
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph on
+ 
+\emph default
+turns out to be a more accurate description than 
+\begin_inset Quotes eld
+\end_inset
+
+analyzing
+\begin_inset Quotes erd
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Quotation
+In software engineering, 
+\emph on
+performance analysis, more commonly today known as profiling
+\emph default
+, is the investigation of a program's behavior using information gathered
+ as the program executes.
+ The 
+\emph on
+usual goal of performance analysis is to determine which sections of a program
+ to optimize
+\emph default
+ — usually either to increase its speed or decrease its memory requirement
+ (or sometimes both).
+\end_layout
+
+\begin_layout Standard
+So we'll go through a list of tools: UA Profiler, Cuzillion, Hammerhead,
+ YSlow, Apache JMeter, Gomez/Keynote/Webmetrics/Pingdom and Jiffy/Episodes.
+ As you can tell, it's a pretty long list, so I'll pick the tools I'll use
+ while improving Drupal's page loading performance based on two factors:
+\end_layout
+
+\begin_layout Enumerate
+How the tool could help improve Drupal core's page loading performance.
+\end_layout
+
+\begin_layout Enumerate
+How the tool could help Drupal site owners profile their site's page loading
+ performance.
+\end_layout
+
+\begin_layout Subsection
+UA Profiler
+\end_layout
+
+\begin_layout Standard
+UA Profiler 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "UA Profiler"
+
+\end_inset
+
+ is a crowd-sourced project for gathering browser performance characteristics
+ (parallel connections, downloading scripts without blocking, caching, etc.).
+ The tests run automatically when you navigate to the test page from any
+ browser – this is why it's powered by crowdsourcing.
+\end_layout
+
+\begin_layout Standard
+It's a handy, informative tool to find out which browser supports which
+ features related to page loading performance.
+\end_layout
+
+\begin_layout Subsection
+Cuzillion
+\end_layout
+
+\begin_layout Standard
+Cuzillion 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Cuzillion"
+
+\end_inset
+
+ was introduced 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Cuzillion announcement"
+
+\end_inset
+
+ on April 25, 2008 so it is a relatively new tool.
+ Its tag line, 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+‘cuz there are zillion pages to check
+\emph default
+
+\begin_inset Quotes erd
+\end_inset
+
+ indicates what it's about: there are a lot of possible combinations of
+ stylesheets, scripts and images.
+ Plus they can be external or inline.
+ And each combination has different effects.
+ Finally, to further complicate the situation, all these combinations depend
+ on the browser being used.
+ It should be obvious that without Cuzillion, it's an insane job to figure
+ out how each browser behaves:
+\end_layout
+
+\begin_layout Quote
+Before I would open an editor and build some test pages.
+ Firing up a packet sniffer I would load these pages in different browsers
+ to diagnose what was going on.
+ I was starting my research on advanced techniques for loading scripts without
+ blocking and realized the number of test pages needed to cover all the
+ permutations was in the hundreds.
+ That was the birth of Cuzillion.
+\end_layout
+
+\begin_layout Standard
+Cuzillion is not a tool that helps you analyze any 
+\emph on
+existing 
+\emph default
+web page.
+ Instead, it allows you to analyze any combination of components.
+ That means it's a 
+\emph on
+learning tool
+\emph default
+.
+ You could also look at it as a 
+\emph on
+browser profiling tool
+\emph default
+ instead of all other listed tools, which are 
+\emph on
+page loading profiling tools
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+Let's go through a simple example for a better understanding.
+ How does the following combination of components (in the 
+\family typewriter
+<body>
+\family default
+ tag) behave in different browsers?
+\end_layout
+
+\begin_layout Enumerate
+an image on domain 1 with a 2 second delay
+\end_layout
+
+\begin_layout Enumerate
+an inline script with a 2 second execution time
+\end_layout
+
+\begin_layout Enumerate
+an image on domain 1 with a 2 second delay
+\end_layout
+
+\begin_layout Standard
+First you create this setup in Cuzillion (see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Cuzillion"
+
+\end_inset
+
+).
+ This generates a unique URL.
+ You can then copy this URL to all browsers you'd like to test.
+\end_layout
+
+\begin_layout Standard
+As you can see, Safari and Firefox behave very differently.
+ In Safari (see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Cuzillion-Safari"
+
+\end_inset
+
+), the loading of the first image seems to be deferred until the inline
+ script has been executed.
+ In Firefox (see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Cuzillion-Firefox"
+
+\end_inset
+
+), the first image is immediately rendered and after a delay of 2 seconds
+ – indeed the execution time of the inline script – the second image is
+ rendered.
+ Without going into details about this, it should be clear that Cuzillion
+ is a simple, yet powerful tool to learn about browser behavior, which can
+ in turn help to improve the page loading performance.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/profiling/cuzillion.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The example situation created in Cuzillion.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Cuzillion"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/profiling/cuzillion - safari.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The example situation in Safari 3.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Cuzillion-Safari"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/profiling/cuzillion - firefox.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The example situation created in Firefox 3.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Cuzillion-Firefox"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Hammerhead
+\end_layout
+
+\begin_layout Subsection
+YSlow
+\end_layout
+
+\begin_layout Subsection
+Apache JMeter
+\end_layout
+
+\begin_layout Subsection
+Gomez/KeyNote/Webmetrics/Pingdom
+\end_layout
+
+\begin_layout Subsection
+Jiffy/Episodes
+\end_layout
+
+\begin_layout Section
+The State of Drupal's page loading performance
+\end_layout
+
+\begin_layout Section
+Improving Drupal: JS at the bottom
+\end_layout
+
+\begin_layout Section
+Improving Drupal: CDN integration
+\end_layout
+
+\begin_layout Section
+Test cases
+\end_layout
+
+\begin_layout Section
+Conclusion
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "UA Profiler"
+key "UA Profiler"
+
+\end_inset
+
+
+\emph on
+UA Profiler
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/ua/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Cuzillion"
+key "Cuzillion"
+
+\end_inset
+
+
+\emph on
+Cuzillion
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/cuzillion/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Cuzillion announcement"
+key "Cuzillion announcement"
+
+\end_inset
+
+
+\emph on
+Cuzillion
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.stevesouders.com/blog/2008/04/25/cuzillion/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "Souders State of Performance 2008"
+key "Souders State of Performance 2008"
+
+\end_inset
+
+State of Performance 2008, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.stevesouders.com/blog/2008/12/17/state-of-performance-2008/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "white paper Episodes"
+key "white paper Episodes"
+
+\end_inset
+
+
+\emph on
+Episodes: a Framework for Measuring Web Page Load Times
+\emph default
+, Steve Souders, July 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/episodes/paper.php
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "JSMIN"
+key "JSMIN"
+
+\end_inset
+
+
+\emph on
+JSMin, The JavaScript Minifier
+\emph default
+, Douglas Crockford, 2003, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://javascript.crockford.com/jsmin.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
