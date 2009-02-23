@@ -81,12 +81,25 @@ Wim Leers
 \shape italic
 Promotor
 \shape default
-: Wim Lamotte
+: dr.
+ Wim Lamotte
+\shape italic
+
 \begin_inset Newline newline
 \end_inset
 
-
+Co-promotor
+\shape default
+: 
 \shape italic
+\emph on
+dr.
+ Peter Quax
+\emph default
+
+\begin_inset Newline newline
+\end_inset
+
 Mentor
 \shape default
 s: Stijn Agten & Maarten Wijnants
@@ -159,7 +172,16 @@ CDN A content delivery network (CDN) is a collection of web servers distributed
 \end_layout
 
 \begin_layout Description
-component
+component A component of a web page, this can be a CSS style sheet, a JavaScript
+ file, an image, a font, a movie file, etc.
+\end_layout
+
+\begin_layout Description
+web
+\begin_inset space ~
+\end_inset
+
+page An (X)HTML document that potentially references components.
 \end_layout
 
 \begin_layout Description
@@ -171,7 +193,7 @@ rendering
 \begin_inset space ~
 \end_inset
 
-performance
+performance The time it takes to load a web page and all its components.
 \end_layout
 
 \begin_layout Description
@@ -183,7 +205,7 @@ loading
 \begin_inset space ~
 \end_inset
 
-performance
+performance The time the server needs to render a web page.
 \end_layout
 
 \begin_layout Description
@@ -195,16 +217,211 @@ the
 \begin_inset space ~
 \end_inset
 
-fold the initially visible part of a web page: the part that you can see
+fold The initially visible part of a web page: the part that you can see
  without scrolling
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Definition
 \end_layout
 
+\begin_layout Standard
+When a end user loads a web page, the time perceived by him until the page
+ has loaded entirely is called the 
+\emph on
+end user response time
+\emph default
+.
+ Unlike what you might think, the majority of this time isn't spent at the
+ server, generating the page! The generating (back-end) and transport of
+ the HTML document (front-end) is typically only 10-20% of the end user
+ response time.
+ The other 80-90% of the time is spent on loading the components (CSS stylesheet
+s, JavaScript, images, movies, etc.) in the page (front-end only).
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:End-user-response-time"
+
+\end_inset
+
+ clarifies this visually:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/pageloading piechart.png
+	scale 60
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+End user response time of a typical web page.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:End-user-response-time"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It should be obvious now that it's far more effective to focus on front-end
+ performance than it is to focus on back-end performance.
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Why it matters
+\end_layout
+
+\begin_layout Standard
+Page loading performance matters for a single reason:
+\end_layout
+
+\begin_layout Quote
+Users care about performance!
+\end_layout
+
+\begin_layout Standard
+Your web site's visitors won't be timing the page loads themselves, but
+ they will browse elsewhere when you're forcing them to wait too long.
+ Fast web sites are rewarded, slow web sites are punished.
+ Fast web sites get more visitors, have happier visitors and their visitors
+ return more often.
+ If the revenue of your company is generated through your web site, you'll
+ want to make sure that page loading performance is as good as possible,
+ because it will maximize your revenue as well.
+\end_layout
+
+\begin_layout Standard
+Some statistics:
+\end_layout
+
+\begin_layout Itemize
+Amazon: 100 ms of extra load time caused a 1% drop in sales 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "presentation Design Fast Websites"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Yahoo!: 400 ms of extra load time caused a 5-9% drop in full-page traffic
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "presentation Design Fast Websites"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Google: 500 ms of extra load time caused 20% fewer searches 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "presentation Design Fast Websites"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Google: trimming page size by 30% resulted in 30% more map requests 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Google maps load time impact"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It's clear that even the smallest delays can have disastrous and wondrous
+ effects.
+ 
+\end_layout
+
+\begin_layout Standard
+Now, why is this important to Drupal – because this bachelor thesis is about
+ improving Drupal's page loading performance in particular? Because then
+ the Drupal Experience is better: a faster web site results in happier users
+ and developers.
+ More generally, a faster Drupal would affect many:
+\end_layout
+
+\begin_layout Itemize
+Drupal is increasinly used for big, high-traffic web sites, thus a faster
+ Drupal would affect a lot of people
+\end_layout
+
+\begin_layout Itemize
+Drupal is still growing in popularity (according to its usage statistics,
+ which only includes web sites with the Update Status module enabled, there
+ are over 125,000 web sites as of January 25, 2009) and would therefor affect
+ ever more people
+\end_layout
+
+\begin_layout Itemize
+Drupal is international, thanks to its i18n/L10n support, and thanks to
+ that it's used for sites with very international audiences (whom face high
+ network latencies) and developing countries (where low-speed internet connectio
+ns are commonplace).
+ A faster Drupal would make a big difference there as well.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -570,18 +787,153 @@ name "fig:Cuzillion-Firefox"
 
 \begin_layout Subsection
 Hammerhead
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Hammerhead"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hammerhead 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Hammerhead,Hammerhead announcement"
+
+\end_inset
+
+ is a Firebug 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Firebug"
+
+\end_inset
+
+ extension that should be used 
+\emph on
+while
+\emph default
+ developing.
+ It measures how long a page takes to load and it can load a page multiple
+ times, to calculate the average and mean page load times.
+ Of course, this is a lot less precise than real-world profiling, but it
+ allows you to profile while you're working.
+ It's far more effective to prevent page loading performance problems due
+ to changes in code, because you have the test results within seconds or
+ minutes after you've made these changes!
+\end_layout
+
+\begin_layout Standard
+Of course, you could also use YSlow (see section 
+\begin_inset CommandInset ref
+LatexCommand prettyref
+reference "sub:YSlow"
+
+\end_inset
+
+) or FasterFox 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Fasterfox"
+
+\end_inset
+
+, but then you have to load the page multiple times (i.e.
+ 
+\emph on
+hammer 
+\emph default
+the server, this is where the name comes from).
+ And you'd still have to set up the separate testing conditions for each
+ page load: empty cache, primed cache and for the latter there are again
+ two possible situations: disk cache 
+\emph on
+and
+\emph default
+ memory cache or just disk cache.
+ Memory cache is of course faster than disk cache; that's also why that
+ distinction is important.
+ Finally, it supports exporting the resulting data into CSV format, so you
+ could even create some tools to roughly track page loading performance
+ throughout time.
+\begin_inset Newline newline
+\end_inset
+
+See figure .
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/profiling/Hammerhead.png
+	scale 36
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The Hammerhead Firebug extension.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Hammerhead"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
 YSlow
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:YSlow"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
 Apache JMeter
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Apache-JMeter"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
 Gomez/Keynote/WebMetrics/Pingdom
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Gomez/Keynote/WebMetrics/Pingdom"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1084,6 +1436,106 @@ Conclusion
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "presentation Design Fast Websites"
+
+\end_inset
+
+
+\emph on
+Design Fast Websites
+\emph default
+, Nicole Sullivan, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.slideshare.net/stubbornella/designing-fast-websites-presentation
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Google maps load time impact"
+
+\end_inset
+
+
+\emph on
+We're all guinea pigs in Google's search experiment,
+\emph default
+ Stephen Shankland, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://news.cnet.com/8301-10784_3-9954972-7.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "High Performance Web Sites Book"
+
+\end_inset
+
+
+\emph on
+High Performance Web Sites
+\emph default
+, Steve Souders, 2007, O'Reilly, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/hpws/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal usage statistics"
+
+\end_inset
+
+
+\emph on
+Usage statistics for Drupal,
+\emph default
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/usage/drupal
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "UA Profiler"
 
 \end_inset
@@ -1159,6 +1611,107 @@ http://www.stevesouders.com/blog/2008/04/25/cuzillion/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "Hammerhead"
+
+\end_inset
+
+
+\emph on
+Hammerhead
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/hammerhead/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Hammerhead announcement"
+
+\end_inset
+
+
+\emph on
+Hammerhead:
+\begin_inset space ~
+\end_inset
+
+moving performance testing upstream
+\emph default
+, Steve Souders, September 30, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.stevesouders.com/blog/2008/09/30/hammerhead-moving-performance-testing-
+upstream/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Firebug"
+
+\end_inset
+
+Firebug, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://getfirebug.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Fasterfox"
+
+\end_inset
+
+
+\emph on
+Fasterfox
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://fasterfox.mozdev.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "Souders State of Performance 2008"
 
 \end_inset
@@ -1184,7 +1737,11 @@ key "Gomez web site"
 
 \end_inset
 
-Gomez web site, 
+
+\emph on
+Gomez
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1205,7 +1762,11 @@ key "Keynote web site"
 
 \end_inset
 
-Keynote web site, 
+
+\emph on
+Keynote
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1226,7 +1787,11 @@ key "WebMetrics web site"
 
 \end_inset
 
-WebMetrics web site, 
+
+\emph on
+WebMetrics
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1247,7 +1812,11 @@ key "Pingdom web site"
 
 \end_inset
 
-Pingdom web site, 
+
+\emph on
+Pingdom
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1268,7 +1837,11 @@ key "AJAX wikipedia"
 
 \end_inset
 
-AJAX information, 
+
+\emph on
+AJAX
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1289,7 +1862,11 @@ key "web site Selenium"
 
 \end_inset
 
-Selenium web site, 
+
+\emph on
+Selenium
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1310,7 +1887,11 @@ key "Keynote KITE"
 
 \end_inset
 
-Keynote KITE, 
+
+\emph on
+Keynote KITE
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1331,7 +1912,11 @@ key "Gomez Script Recorder"
 
 \end_inset
 
-Gomez Script Recorder, 
+
+\emph on
+Gomez Script Recorder
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1353,7 +1938,11 @@ key "web site WhitePages"
 
 \end_inset
 
-WhitePages, 
+
+\emph on
+WhitePages,
+\emph default
+ 
 \begin_inset Flex URL
 status collapsed
 
@@ -1399,8 +1988,11 @@ key "video of Velocity 2008 Jiffy presentation"
 
 \end_inset
 
-Velocity 2008, video of the Jiffy presentation, Scotth Ruthfield, 2008,
- 
+Velocity 2008, 
+\emph on
+video of the Jiffy presentation
+\emph default
+, Scotth Ruthfield, 2008, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1421,7 +2013,11 @@ key "Jiffy project"
 
 \end_inset
 
-Jiffyweb site, 
+
+\emph on
+Jiffy
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1442,7 +2038,11 @@ key "Jiffy Firebug Extension"
 
 \end_inset
 
-Jiffy Firebug Extension, 
+
+\emph on
+Jiffy Firebug Extension
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
