@@ -57,6 +57,18 @@ Improving Drupal's page loading performance
 \end_layout
 
 \begin_layout Author
+Thesis proposed to achieve the degree of bachelor
+\begin_inset Newline newline
+\end_inset
+
+in computer sciene/ICT/knowledge technology
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
 Wim Leers
 \begin_inset Newline newline
 \end_inset
@@ -123,11 +135,27 @@ Abstract
 \end_layout
 
 \begin_layout Section
+Preface
+\end_layout
+
+\begin_layout Section
+Nederlandstalige samenvatting
+\end_layout
+
+\begin_layout Section
 Terminology
 \end_layout
 
 \begin_layout Description
 browser
+\end_layout
+
+\begin_layout Description
+CDN A content delivery network (CDN) is a collection of web servers distributed
+ across multiple locations to deliver content more efficiently to users.
+ The server selected for delivering content to a specific user is typically
+ based on a measure of network proximity.
+ 
 \end_layout
 
 \begin_layout Description
@@ -156,6 +184,19 @@ loading
 \end_inset
 
 performance
+\end_layout
+
+\begin_layout Description
+above
+\begin_inset space ~
+\end_inset
+
+the
+\begin_inset space ~
+\end_inset
+
+fold the initially visible part of a web page: the part that you can see
+ without scrolling
 \end_layout
 
 \begin_layout Section
@@ -234,7 +275,7 @@ usual goal of performance analysis is to determine which sections of a program
 
 \begin_layout Standard
 So we'll go through a list of tools: UA Profiler, Cuzillion, Hammerhead,
- YSlow, Apache JMeter, Gomez/Keynote/Webmetrics/Pingdom and Jiffy/Episodes.
+ YSlow, Apache JMeter, Gomez/Keynote/WebMetrics/Pingdom and Jiffy/Episodes.
  As you can tell, it's a pretty long list, so I'll pick the tools I'll use
  while improving Drupal's page loading performance based on two factors:
 \end_layout
@@ -540,15 +581,477 @@ Apache JMeter
 \end_layout
 
 \begin_layout Subsection
-Gomez/KeyNote/Webmetrics/Pingdom
+Gomez/Keynote/WebMetrics/Pingdom
+\end_layout
+
+\begin_layout Standard
+Gomez 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Gomez web site"
+
+\end_inset
+
+, KeyNote 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Keynote web site"
+
+\end_inset
+
+, WebMetrics 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "WebMetrics web site"
+
+\end_inset
+
+ and Pingdom 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Pingdom web site"
+
+\end_inset
+
+ are examples of 3rd-party (paid) performance monitoring systems.
+\end_layout
+
+\begin_layout Standard
+They have four major disadvantages:
+\end_layout
+
+\begin_layout Enumerate
+limited number of measurement points
+\end_layout
+
+\begin_layout Enumerate
+no real-world browsers are used
+\end_layout
+
+\begin_layout Enumerate
+unsuited for Web 2.0
+\end_layout
+
+\begin_layout Enumerate
+paid & closed source
+\end_layout
+
+\begin_layout Subsubsection
+Limited number of measurement points
+\end_layout
+
+\begin_layout Standard
+These services poll your site at regular or irregular intervals.
+ This poses analysis problems: for example, if one your servers is very
+ slow just at that one moment that any of these services requests a page,
+ you will be told that there's a major issue with your site.
+ But that's not necessarily true: it might be a fluke.
+\end_layout
+
+\begin_layout Subsubsection
+No real-world browsers
+\end_layout
+
+\begin_layout Standard
+Most, if not all of these services use their own custom clients 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "video of Velocity 2008 Jiffy presentation"
+
+\end_inset
+
+.
+ That implies their results aren't a representation of the real-world situation,
+ which means you can't rely upon these metrics for making decisions: what
+ if a commonly used real-world browser behaves completely differently? Even
+ if the services would all use real-world browsers, they would never reflect
+ real-world performance, because browser usage evolves over time and aren't
+ the same for any two web sites.
+\end_layout
+
+\begin_layout Subsubsection
+Unsuited for Web 2.0
+\end_layout
+
+\begin_layout Standard
+The problem with these services is that they still assume the World Wide
+ Web is the same as it was 10 years ago, where JavaScript was rather a scarcity
+ than the abundancy it is today.
+ They still intrerpret the 
+\family typewriter
+onload
+\family default
+ event as the 
+\begin_inset Quotes eld
+\end_inset
+
+end time
+\begin_inset Quotes erd
+\end_inset
+
+ for response time measurements.
+ In Web 1.0, that was fine.
+ But as the adoption of AJAX 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "AJAX wikipedia"
+
+\end_inset
+
+ has grown, the 
+\family typewriter
+onload
+\family default
+ event has become less and less representative of when the page is ready
+ (i.e.
+ has completely loaded), because the page can continue to load additional
+ components.
+ For some web sites, the 
+\begin_inset Quotes eld
+\end_inset
+
+above the fold
+\begin_inset Quotes erd
+\end_inset
+
+ section of a web page has been optimized, thereby loading 
+\begin_inset Quotes eld
+\end_inset
+
+heavier
+\begin_inset Quotes erd
+\end_inset
+
+ content later, below the fold.
+ Thus the 
+\begin_inset Quotes eld
+\end_inset
+
+page ready
+\begin_inset Quotes erd
+\end_inset
+
+ point in time is shifted from its default.
+\end_layout
+
+\begin_layout Standard
+In both of these cases, the 
+\family typewriter
+onload
+\family default
+ event is too optimistic 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "white paper Episodes"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+There are two ways to measure Web 2.0 web sites 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "presentation Episodes"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+manual scripting
+\emph default
+: identify timing points using scripting tools (Selenium 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "web site Selenium"
+
+\end_inset
+
+, Keynote's KITE 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Keynote KITE"
+
+\end_inset
+
+, etc.).
+ This approach has a long list of disadvantages: low accuracy, high switching
+ costs, high maintenance costs, synthetic (no real-world measurements).
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+programmatic scripting
+\emph default
+: timing points are marked by JavaScript (Jiffy 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Jiffy project"
+
+\end_inset
+
+, Gomez Script Recorder 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Gomez Script Recorder"
+
+\end_inset
+
+, etc.).
+ This is the preferred approach: it has lower maintenance costs and a higher
+ accuracy because the code for timing is included in the other code and
+ measures real user traffic.
+\begin_inset Newline newline
+\end_inset
+
+If we would now work on a shared implementation of this approach, then we
+ wouldn't have to reinvent the wheel every time and switching costs would
+ be much lower.
+ See the Jiffy/Episodes later on.
+\end_layout
+
+\begin_layout Subsubsection
+Paid & closed source
+\end_layout
+
+\begin_layout Standard
+You're dependent upon the 3rd party service to implement new instrumentations
+ and analysises.
+ There's a high cost for the implementation cost and a very high cost when
+ switching to a different 3rd party service.
 \end_layout
 
 \begin_layout Subsection
 Jiffy/Episodes
 \end_layout
 
+\begin_layout Subsubsection
+Jiffy
+\end_layout
+
+\begin_layout Standard
+Jiffy 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Velocity 2008 Jiffy presentation,video of Velocity 2008 Jiffy presentation,Jiffy project"
+
+\end_inset
+
+ is designed to give you real-world information on what's actually happening
+ within browsers of users that are visiting your site.
+ It shows you how long pages really take to load and how long events that
+ happen while or after your page is loading really take.
+ Especially when you don't control all the components of your web site (e.g.
+ widgets of photo and music web sites, contextual ads or web analytics services)
+, it's important that you can monitor their performance.
+ It overcomes to 4 major disadvantages that were listed previously:
+\end_layout
+
+\begin_layout Enumerate
+it can measure 
+\emph on
+every
+\emph default
+ page load if desired
+\end_layout
+
+\begin_layout Enumerate
+real-world browsers are used, becuase it's just JavaScript code that runs
+ in the browser
+\end_layout
+
+\begin_layout Enumerate
+well-suited for Web 2.0, because you can configure it to measure 
+\emph on
+anything
+\end_layout
+
+\begin_layout Enumerate
+open source
+\end_layout
+
+\begin_layout Standard
+Jiffy consists of several components:
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+Jiffy.js
+\family default
+: a library for instrumenting your pages and reporting measurements
+\end_layout
+
+\begin_layout Itemize
+Apache configuration: to receive and log measurements
+\end_layout
+
+\begin_layout Itemize
+Ingestor: parse logs and store in a database (currently only supports Oracle
+ XE)
+\end_layout
+
+\begin_layout Itemize
+Reporting toolset
+\end_layout
+
+\begin_layout Itemize
+Firebug extension 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Jiffy Firebug Extension"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Jiffy was built to be used by the WhitePages web site 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "web site WhitePages"
+
+\end_inset
+
+ and has been running on that site.
+ At more than 10 million page views per day, it should be clear that Jiffy
+ can scale quite well.
+\end_layout
+
+\begin_layout Subsubsection
+Episodes
+\end_layout
+
+\begin_layout Standard
+Episodes is very, very much like Jiffy.
+ There are two differences:
+\end_layout
+
+\begin_layout Enumerate
+Episodes' goal is to become an industry standard.
+ This would imply that the aforementioned 3rd party services (Gomez/Keynote/WebM
+etrics/Pingdom) would take advantage of the the instrumentations implemented
+ through Episodes in their anylises.
+\end_layout
+
+\begin_layout Enumerate
+Most of the implementation is built into browsers (
+\family typewriter
+window.postMessage(),
+\family default
+ 
+\family typewriter
+addEventListener()
+\family default
+), which means there is less code that must be downloaded.
+ (Note: the newest versions of browsers are necessary: Internet Explorer
+ 8, Firefox 3, WebKit Nightlies and Opera 9.5.
+ An additional backwards compatibility JavaScript file must be downloaded
+ for older browsers.)
+\end_layout
+
+\begin_layout Standard
+Steve Souders outlines the goals and vision for Episodes succinctly in these
+ two paragrahps:
+\end_layout
+
+\begin_layout Quotation
+
+\emph on
+The goal is to make Episodes the industrywide solution for measuring web
+ page load times.
+
+\emph default
+ This is possible because Episodes has benefits for all the stakeholders.
+ Web developers only need to learn and deploy a single framework.
+ Tool developers and web metrics service providers get more accurate timing
+ information by relying on instrumentation inserted by the developer of
+ the web page.
+ Browser developers gain insight into what's happening in the web page by
+ relying on the context relayed by Episodes.
+\end_layout
+
+\begin_layout Quotation
+Most importantly, users benefit by the adoption of Episodes.
+ They get a browser that can better inform them of the web page's status
+ for Web 2.0 apps.
+ Since Episodes is a lighter weight design than other instrumentation frameworks
+, users get faster pages.
+ As Episodes makes it easier for web developers to shine a light on performance
+ issues, 
+\emph on
+the end result is an Internet experience that is faster for everyone
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+A couple of things can be said about the current codebase of Episodes:
+\end_layout
+
+\begin_layout Itemize
+There are two JavaScript files: 
+\family typewriter
+episodes.js
+\family default
+ and 
+\family typewriter
+episodes-compat.js
+\family default
+.
+ The latter is loaded on-the-fly when an older browser is being used that
+ doesn't support 
+\family typewriter
+window.postMessage()
+\family default
+.
+ These are operational but haven't had wide testing yet.
+\end_layout
+
+\begin_layout Itemize
+It uses the same query string syntax as Jiffy uses, which means Jiffy's
+ Apache configuration, ingestor and reporting toolset can be reused.
+\end_layout
+
+\begin_layout Itemize
+It has its own Firebug extension.
+\end_layout
+
+\begin_layout Standard
+So, Episodes' very 
+\emph on
+raison d'existence
+\emph default
+ is to achieve a concensus on a JavaScript-based page loading instrumentation
+ toolset.
+ It aims to become an industry standard and is maintained by Steve Souders,
+ who is currently on Google's payroll to work on all things page loading
+ performance full-time (which suggests we might see integration with Google's
+ Analytics 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Google Analytics"
+
+\end_inset
+
+ service in the long term).
+ Add in the fact that Jiffy hasn't been updated since its initial release,
+ and it becomes clear that Episodes is the better long-term choice.
+\end_layout
+
 \begin_layout Section
 The State of Drupal's page loading performance
+\end_layout
+
+\begin_layout Section
+Improving Drupal: Episodes integration
 \end_layout
 
 \begin_layout Section
@@ -561,6 +1064,10 @@ Improving Drupal: CDN integration
 
 \begin_layout Section
 Test cases
+\end_layout
+
+\begin_layout Subsection
+DriverPacks.net
 \end_layout
 
 \begin_layout Section
@@ -577,7 +1084,6 @@ Conclusion
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "UA Profiler"
 key "UA Profiler"
 
 \end_inset
@@ -603,7 +1109,6 @@ http://stevesouders.com/ua/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "Cuzillion"
 key "Cuzillion"
 
 \end_inset
@@ -629,7 +1134,6 @@ http://stevesouders.com/cuzillion/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "Cuzillion announcement"
 key "Cuzillion announcement"
 
 \end_inset
@@ -655,7 +1159,6 @@ http://www.stevesouders.com/blog/2008/04/25/cuzillion/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "Souders State of Performance 2008"
 key "Souders State of Performance 2008"
 
 \end_inset
@@ -677,7 +1180,285 @@ http://www.stevesouders.com/blog/2008/12/17/state-of-performance-2008/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "white paper Episodes"
+key "Gomez web site"
+
+\end_inset
+
+Gomez web site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.gomez.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Keynote web site"
+
+\end_inset
+
+Keynote web site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.keynote.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "WebMetrics web site"
+
+\end_inset
+
+WebMetrics web site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.webmetrics.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Pingdom web site"
+
+\end_inset
+
+Pingdom web site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://pingdom.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "AJAX wikipedia"
+
+\end_inset
+
+AJAX information, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://en.wikipedia.org/wiki/AJAX
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "web site Selenium"
+
+\end_inset
+
+Selenium web site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://seleniumhq.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Keynote KITE"
+
+\end_inset
+
+Keynote KITE, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://kite.keynote.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Gomez Script Recorder"
+
+\end_inset
+
+Gomez Script Recorder, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.gomeznetworks.com/help/Gomezu/main/Gomez_university/3_Gomez_Script_Reco
+rder/toc.htm
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "web site WhitePages"
+
+\end_inset
+
+WhitePages, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://whitepages.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Velocity 2008 Jiffy presentation"
+
+\end_inset
+
+Velocity 2008, 
+\emph on
+Jiffy: Open Source Performance Measurement and Instrumentation
+\emph default
+, Scott Ruthfield, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://en.oreilly.com/velocity2008/public/schedule/detail/4404
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "video of Velocity 2008 Jiffy presentation"
+
+\end_inset
+
+Velocity 2008, video of the Jiffy presentation, Scotth Ruthfield, 2008,
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://blip.tv/file/1018527
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Jiffy project"
+
+\end_inset
+
+Jiffyweb site, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.google.com/p/jiffy-web/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Jiffy Firebug Extension"
+
+\end_inset
+
+Jiffy Firebug Extension, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://billwscott.com/jiffyext/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "white paper Episodes"
 
 \end_inset
@@ -703,7 +1484,56 @@ http://stevesouders.com/episodes/paper.php
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-label "JSMIN"
+key "presentation Episodes"
+
+\end_inset
+
+
+\emph on
+Episodes: a shared approach for timing web pages
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/docs/episodes-tae-20080930.ppt
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Google Analytics"
+
+\end_inset
+
+
+\emph on
+Google Analytics
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://google.com/analytics
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "JSMIN"
 
 \end_inset
