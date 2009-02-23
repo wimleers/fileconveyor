@@ -3,6 +3,9 @@
 \begin_document
 \begin_header
 \textclass article
+\begin_preamble
+\setcounter{page}{0}
+\end_preamble
 \use_default_options true
 \language english
 \inputencoding auto
@@ -81,7 +84,8 @@ Wim Leers
 \shape italic
 Promotor
 \shape default
-: dr.
+: Prof.
+ dr.
  Wim Lamotte
 \shape italic
 
@@ -134,6 +138,10 @@ thispagestyle{empty}
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Table of contents here… when it starts working again.
 \end_layout
 
 \begin_layout Standard
@@ -674,7 +682,7 @@ status collapsed
 \align center
 \begin_inset Graphics
 	filename images/profiling/cuzillion.png
-	scale 50
+	width 100text%
 
 \end_inset
 
@@ -716,7 +724,7 @@ status collapsed
 \align center
 \begin_inset Graphics
 	filename /Users/wimleers/School/thesis/svn/doc/images/profiling/cuzillion - safari.png
-	scale 50
+	width 100text%
 
 \end_inset
 
@@ -748,13 +756,13 @@ name "fig:Cuzillion-Safari"
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename images/profiling/cuzillion - firefox.png
-	scale 50
+	width 100text%
 
 \end_inset
 
@@ -765,7 +773,7 @@ status collapsed
 \begin_inset Caption
 
 \begin_layout Plain Layout
-The example situation created in Firefox 3.
+The example situation in Firefox 3.
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:Cuzillion-Firefox"
@@ -868,7 +876,7 @@ See figure .
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \noindent
@@ -883,7 +891,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-The Hammerhead Firebug extension.
+Hammerhead.
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:Hammerhead"
@@ -1261,6 +1269,55 @@ key "Jiffy Firebug Extension"
 
 \end_inset
 
+, see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Jiffy"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/profiling/Jiffy.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Jiffy.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Jiffy"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
 
 \end_layout
 
@@ -1373,7 +1430,60 @@ It uses the same query string syntax as Jiffy uses, which means Jiffy's
 \end_layout
 
 \begin_layout Itemize
-It has its own Firebug extension.
+It has its own Firebug extension, see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Episodes"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/profiling/Episodes.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1396,6 +1506,35 @@ key "Google Analytics"
  service in the long term).
  Add in the fact that Jiffy hasn't been updated since its initial release,
  and it becomes clear that Episodes is the better long-term choice.
+\end_layout
+
+\begin_layout Subsection
+Conclusion
+\end_layout
+
+\begin_layout Standard
+There isn't a single, 
+\begin_inset Quotes eld
+\end_inset
+
+do-it-all
+\begin_inset Quotes erd
+\end_inset
+
+ tool that you should use.
+ Instead, you should wisely combine all of the above tools.
+ Use the tool that fits the task at hand.
+\end_layout
+
+\begin_layout Standard
+However, for the scope of this thesis, there is one tool that jumps out:
+ Episodes.
+ This tool, if properly integrated with Drupal, would be a key asset to
+ Drupal.
+ It would allow contributed module developers to support Episodes.
+ This, in turn, would be a good indicator for a module's quality and would
+ allow the web site owner/administrator/developer to carefully analyze each
+ aspect of his Drupal web site.
 \end_layout
 
 \begin_layout Section
