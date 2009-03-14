@@ -10,6 +10,7 @@
  * that the file can be displayed nicely in default-sized consoles.
  */
 
+
 define('EPISODES_STATUS_VARIABLE', 'episodes_status');
 define('EPISODES_STATUS_DISABLED', 0);
 define('EPISODES_STATUS_DEBUG', 1);
@@ -19,11 +20,16 @@ define('EPISODES_LOGGING_VARIABLE', 'episodes_logging');
 define('EPISODES_LOGGING_DISABLED', 0);
 define('EPISODES_LOGGING_ENABLED', 1);
 
+define('EPISODES_EXCLUDED_PATHS_VARIABLE', 'episodes_excluded_paths');
+define('EPISODES_EXCLUDED_PATHS_DEFAULT', 'admin/*');
+
 define('EPISODES_LAST_SCAN_VARIABLE', 'episodes_last_scan');
 define('EPISODES_LAST_SCAN_NEVER', -1);
 
 define('EPISODES_BEHAVIOR_NOT_IGNORED', 0);
 define('EPISODES_BEHAVIOR_IGNORED', 1);
+
+
 
 
 //----------------------------------------------------------------------------
@@ -82,10 +88,20 @@ function episodes_menu() {
  */
 function episodes_init() {
   // Get all related settings.
-  $status  = variable_get(EPISODES_STATUS_VARIABLE, EPISODES_STATUS_DEBUG);
-  $logging = variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_LOGGING_DISABLED);
-
-  if ($status == EPISODES_STATUS_ENABLED || ($status == EPISODES_STATUS_DEBUG && user_access('administer site configuration'))) {  
+  $status        = variable_get(EPISODES_STATUS_VARIABLE, EPISODES_STATUS_DEBUG);
+  $logging       = variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_LOGGING_DISABLED);
+  $path_patterns = variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT);
+  $path = drupal_get_path_alias($_GET['q']);
+  
+  if (!drupal_match_path($path, $path_patterns)
+      &&
+        (
+         $status == EPISODES_STATUS_ENABLED
+         ||
+         ($status == EPISODES_STATUS_DEBUG && user_access('administer site configuration'))
+        )
+      )
+  {  
     $path = drupal_get_path('module', 'episodes');
 
     // Cheat a little bit: use drupal_set_html_head() to add the episodes.js
@@ -107,7 +123,7 @@ function episodes_init() {
     // for Drupal behaviors with Episodes.
     drupal_add_js("$path/drupal.episodes.js", 'module', 'header');
 
-    // Let 
+    // Let Drupal.Episodes (JS) know which Drupal.behaviors it should ignore.
     $ignored_behaviors = array();
     $behaviors = episodes_behavior_load(NULL, EPISODES_BEHAVIOR_IGNORED);
     foreach ($behaviors as $behavior) {

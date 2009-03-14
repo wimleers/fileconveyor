@@ -42,6 +42,24 @@ function episodes_admin_settings() {
     '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_LOGGING_DISABLED),
   );
 
+  $form[EPISODES_EXCLUDED_PATHS_VARIABLE] = array(
+    '#type' => 'textarea',
+    '#title' => t('Excluded paths'),
+    '#description' => t("Enter one page per line as Drupal paths. The '*'
+                         character is a wildcard. Example paths are %blog for
+                         the blog page and %blog-wildcard for every personal
+                         blog. %front is the front page.",
+                         array(
+                           '%blog'          => 'blog',
+                           '%blog-wildcard' => 'blog/*',
+                           '%front'         => '<front>',
+                         )),
+    '#cols' => 60,
+    '#rows' => 5,
+    '#default_value' => variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT),
+  );
+  
+
   return system_settings_form($form);
 }
 
