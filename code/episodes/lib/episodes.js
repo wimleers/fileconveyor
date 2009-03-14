@@ -17,10 +17,12 @@ var EPISODES = EPISODES || {};
 
 EPISODES.init = function() {
 	EPISODES.done = false;
+	EPISODES.domready = false;
     EPISODES.marks = {};
     EPISODES.measures = {};
     EPISODES.starts = {};
 	EPISODES.addEventListener("message", EPISODES.handleEpisodeMessage, false);
+	EPISODES.bindDomReady();
 	EPISODES.findStartTime();
 	window.postMessage("EPISODES:mark:frontendstarttime:" + EPISODES.frontendStartTime, document.location);
 	window.postMessage("EPISODES:measure:backend:backendstarttime:frontendstarttime", document.location);
@@ -165,6 +167,61 @@ EPISODES.addEventListener = function(sType, callback, bCapture) {
 	else if ( window.addEventListener ){
 		return window.addEventListener(sType, callback, bCapture);
 	}
+};
+
+// Add a domready measurement. This event occurs before all images and other
+// referenced binaries have finished loading. It uses the DOMContentLoaded
+// event in browsers that support it, and an emulation of that for Internet
+// Explorer.
+// Shamelessly copied from jQuery.
+EPISODES.bindDomReady =  function() {
+  // Mozilla, Opera and webkit nightlies currently support this event
+  if ( document.addEventListener ) {
+    // Use the handy event callback
+    document.addEventListener( "DOMContentLoaded", function(){
+        document.removeEventListener( "DOMContentLoaded", arguments.callee, false );
+        EPISODES.domIsReady();
+    }, false );
+
+  // If IE event model is used
+  } else if ( document.attachEvent ) {
+    // ensure firing before onload,
+    // maybe late but safe also for iframes
+    document.attachEvent("onreadystatechange", function(){
+      if ( document.readyState === "complete" ) {
+        document.detachEvent( "onreadystatechange", arguments.callee );
+        EPISODES.domIsReady();
+      }
+    });
+
+    // If IE and not an iframe
+    // continually check to see if the document is ready
+    if ( document.documentElement.doScroll && window == window.top ) (function(){
+      if ( EPISODES.domready ) return;
+
+      try {
+        // If IE is used, use the trick by Diego Perini
+        // http://javascript.nwbox.com/IEContentLoaded/
+        document.documentElement.doScroll("left");
+      } catch( error ) {
+        setTimeout( arguments.callee, 0 );
+        return;
+      }
+
+      // and execute any waiting functions
+      EPISODES.domIsReady();
+    })();
+  }
+
+  // A fallback to window.onload, that will always work
+  EPISODES.addEventListener("load", function() { EPISODES.domIsReady(); }, false);
+};
+
+EPISODES.domIsReady = function() {
+  if (!EPISODES.domready) {
+    EPISODES.domready = true;
+    window.postMessage("EPISODES:measure:domready:frontendstarttime", document.location);
+  }
 };
 
 if ( EPISODES.isCompatible() ) {

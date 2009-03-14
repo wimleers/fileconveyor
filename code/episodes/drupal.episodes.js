@@ -23,13 +23,6 @@ Drupal.attachBehaviors = function(context) {
     window.postMessage("EPISODES:measure:DrupalBehaviors", document.location);
   }
 };
-// Add a domready measurement. This event occurs before all images and other
-// referenced binaries have finished loading. It uses the DOMContentLoaded
-// event in browsers that support it, and an emulation of that for Internet
-// Explorer.
-$(document).ready(function() {
-  window.postMessage("EPISODES:measure:domready:frontendstarttime", document.location);
-});
 
 // Drupal.Episodes object. Allows Drupal modules to specify lazy load
 // callbacks. Each callback should only return as soon as it's truly finished
