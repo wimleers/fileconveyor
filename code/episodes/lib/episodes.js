@@ -22,7 +22,6 @@ EPISODES.init = function() {
     EPISODES.starts = {};
 	EPISODES.addEventListener("message", EPISODES.handleEpisodeMessage, false);
 	EPISODES.findStartTime();
-	window.postMessage("EPISODES:mark:backendstarttime:" + EPISODES.backendStartTime, document.location);
 	window.postMessage("EPISODES:mark:frontendstarttime:" + EPISODES.frontendStartTime, document.location);
 	window.postMessage("EPISODES:measure:backend:backendstarttime:frontendstarttime", document.location);
 	EPISODES.addEventListener("beforeunload", EPISODES.beforeUnload, false);

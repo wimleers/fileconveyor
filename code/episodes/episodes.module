@@ -10,7 +10,6 @@
  * that the file can be displayed nicely in default-sized consoles.
  */
 
-
 define('EPISODES_STATUS_VARIABLE', 'episodes_status');
 define('EPISODES_STATUS_DISABLED', 0);
 define('EPISODES_STATUS_DEBUG', 1);
@@ -19,8 +18,6 @@ define('EPISODES_STATUS_ENABLED', 2);
 define('EPISODES_LOGGING_VARIABLE', 'episodes_logging');
 define('EPISODES_LOGGING_DISABLED', 0);
 define('EPISODES_LOGGING_ENABLED', 1);
-
-define('EPISODES_BEACON_URL', 'episodes/beacon');
 
 
 /**
@@ -87,13 +84,12 @@ function episodes_init() {
     // settings. We can't use Drupal.settings for this, because Drupal.js will
     // not yet be loaded.
     $cache_mode = variable_get('cache', CACHE_DISABLED);
-    $time = episodes_boot();
     $js_code = array(
       'var EPISODES = EPISODES || {};',
       'EPISODES.frontendStartTime=Number(new Date());',
       'EPISODES.compatScriptUrl="' . url("$path/lib/episodes-compat.js") . '";',
       'EPISODES.logging="' . $logging .'";',
-      'EPISODES.beaconUrl="' . url(EPISODES_BEACON_URL)  . '";',
+      'EPISODES.beaconUrl="' . url("$path/beacon")  . '";',
     );
     drupal_set_html_head('<script type="text/javascript">' . implode('', $js_code) . '</script>');
     drupal_set_html_head('<script type="text/javascript" src="' . url("$path/lib/episodes.js") . '"></script>');
@@ -102,11 +98,6 @@ function episodes_init() {
     // for Drupal behaviors with Episodes.
     drupal_add_js("$path/drupal.episodes.js", 'module', 'header');
   }
-}
-
-function episodes_exit() {
-  $duration = round(timer_read('page'));
-  drupal_set_html_head('<script type="text/javascript">EPISODES.backendduration=' . $duration . ';</script>');
 }
 
 
