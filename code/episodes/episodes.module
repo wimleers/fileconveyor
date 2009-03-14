@@ -27,15 +27,6 @@ define('EPISODES_BEACON_URL', 'episodes/beacon');
  * Implementation of hook_menu().
  */
 function episodes_menu() {
-  $items['episodes/rtt-estimator'] = array(
-    'title'            => 'RTT Estimator',
-    'description'      => 'Page used to estimate the RTT.',
-    'access callback'  => TRUE,
-    'page callback'    => 'episodes_rtt_estimator',
-    'type'             => MENU_CALLBACK,
-  );
-
-
   $items['admin/settings/episodes'] = array(
     'title'            => 'Episodes',
     'description'      => 'Configure various settings for Episodes.',
@@ -80,24 +71,6 @@ function episodes_menu() {
   return $items;
 }
 
-
-/**
- * Implementation of hook_boot().
- */
-function episodes_boot() {
-  static $time;
-
-  if (!isset($time)) {
-    list($usec, $sec) = explode(" ", microtime());
-    $milliseconds = round(($sec + $usec) * 1000, 0);
-
-    $time = $milliseconds;
-  }
-  else {
-    return $time;
-  }
-}
-
 /**
  * Implementation of hook_init().
  */
@@ -118,7 +91,6 @@ function episodes_init() {
     $js_code = array(
       'var EPISODES = EPISODES || {};',
       'EPISODES.frontendStartTime=Number(new Date());',
-      ($cache_mode == CACHE_AGGRESSIVE) ? '' : 'EPISODES.backendStartTime=Number(' . $time .');', //$_SERVER['REQUEST_TIME']
       'EPISODES.compatScriptUrl="' . url("$path/lib/episodes-compat.js") . '";',
       'EPISODES.logging="' . $logging .'";',
       'EPISODES.beaconUrl="' . url(EPISODES_BEACON_URL)  . '";',
@@ -146,16 +118,3 @@ function episodes_exit() {
  *
  * Should end up in the theme layer. See TODO.txt
  */
- 
- 
-
-function episodes_rtt_estimator() {
-  // Disable devel module output.
-  $GLOBALS['devel_shutdown'] = FALSE;
-
-  // Print timestamp.
-  list($usec, $sec) = explode(" ", microtime());
-  $milliseconds = round(($sec + $usec) * 1000, 0);
-  print $milliseconds;
-  exit;
-}

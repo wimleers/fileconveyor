@@ -16,9 +16,7 @@ Problems-that-need-thought:
 - Measuring CSS and JS files load times requires cooperation of the themes -> theme layer.
 - Encourage module developers to support EPISODES when present. Should degrade gracefully.
   -> lazy loading callbacks
-  -> 
-- Always measures 50-100 ms too few, it could be wise to calculate an offset for the backend start time, because
-  the backend start time starts counting too late:  browser -> network stack -> internet -> server -> apache -> php
+  -> own episodes
 - On the first page load, the cookie is not yet set and therefor the pageready,
   backend and totaltime times cannot be calculated. Also a problem when cookies are disabled
 
@@ -32,11 +30,6 @@ Know-how-to-do-but-not-yet-done:
 
 Drupal core ideas:
 - Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc) and Drupal.lazy.
-
-
-
-Warnings
-- Doesn't work with aggressive page caching! (back end start time will be incorrect)
 
 
 

@@ -27,8 +27,6 @@ Drupal.attachBehaviors = function(context) {
 // referenced binaries have finished loading. It uses the DOMContentLoaded
 // event in browsers that support it, and an emulation of that for Internet
 // Explorer.
-// TODO: instead of relying on jQuery and having this event outside of the
-// "core" episodes.js, include it there? Ask Steve Souders.
 $(document).ready(function() {
   window.postMessage("EPISODES:measure:domready:frontendstarttime", document.location);
 });
@@ -80,19 +78,5 @@ EPISODES.addEventListener("load", function() { Drupal.Episodes.done(); }, false)
 
 // Start executing lazy load callbacks as soon as the DOM is ready.
 $(document).ready(function() { Drupal.Episodes.executeLazyLoadCallbacks(); });
-
-
-$(document).ready(function() {
-  setTimeout('EPISODES.rtt();', 100);
-});
-
-EPISODES.rtt = function() {
-  var before = Number(new Date());
-  $.get('http://dev/d6/episodes/rtt-estimator', null, function(before) {
-    var after = Number(new Date());
-    console.log(after - before);
-  });
-};
-
 
 })(jQuery);
