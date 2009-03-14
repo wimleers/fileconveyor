@@ -99,13 +99,3 @@ function episodes_init() {
     drupal_add_js("$path/drupal.episodes.js", 'module', 'header');
   }
 }
-
-
-/**
- * for measuring CSS/JS files load times:
- * 
- * $measure_drupal_css_load_time = 'window.postMessage("EPISODES:measure:drupalcss:starttime", document.location); window.postMessage("EPISODES:mark:drupalcss", document.location);';
- * drupal_set_html_head('<script type="text/javascript">' . $measure_drupal_css_load_time . '</script>');
- *
- * Should end up in the theme layer. See TODO.txt
- */
