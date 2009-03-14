@@ -1,0 +1,50 @@
+Questions for Steve Souders:
+- Why hardcode the domain name in window.postMessage() calls when you could also just use document.location?
+- Why hardcode scriptUrl? It should be in EPISODES.compatScriptUrl?
+- Should the first byte always be measured explicitly?
+  http://stevesouders.com/episodes/episodes.js suggests you shouldn't: it estimates the start time based on a cookie – BUT WHAT WITH THE FIRST TIME?
+  http://stevesouders.com/episodes/example.php suggests you should measure it explicitly.
+  But firstbyte only starts measuring from the front-end. I also want to measure
+  the back-end. So I'm now setting EPISODES.backendStartTime from the back-end.
+- Is http://stevesouders.com/episodes/episodes.js released under the GPL or the public domain?
+- Should a domready event (besides the pageready) episode be added to episodes.js?
+
+
+
+Problems-that-need-thought:
+- Handle dev/staging/production.
+- Measuring CSS and JS files load times requires cooperation of the themes -> theme layer.
+- Encourage module developers to support EPISODES when present. Should degrade gracefully.
+  -> lazy loading callbacks
+  -> 
+- Always measures 50-100 ms too few, it could be wise to calculate an offset for the backend start time, because
+  the backend start time starts counting too late:  browser -> network stack -> internet -> server -> apache -> php
+- On the first page load, the cookie is not yet set and therefor the pageready,
+  backend and totaltime times cannot be calculated. Also a problem when cookies are disabled
+
+
+
+Know-how-to-do-but-not-yet-done:
+- Add a setting that allows you to serve the file from a central location (e.g. when Google starts hosting Episodes).
+- Add a setting that allows you to enable/disable per-behavior measurements
+
+
+
+Drupal core ideas:
+- Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc) and Drupal.lazy.
+
+
+
+Warnings
+- Doesn't work with aggressive page caching! (back end start time will be incorrect)
+
+
+
+Insights
+- Generating the back-end start time on the server can never work reliably because
+  the clocks of the client (browser) and server can never be in sync precise enough.
+- Even just measuring the page execution time on the server cannot work
+  because of this same reason. You can accurately measure this time, but you
+  can't relate it to the measurements in the browser.
+  (I implemented this using hook_boot() and hook_exit())
+- RTT estimator cannot work either

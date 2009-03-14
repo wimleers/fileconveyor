@@ -1,0 +1,10 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function episodes_uninstall() {
+  // Ensure that episodes' hooks are executed before all others.
+  db_query("UPDATE {system} SET weight = -1000 WHERE name = 'episodes'");
+}
