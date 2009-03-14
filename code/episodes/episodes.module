@@ -19,6 +19,15 @@ define('EPISODES_LOGGING_VARIABLE', 'episodes_logging');
 define('EPISODES_LOGGING_DISABLED', 0);
 define('EPISODES_LOGGING_ENABLED', 1);
 
+define('EPISODES_LAST_SCAN_VARIABLE', 'episodes_last_scan');
+define('EPISODES_LAST_SCAN_NEVER', -1);
+
+define('EPISODES_BEHAVIOR_NOT_IGNORED', 0);
+define('EPISODES_BEHAVIOR_IGNORED', 1);
+
+
+//----------------------------------------------------------------------------
+// Drupal core hooks.
 
 /**
  * Implementation of hook_menu().
@@ -97,5 +106,54 @@ function episodes_init() {
     // Add the drupal.episodes.js file, which provides automagic integration
     // for Drupal behaviors with Episodes.
     drupal_add_js("$path/drupal.episodes.js", 'module', 'header');
+
+    // Let 
+    $ignored_behaviors = array();
+    $behaviors = episodes_behavior_load(NULL, EPISODES_BEHAVIOR_IGNORED);
+    foreach ($behaviors as $behavior) {
+      $ignored_behaviors[$behavior->name] = TRUE;
+    }
+    drupal_add_js(array('Episodes' => array('ignoredBehaviors' => $ignored_behaviors)), 'setting');
   }
+}
+
+
+//----------------------------------------------------------------------------
+// Public functions.
+
+/**
+ * Load all behaviors that were detected during the last scan. Optionally
+ * other conditions must be fulfilled.
+ *
+ * @param $name
+ *   Optional. Filter by behavior name.
+ * @param $ignored
+ *   Optional. Filter by ignored field (either EPISODES_BEHAVIOR_NOT_IGNORED
+ *   or EPISODES_BEHAVIOR_IGNORED).
+ * @return
+ *   An array of behavior objects that match the set conditions.
+ */
+function episodes_behavior_load($name = NULL, $ignored = NULL) {
+  $last_scan = variable_get(EPISODES_LAST_SCAN_VARIABLE, EPISODES_LAST_SCAN_NEVER);
+  $behaviors = array();
+
+  // Build the SQL.
+  $sql = "SELECT name, module, filename, ignored
+          FROM {episodes_behavior}
+          WHERE detected = %d";
+  if (isset($name)) {
+    $sql .= " AND name = '$name'";
+  }
+  if (isset($ignored)) {
+    $sql .= " AND ignored = $ignored";
+  }
+  $sql .= " ORDER BY name";
+
+  // Query the database.
+  $result = db_query($sql, $last_scan);
+  while ($behavior = db_fetch_object($result)) {
+    $behaviors[] = $behavior;
+  }
+
+  return $behaviors;
 }

@@ -16,9 +16,14 @@ Drupal.attachBehaviors = function(context) {
   if (Drupal.jsEnabled && count) {
     window.postMessage("EPISODES:mark:DrupalBehaviors", document.location);
     for (behavior in Drupal.behaviors) {
-      window.postMessage("EPISODES:mark:" + behavior, document.location);
+      var ignored = (Drupal.settings.Episodes.ignoredBehaviors[behavior] !== undefined);
+      if (!ignored) {
+        window.postMessage("EPISODES:mark:" + behavior, document.location);
+      }
       Drupal.behaviors[behavior](context);
-      window.postMessage("EPISODES:measure:" + behavior, document.location);
+      if (!ignored) {
+        window.postMessage("EPISODES:measure:" + behavior, document.location);
+      }
     }
     window.postMessage("EPISODES:measure:DrupalBehaviors", document.location);
   }

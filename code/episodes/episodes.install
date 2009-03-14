@@ -2,9 +2,67 @@
 // $Id$
 
 /**
+ * Implementation of hook_install().
+ */
+function episodes_install() {
+  drupal_install_schema('episodes');
+  drupal_set_message(t('Schema installed!'));
+
+  // Ensure that episodes' hooks are executed before all others.
+  db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", -1000, 'episode');
+}
+
+/**
  * Implementation of hook_uninstall().
  */
 function episodes_uninstall() {
-  // Ensure that episodes' hooks are executed before all others.
-  db_query("UPDATE {system} SET weight = -1000 WHERE name = 'episodes'");
+  drupal_uninstall_schema('episodes');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function episodes_schema() {
+  $schema['episodes_behavior'] = array(
+    'description' => t('Stores all Drupal.behaviors and whether they should be measured or not.'),
+    'fields' => array(
+      'module' => array(
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'description' => "The module which this behavior is included in.",
+      ),
+      'name' => array(
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'description' => "The behavior name.",
+      ),
+      'filename' => array(
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'description' => "The name of the JavaScript file in which this behavior is located.",
+      ),
+      'ignored' => array(
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => '0',
+        'description' => "Whether this behavior should be measured or not.",
+      ),
+      'detected' => array(
+        'type'        => 'int',
+        'size'        => 'normal',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+        'description' => t('Timestamp of when this behavior was last detected during a scan.'),
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+
+  return $schema;
 }

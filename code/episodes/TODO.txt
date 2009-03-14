@@ -24,7 +24,6 @@ Problems-that-need-thought:
 
 Know-how-to-do-but-not-yet-done:
 - Add a setting that allows you to serve the file from a central location (e.g. when Google starts hosting Episodes).
-- Add a setting that allows you to enable/disable per-behavior measurements.
 
 
 

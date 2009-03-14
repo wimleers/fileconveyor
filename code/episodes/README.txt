@@ -15,6 +15,10 @@ folder, since that will cause problems and is bad practice in general. If
 
 3) Visit "admin/settings/episodes" to learn about the various settings.
 
+4) Visit "admin/settings/episodes/behaviors" if you want to ignore some Drupal
+   behaviors in your episodes. By default, each Drupal behavior is included as
+   an episode.
+
 
 Additional measurements: episodes, css, headerjs, footerjs
 ----------------------------------------------------------

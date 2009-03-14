@@ -5,3 +5,5 @@ description = "The description of this module"
 core = 6.x
 package = Development
 php = 5.2
+
+dependencies[] = hs_flatlist
