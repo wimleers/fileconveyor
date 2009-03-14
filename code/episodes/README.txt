@@ -20,17 +20,35 @@ folder, since that will cause problems and is bad practice in general. If
 
 2) Enable the module.
 
-3) Visit "admin/settings/episodes" to learn about the various settings.
+3) Visit "admin/settings/episodes" to learn about the various settings. If
+   you're using an external logging service, you can configure it here.
 
 4) Visit "admin/settings/episodes/behaviors" if you want to ignore some Drupal
    behaviors in your episodes. By default, each Drupal behavior is included as
    an episode.
+
+5) Install the Firebug add-on. You will already be able to see the episodes in
+   there! (See the Firebug add-on section.)
+
+6) A couple of the measurements cannot be configured without altering some
+   code. These are the measurements for the <head> tag and at the bottom of
+   the page. See the "Additional measurements" section. Optional of course.
+
+7) If you want to use the included analysis tools, continue, otherwise you're
+   ready!
+
+8) We want Apache's logging to do the heavy logging work for us. That's why
+   you'll have to edit your httpd.conf. Look at
+     extra/episodes.httpd.conf
+   for detailed instructions.
 
 
 Firebug add-on
 --------------
 A Firebug add-on that displays the measured episodes on the current page is
 available from http://stevesouders.com/episodes/addon.php.
+When a web page does not include the episodes JS framework, the Firebug add-on
+will still measure some basic episodes (backend, frontend, totaltime).
 
 
 Additional measurements: episodes, css, headerjs, footerjs

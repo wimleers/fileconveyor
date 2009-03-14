@@ -29,6 +29,7 @@ define('EPISODES_LAST_SCAN_NEVER', -1);
 define('EPISODES_BEHAVIOR_NOT_IGNORED', 0);
 define('EPISODES_BEHAVIOR_IGNORED', 1);
 
+define('EPISODES_BEACON_URL_VARIABLE', 'episodes_beacon_url');
 
 
 
@@ -114,7 +115,7 @@ function episodes_init() {
       'EPISODES.frontendStartTime=Number(new Date());',
       'EPISODES.compatScriptUrl="' . url("$path/lib/episodes-compat.js") . '";',
       'EPISODES.logging="' . $logging .'";',
-      'EPISODES.beaconUrl="' . url("$path/beacon")  . '";',
+      'EPISODES.beaconUrl="' . variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon'))  . '";',
     );
     drupal_set_html_head('<script type="text/javascript">' . implode('', $js_code) . '</script>');
     drupal_set_html_head('<script type="text/javascript" src="' . url("$path/lib/episodes.js") . '"></script>');

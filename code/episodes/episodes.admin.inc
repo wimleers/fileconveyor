@@ -15,15 +15,15 @@
  */
 function episodes_admin_settings() {
   $form[EPISODES_STATUS_VARIABLE] = array(
-    '#type' => 'radios',
-    '#title' => t('Status'),
+    '#type'        => 'radios',
+    '#title'       => t('Status'),
     '#description' => t(
       'You can either disable or enable Episodes, or put it in debug mode, in
       which case it will only be applied for users with the
-      %administe-site-configuration permission',
+      %administer-site-configuration permission and logging will be disabled.',
       array('%administer-site-configuration' => t('administer site configuration'))
     ),
-    '#options' => array(
+    '#options'     => array(
       EPISODES_STATUS_DISABLED => t('Disabled'),
       EPISODES_STATUS_DEBUG    => t('Debug mode'),
       EPISODES_STATUS_ENABLED  => t('Enabled'),
@@ -31,20 +31,31 @@ function episodes_admin_settings() {
     '#default_value' => variable_get(EPISODES_STATUS_VARIABLE, EPISODES_STATUS_DEBUG),
   );
 
-  $form[EPISODES_LOGGING_VARIABLE] = array(
-    '#type' => 'radios',
-    '#title' => t('Logging'),
-    '#description' => t("When you've enabled logging, you should provide"),
-    '#options' => array(
+  $form['advanced'] = array(
+    '#type'  => 'fieldset',
+    '#title' => t('Advanced settings'),
+  );
+  $form['advanced'][EPISODES_BEACON_URL_VARIABLE] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Beacon URL'),
+    '#description'   => t('The beacon URL you would like to use. Can also be a URL of a different server, potentially a web service that analyzes the logs for you.'),
+    '#size'          => 60,
+    '#maxlength'     => 255,
+    '#default_value' => variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon')),
+  );
+  $form['advanced'][EPISODES_LOGGING_VARIABLE] = array(
+    '#type'        => 'radios',
+    '#title'       => t('Logging'),
+    '#description' => t("When you've enabled logging, you should provide a valid beacon URL."),
+    '#options'     => array(
       EPISODES_LOGGING_DISABLED => t('Disabled'),
       EPISODES_LOGGING_ENABLED  => t('Enabled'),
     ),
     '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_LOGGING_DISABLED),
   );
-
-  $form[EPISODES_EXCLUDED_PATHS_VARIABLE] = array(
-    '#type' => 'textarea',
-    '#title' => t('Excluded paths'),
+  $form['advanced'][EPISODES_EXCLUDED_PATHS_VARIABLE] = array(
+    '#type'        => 'textarea',
+    '#title'       => t('Excluded paths'),
     '#description' => t("Enter one page per line as Drupal paths. The '*'
                          character is a wildcard. Example paths are %blog for
                          the blog page and %blog-wildcard for every personal
@@ -58,7 +69,6 @@ function episodes_admin_settings() {
     '#rows' => 5,
     '#default_value' => variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT),
   );
-  
 
   return system_settings_form($form);
 }
@@ -129,10 +139,10 @@ function episodes_admin_settings_behaviors() {
 
   if ($last_scan != EPISODES_LAST_SCAN_NEVER) {
     $form['ignored'] = array(
-      '#type' => 'hierarchical_select',
-      '#title' => t('Ignored behaviors'),
+      '#type'        => 'hierarchical_select',
+      '#title'       => t('Ignored behaviors'),
       '#description' => t("Select the behaviors that you <strong>don't</strong> want to be measured!"),
-      '#config' => array(
+      '#config'      => array(
         'module' => 'hs_flatlist',
         'params' => array(
           'options' => $options,
