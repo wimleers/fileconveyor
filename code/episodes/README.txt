@@ -4,6 +4,13 @@ Description
 -----------
 
 
+
+Dependencies
+------------
+- Hierarchical Select
+- Hierarchical Select Flat List
+
+
 Installation
 ------------
 1) Place this module directory in your "modules" folder (this will usually be
@@ -18,6 +25,12 @@ folder, since that will cause problems and is bad practice in general. If
 4) Visit "admin/settings/episodes/behaviors" if you want to ignore some Drupal
    behaviors in your episodes. By default, each Drupal behavior is included as
    an episode.
+
+
+Firebug add-on
+--------------
+A Firebug add-on that displays the measured episodes on the current page is
+available from http://stevesouders.com/episodes/addon.php.
 
 
 Additional measurements: episodes, css, headerjs, footerjs
