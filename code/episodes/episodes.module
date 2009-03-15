@@ -97,21 +97,7 @@ function episodes_menu() {
  * Implementation of hook_init().
  */
 function episodes_init() {
-  // Get all related settings.
-  $status        = variable_get(EPISODES_STATUS_VARIABLE, EPISODES_DEBUG);
-  $logging       = variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_DISABLED);
-  $path_patterns = variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT);
-  $path = drupal_get_path_alias($_GET['q']);
-  
-  if (!drupal_match_path($path, $path_patterns)
-      &&
-        (
-         $status == EPISODES_ENABLED
-         ||
-         ($status == EPISODES_DEBUG && user_access('administer site configuration'))
-        )
-      )
-  {  
+  if (episodes_is_enabled($path)) {  
     $path = drupal_get_path('module', 'episodes');
 
     // Cheat a little bit: use drupal_set_html_head() to add the episodes.js
@@ -119,6 +105,7 @@ function episodes_init() {
     // settings. We can't use Drupal.settings for this, because Drupal.js will
     // not yet be loaded.
     $cache_mode = variable_get('cache', CACHE_DISABLED);
+    $logging    = variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_DISABLED);
     $js_code = array(
       'var EPISODES = EPISODES || {};',
       'EPISODES.frontendStartTime=Number(new Date());',
@@ -214,6 +201,29 @@ function episodes_cron() {
 
 //----------------------------------------------------------------------------
 // Public functions.
+
+/**
+ * Check if the Episodes module should add episodes.js and additional mark &
+ * measure calls to the currently displayed web page or not.
+ *
+ * @return
+ *   TRUE if it's enabled for the current web page, otherwise FALSE.
+ */
+function episodes_is_enabled() {
+  // Get all related settings.
+  $status        = variable_get(EPISODES_STATUS_VARIABLE, EPISODES_DEBUG);
+  $path_patterns = variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT);
+  $path = drupal_get_path_alias($_GET['q']);
+
+  // Determine whether episodes is enabled at the current path.
+  $enabled = TRUE;
+  $enabled = $enabled && !drupal_match_path($path, $path_patterns);
+  $enabled = $enabled && ($status == EPISODES_ENABLED
+                          ||
+                         ($status == EPISODES_DEBUG && user_access('administer site configuration')));
+
+  return $enabled;
+}
 
 /**
  * Load all behaviors that were detected during the last scan. Optionally

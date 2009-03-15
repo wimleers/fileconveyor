@@ -61,20 +61,20 @@ All you have to do is change this:
     <?php print $styles ?>
     <?php print $scripts ?>
 to:
-    <script type="text/javascript">window.postMessage("EPISODES:mark:episodes", document.location);</script>
+    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:mark:episodes", document.location);</script><? endif; ?>
     <?php print $head ?>
-    <script type="text/javascript">window.postMessage("EPISODES:measure:episodes", document.location);window.postMessage("EPISODES:mark:css", document.location);</script>
+    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:measure:episodes", document.location);window.postMessage("EPISODES:mark:css", document.location);</script><? endif; ?>
     <?php print $styles ?>
-    <script type="text/javascript">window.postMessage("EPISODES:measure:css", document.location);window.postMessage("EPISODES:mark:headerjs", document.location);</script>
+    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:measure:css", document.location);window.postMessage("EPISODES:mark:headerjs", document.location);</script><? endif; ?>
     <?php print $scripts ?>
-    <script type="text/javascript">window.postMessage("EPISODES:measure:headerjs", document.location);</script>
+    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:measure:headerjs", document.location);</script><? endif; ?>
 
 And:
     <?php print $closure ?>
 to:
-    <?php if (strlen(drupal_get_js('footer'))): ?><script type="text/javascript">window.postMessage("EPISODES:mark:footerjs", document.location);</script><? endif; ?>
+    <?php if (episodes_is_enabled() && strlen(drupal_get_js('footer'))): ?><script type="text/javascript">window.postMessage("EPISODES:mark:footerjs", document.location);</script><? endif; ?>
     <?php print $closure ?>
-    <?php if (strlen(drupal_get_js('footer'))): ?><script type="text/javascript">window.postMessage("EPISODES:measure:footerjs", document.location);</script><? endif; ?>
+    <?php if (episodes_is_enabled() && strlen(drupal_get_js('footer'))): ?><script type="text/javascript">window.postMessage("EPISODES:measure:footerjs", document.location);</script><? endif; ?>
 
 Really, that's all there is to it!
 
