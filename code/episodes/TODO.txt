@@ -23,8 +23,9 @@ Problems-that-need-thought:
 
 
 
-Know-how-to-do-but-not-yet-done:
 
+Know-how-to-do-but-not-yet-done:
+- Validation of the beacon URL and the log file to ingest
 
 
 Drupal core ideas:
@@ -40,3 +41,9 @@ Insights
   can't relate it to the measurements in the browser.
   (I implemented this using hook_boot() and hook_exit())
 - RTT estimator cannot work either
+- Currently the same DB as Drupal is being used. Is this scalable enough?
+  Writing everything to a sqlite server won't solve anything either. The real
+  solution is to use a different server to log to or even a web service. Better
+  even is to log to a non-app server of your own and then send the logs to an
+  external web service. Then you stay in control of all your data! (Avoiding
+  vendor lock-in.)

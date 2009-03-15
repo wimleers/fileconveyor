@@ -24,11 +24,11 @@ function episodes_admin_settings() {
       array('%administer-site-configuration' => t('administer site configuration'))
     ),
     '#options'     => array(
-      EPISODES_STATUS_DISABLED => t('Disabled'),
-      EPISODES_STATUS_DEBUG    => t('Debug mode'),
-      EPISODES_STATUS_ENABLED  => t('Enabled'),
+      EPISODES_DISABLED => t('Disabled'),
+      EPISODES_DEBUG    => t('Debug mode'),
+      EPISODES_ENABLED  => t('Enabled'),
     ),
-    '#default_value' => variable_get(EPISODES_STATUS_VARIABLE, EPISODES_STATUS_DEBUG),
+    '#default_value' => variable_get(EPISODES_STATUS_VARIABLE, EPISODES_DEBUG),
   );
 
   $form['advanced'] = array(
@@ -48,10 +48,10 @@ function episodes_admin_settings() {
     '#title'       => t('Logging'),
     '#description' => t("When you've enabled logging, you should provide a valid beacon URL."),
     '#options'     => array(
-      EPISODES_LOGGING_DISABLED => t('Disabled'),
-      EPISODES_LOGGING_ENABLED  => t('Enabled'),
+      EPISODES_DISABLED => t('Disabled'),
+      EPISODES_ENABLED  => t('Enabled'),
     ),
-    '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_LOGGING_DISABLED),
+    '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_DISABLED),
   );
   $form['advanced'][EPISODES_EXCLUDED_PATHS_VARIABLE] = array(
     '#type'        => 'textarea',
@@ -69,6 +69,35 @@ function episodes_admin_settings() {
     '#rows' => 5,
     '#default_value' => variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT),
   );
+
+  $form['ingestor'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Ingestor settings'),
+    '#description' => t('Only when you are using a beacon URL that points to
+                         this same server and have set up Apache properly to
+                         do the logging, only then, you have to configure the
+                         ingestor.<br />
+                         The ingestor runs during cron.'),
+  );
+  $form['ingestor'][EPISODES_INGESTOR_STATUS_VARIABLE] = array(
+    '#type' => 'radios',
+    '#title' => t('Status'),
+    '#options' => array(
+      EPISODES_DISABLED => t('Disabled'),
+      EPISODES_ENABLED  => t('Enabled'),
+    ),
+    '#default_value' => variable_get(EPISODES_INGESTOR_STATUS_VARIABLE, EPISODES_INGESTOR_STATUS_DEFAULT),
+  );
+  
+  $form['ingestor'][EPISODES_INGESTOR_LOG_FILE_VARIABLE] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Log file'),
+    '#description' => t('The <strong>absolute path</strong> to the log file that must be ingested.'),
+    '#size'        => 40,
+    '#maxlength'   => 255,
+    '#default_value' => variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL),
+  );
+  
 
   return system_settings_form($form);
 }
@@ -175,7 +204,6 @@ function episodes_admin_settings_behaviors() {
 
   return $form;
 }
-
 
 /**
  * Default submit callback for the behaviors settings form. 

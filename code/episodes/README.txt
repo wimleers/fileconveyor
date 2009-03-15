@@ -79,6 +79,19 @@ to:
 Really, that's all there is to it!
 
 
+Credit
+------
+- episodes.js from Steve Souders in a heavily changed form. Also
+  episodes-compat.js but in an unchanged form.
+  http://stevesouders.com/episodes/
+- Browser.php from Chris Schuld
+  http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php
+- episodes.httpd.conf is based on Jiffy's jiffy.httpd.conf, but is different
+  in several ways. Thanks to that, I was able to copy some of their regular
+  expressions.
+  http://code.google.com/p/jiffy-web/source/browse/trunk/ingestor/jiffy.httpd.conf
+
+
 Author
 ------
 Wim Leers ~ http://wimleers.com/
