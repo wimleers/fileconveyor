@@ -1,6 +1,6 @@
 ; $Id$
 name = Episodes
-description = "The description of this module"
+description = "Episodes is a module that allows you to measure episodes in a web page's loading sequence."
 
 core = 6.x
 package = Development

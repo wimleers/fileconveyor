@@ -3,11 +3,7 @@
 
 /**
  * @file
- * This is the file description for Untitled module.
- *
- * In this more verbose, multi-line description, you can specify what this
- * file does exactly. Make sure to wrap your documentation in column 78 so
- * that the file can be displayed nicely in default-sized consoles.
+ * Implementation of the core hooks, defines and public functions.
  */
 
 

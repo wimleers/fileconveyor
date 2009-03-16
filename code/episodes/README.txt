@@ -3,6 +3,42 @@ $Id$
 Description
 -----------
 
+Episodes is a module that includes the identically named Episodes [1]
+framework in Drupal. Episodes allows you to measure episodes in a web page's
+loading sequence. Hence its name.
+
+It works by embedding some JavaScript code in the web page. This code then
+measures how long the different episodes take to load. Finally, the results
+are sent back to a web server (logged through Apache). This can be a different
+server than the one Drupal runs on.
+Because it's JavaScript, it's run in actual browsers, which means the results
+give you an accurate representation of the real-world page loading performance
+of your web pages. It's not perfect, amongst others because you cannot
+accurately measure time through JavaScript, but give or take a few
+milliseconds, it's accurate. And that's what we really need.
+
+This module provides easy integration with Drupal. It automatically creates an
+episode for each JavaScript behavior defined in Drupal.behaviors. You can
+disable Episodes for specific behaviors or on certain paths. Basic reports
+(with charts!) are also provided (e.g. average page load time per day for the
+last month).
+
+Episodes (the JavaScript, thus also this Drupal module) is designed to run on
+production web sites. Otherwise the measurements wouldn't be based on
+real-world circumstances and would therefor be inaccurate or even meaningless.
+So it's meant to be a continuous performance monitoring tool. So it's not
+unlike Google Analytics in the way it's mean to be used
+
+The goal of this framework is to become an industry standard. And it's likely
+that it'll manage to do just that, because the author and driving force behind
+it is Steve Souders himself. Drupal is the first CMF/CMS to support it.
+
+Written as part of the bachelor thesis [2] of Wim Leers at the university of
+Hasselt, Belgium [3].
+
+[1] http://stevesouders.com/episodes/
+[2] http://wimleers.com/tags/bachelor-thesis
+[3] http://uhasselt.be/
 
 
 Dependencies

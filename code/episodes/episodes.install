@@ -2,6 +2,12 @@
 // $Id$
 
 /**
+ * @file
+ * Contains the (un)install hooks, the DB schema and the upgrade path.
+ */
+
+
+/**
  * Implementation of hook_install().
  */
 function episodes_install() {
