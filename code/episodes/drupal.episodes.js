@@ -1,5 +1,11 @@
 // $Id$
 
+/**
+ * @file
+ * Drupal.Episodes and automatic integration with episodes.js for Drupal.
+ */
+
+
 (function($) {
 
 // Override Drupal.attachBehaviors with a version that does measurements at

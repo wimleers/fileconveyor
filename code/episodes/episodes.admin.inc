@@ -17,12 +17,13 @@ function episodes_admin_settings() {
   $form[EPISODES_STATUS_VARIABLE] = array(
     '#type'        => 'radios',
     '#title'       => t('Status'),
-    '#description' => t(
-      'You can either disable or enable Episodes, or put it in debug mode, in
-      which case it will only be applied for users with the
-      %administer-site-configuration permission and logging will be disabled.',
-      array('%administer-site-configuration' => t('administer site configuration'))
-    ),
+    '#description' => t('You can either disable or enable Episodes, or put it
+                         in debug mode, in which case it will only be applied
+                         for users with the %administer-site-configuration
+                         permission and logging will be disabled.',
+                         array(
+                           '%administer-site-configuration' => t('administer site configuration'),
+                         )),
     '#options'     => array(
       EPISODES_DISABLED => t('Disabled'),
       EPISODES_DEBUG    => t('Debug mode'),
@@ -38,7 +39,9 @@ function episodes_admin_settings() {
   $form['advanced'][EPISODES_BEACON_URL_VARIABLE] = array(
     '#type'          => 'textfield',
     '#title'         => t('Beacon URL'),
-    '#description'   => t('The beacon URL you would like to use. Can also be a URL of a different server, potentially a web service that analyzes the logs for you.'),
+    '#description'   => t('The beacon URL you would like to use. Can also be
+                           the URL of a different server, potentially a web
+                           service that analyzes the logs for you.'),
     '#size'          => 60,
     '#maxlength'     => 255,
     '#default_value' => variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon')),
@@ -46,7 +49,8 @@ function episodes_admin_settings() {
   $form['advanced'][EPISODES_LOGGING_VARIABLE] = array(
     '#type'        => 'radios',
     '#title'       => t('Logging'),
-    '#description' => t("When you've enabled logging, you should provide a valid beacon URL."),
+    '#description' => t("When you've enabled logging, you should provide a
+                         valid beacon URL."),
     '#options'     => array(
       EPISODES_DISABLED => t('Disabled'),
       EPISODES_ENABLED  => t('Enabled'),
@@ -80,8 +84,8 @@ function episodes_admin_settings() {
                          The ingestor runs during cron.'),
   );
   $form['ingestor'][EPISODES_INGESTOR_STATUS_VARIABLE] = array(
-    '#type' => 'radios',
-    '#title' => t('Status'),
+    '#type'    => 'radios',
+    '#title'   => t('Status'),
     '#options' => array(
       EPISODES_DISABLED => t('Disabled'),
       EPISODES_ENABLED  => t('Enabled'),
@@ -90,11 +94,11 @@ function episodes_admin_settings() {
   );
   
   $form['ingestor'][EPISODES_INGESTOR_LOG_FILE_VARIABLE] = array(
-    '#type'        => 'textfield',
-    '#title'       => t('Log file'),
-    '#description' => t('The <strong>absolute path</strong> to the log file that must be ingested.'),
-    '#size'        => 40,
-    '#maxlength'   => 255,
+    '#type'          => 'textfield',
+    '#title'         => t('Log file'),
+    '#description'   => t('The <strong>absolute path</strong> to the log file that must be ingested.'),
+    '#size'          => 40,
+    '#maxlength'     => 255,
     '#default_value' => variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL),
   );
   
@@ -211,7 +215,11 @@ function episodes_admin_settings_behaviors() {
 function episodes_admin_settings_behaviors_submit($form, &$form_state) {
   // Mark the behavior as ignored.
   foreach ($form_state['values']['ignored'] as $behaviorname) {
-    db_query("UPDATE {episodes_behavior} SET ignored = %d WHERE name = '%s'", EPISODES_BEHAVIOR_IGNORED, $behaviorname);
+    db_query("UPDATE {episodes_behavior} 
+              SET ignored = %d
+              WHERE name = '%s'",
+              EPISODES_BEHAVIOR_IGNORED,
+              $behaviorname);
   }
 }
 
@@ -219,6 +227,7 @@ function episodes_admin_settings_behaviors_submit($form, &$form_state) {
  * Submit callback for the 'Scan' button on the behaviors settings form.
  */
 function episodes_admin_settings_behaviors_scan_submit($form, &$form_state) {
+  // The scan progress is triggered by going to this URL.
   drupal_goto('admin/settings/episodes/behaviors/scan');
 }
 
@@ -233,7 +242,8 @@ function episodes_scan_behaviors() {
   batch_set(episodes_scan_behaviors_batch());
 
   // Trigger batch processing.
-  batch_process('admin/settings/episodes/behaviors');
+  $redirect = 'admin/settings/episodes/behaviors';
+  batch_process($redirect);
 
   return '';
 }
@@ -256,7 +266,9 @@ function episodes_scan_behaviors_batch() {
   }
 
   // Get the filenames of all enabled modules and themes.
-  $result = db_query("SELECT filename, name AS modulename FROM {system} WHERE status = 1");
+  $result = db_query("SELECT filename, name AS modulename
+                      FROM {system}
+                      WHERE status = 1");
   while ($row = db_fetch_object($result)) {
     $directory = dirname($row->filename);
 
@@ -285,13 +297,16 @@ function episodes_scan_behaviors_batch() {
     $operations[] = array('episodes_scan_behaviors_process', array($modulename, $file));
   }
 
+  // Build the batch configuration array.
+  $path = drupal_get_path('module', 'episodes');
   $batch = array(
-    'title'            => t('Scanning Drupal installation for Drupal.behaviors'),
-    'file'             => drupal_get_path('module', 'episodes') . '/episodes.admin.inc',
+    'title'            => t('Scanning Drupal installation for behaviors'),
+    'file'             => "$path/episodes.admin.inc",
     'operations'       => $operations,
     'finished'         => 'episodes_scan_behaviors_results',
     'init_message'     => t('Scan process is starting.'),
-    'progress_message' => t('Scanned @current files out of @total files (@percentage%). @remaining remaining.'),
+    'progress_message' => t('Scanned @current files out of @total files
+                             (@percentage%). @remaining remaining.'),
     'error_message'    => t('Scan process has encountered an error.'),
   );
 
@@ -338,10 +353,10 @@ function episodes_scan_behaviors_process($modulename, $file, &$context = NULL) {
  */
 function episodes_scan_behaviors_results($success, $results, $operations) {
   if ($success) {
-    // Generate message.
-    drupal_set_message(t('Scanned !num-files files and found !num-behaviors behaviors.',
+    drupal_set_message(t(
+      'Scanned !num-files files and found !num-behaviors behaviors.',
       array(
-        '!num-files' => count($results['files']),
+        '!num-files'     => count($results['files']),
         '!num-behaviors' => count($results['behaviors']),
       )
     ));
@@ -379,10 +394,11 @@ function episodes_scan_behaviors_results($success, $results, $operations) {
         $new_count++;
       }
     }
-    drupal_set_message(t('Updated !update-count behaviors, detected !new-count new behaviors.',
+    drupal_set_message(t(
+      'Updated !update-count behaviors, detected !new-count new behaviors.',
       array(
         '!update-count' => $update_count,
-        '!new-count' => $new_count,
+        '!new-count'    => $new_count,
       )
     ));
   }
@@ -390,8 +406,12 @@ function episodes_scan_behaviors_results($success, $results, $operations) {
     // An error occurred.
     // $operations contains the operations that remained unprocessed.
     $error_operation = reset($operations);
-    $message = 'An error occurred while processing '. $error_operation[0];
-    $message .= ' with arguments :'. print_r($error_operation[0], TRUE);
+    $message = t('An error occurred while processing %error-operation with
+                  arguments: %arguments.',
+                  array(
+                    '%error-operation' => $error_operation[0],
+                    '%arguments'       => print_r($error_operation[0], TRUE),
+                  ));
     drupal_set_message($message);
   }
 }

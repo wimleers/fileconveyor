@@ -7,12 +7,22 @@
  */
 
 
+/**
+ * Given an entry (a line) from the log file, write a measurement to the
+ * database if it's relevant.
+ * A measurement is relevant if if has a 200 HTTP response code
+ *
+ * @param $entry
+ *   An entry from the log file.
+ * @return
+ *   TRUE if the entry was valid and added to the database, FALSE otherwise.
+ */
 function episodes_ingestor_parse_entry($entry) {
   static $browser;
   $matches = array();
   
   if (!isset($browser)) {
-    $browser       = new Browser();
+    $browser = new Browser();
   }
 
   // If the entry is invalid, then we ignore it altogether.
@@ -67,4 +77,6 @@ function episodes_ingestor_parse_entry($entry) {
       drupal_write_record('episodes_measurement', $measurement);
     }
   }
+
+  return TRUE;
 }
