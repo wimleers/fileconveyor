@@ -20,7 +20,7 @@ Problems-that-need-thought:
   -> separate logs because they're not entire page load sequences?
 - On the first page load, the cookie is not yet set and therefor the pageready,
   backend and totaltime times cannot be calculated. Also a problem when cookies are disabled
-
+- time zone handling: necessary or not (for the ingestor)
 
 
 

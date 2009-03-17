@@ -15,18 +15,21 @@
  * @param $entry
  *   An entry from the log file.
  * @return
- *   TRUE if the entry was valid and added to the database, FALSE otherwise.
+ *   All measured episodes when the entry was valid, FALSE otherwise.
  */
 function episodes_ingestor_parse_entry($entry) {
   static $browser;
   $matches = array();
-  
+  $measurements = array();
+
+  require_once drupal_get_path('module', 'episodes') . '/lib/Browser.php';
+
   if (!isset($browser)) {
     $browser = new Browser();
   }
 
   // If the entry is invalid, then we ignore it altogether.
-  if (!preg_match('/^(\S+) \[(\S+).*\] "(.*)" (\S+) "(.*)" "(.*)" "(.*)"/', $entry, $matches)) {
+  if (!preg_match('/^(\S+) \[(.*)\] "(.*)" (\S+) "(.*)" "(.*)" "(.*)"/', $entry, $matches)) {
     return FALSE;
   }
   else {
@@ -72,11 +75,12 @@ function episodes_ingestor_parse_entry($entry) {
       list($name, $duration) = explode(':', $episode);
       $measurement->name     = $name;
       $measurement->duration = $duration;
+      $measurements[] = drupal_clone($measurement);
 
       // Finally, write the measurement object to the database!
       drupal_write_record('episodes_measurement', $measurement);
     }
   }
 
-  return TRUE;
+  return $measurements;
 }

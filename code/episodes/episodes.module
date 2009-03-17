@@ -134,7 +134,6 @@ function episodes_cron() {
   // variables.
   timer_start('episodes_ingestor');
   require_once drupal_get_path('module', 'episodes') . '/episodes.ingestor.inc';
-  require_once drupal_get_path('module', 'episodes') . '/lib/Browser.php';
   $log_file      = variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL);
   $lines_per_run = variable_get(EPISODES_INGESTOR_LINES_PER_RUN_VARIABLE, EPISODES_INGESTOR_LINES_PER_RUN_DEFAULT);
   $last_run      = variable_get(EPISODES_INGESTOR_LAST_RUN_VARIABLE, NULL);
