@@ -497,8 +497,8 @@ usual goal of performance analysis is to determine which sections of a program
 \end_layout
 
 \begin_layout Standard
-So we'll go through a list of tools: UA Profiler, Cuzillion, Hammerhead,
- YSlow, Apache JMeter, Gomez/Keynote/WebMetrics/Pingdom and Jiffy/Episodes.
+So we'll go through a list of tools: UA Profiler, Cuzillion, YSlow, Hammerhead,
+ Apache JMeter, Gomez/Keynote/WebMetrics/Pingdom and Jiffy/Episodes.
  As you can tell, it's a pretty long list, so I'll pick the tools I'll use
  while improving Drupal's page loading performance based on two factors:
 \end_layout
@@ -792,131 +792,6 @@ name "fig:Cuzillion-Firefox"
 \end_layout
 
 \begin_layout Subsection
-Hammerhead
-\begin_inset CommandInset label
-LatexCommand label
-name "sub:Hammerhead"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Hammerhead 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Hammerhead,Hammerhead announcement"
-
-\end_inset
-
- is a Firebug 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Firebug"
-
-\end_inset
-
- extension that should be used 
-\emph on
-while
-\emph default
- developing.
- It measures how long a page takes to load and it can load a page multiple
- times, to calculate the average and mean page load times.
- Of course, this is a lot less precise than real-world profiling, but it
- allows you to profile while you're working.
- It's far more effective to prevent page loading performance problems due
- to changes in code, because you have the test results within seconds or
- minutes after you've made these changes!
-\end_layout
-
-\begin_layout Standard
-Of course, you could also use YSlow (see section 
-\begin_inset CommandInset ref
-LatexCommand prettyref
-reference "sub:YSlow"
-
-\end_inset
-
-) or FasterFox 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Fasterfox"
-
-\end_inset
-
-, but then you have to load the page multiple times (i.e.
- 
-\emph on
-hammer 
-\emph default
-the server, this is where the name comes from).
- And you'd still have to set up the separate testing conditions for each
- page load: empty cache, primed cache and for the latter there are again
- two possible situations: disk cache 
-\emph on
-and
-\emph default
- memory cache or just disk cache.
- Memory cache is of course faster than disk cache; that's also why that
- distinction is important.
- Finally, it supports exporting the resulting data into CSV format, so you
- could even create some tools to roughly track page loading performance
- throughout time.
-\begin_inset Newline newline
-\end_inset
-
-See figure 
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "fig:Hammerhead"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status collapsed
-
-\begin_layout Plain Layout
-\noindent
-\align center
-\begin_inset Graphics
-	filename images/profiling/Hammerhead.png
-	scale 36
-
-\end_inset
-
-
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Hammerhead.
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:Hammerhead"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
 YSlow
 \begin_inset CommandInset label
 LatexCommand label
@@ -1131,7 +1006,7 @@ status open
 \noindent
 \align center
 \begin_inset Graphics
-	filename images/profiling/YSlow drupal.org with CDN.png
+	filename /Users/wimleers/School/thesis/svn/doc/images/profiling/YSlow drupal.org with CDN.png
 	width 40text%
 
 \end_inset
@@ -1148,10 +1023,6 @@ The resulting YSlow analysis.
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1185,6 +1056,131 @@ name "fig:Tricking-YSlow"
 \end_layout
 
 \begin_layout Subsection
+Hammerhead
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Hammerhead"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hammerhead 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Hammerhead,Hammerhead announcement"
+
+\end_inset
+
+ is a Firebug 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Firebug"
+
+\end_inset
+
+ extension that should be used 
+\emph on
+while
+\emph default
+ developing.
+ It measures how long a page takes to load and it can load a page multiple
+ times, to calculate the average and mean page load times.
+ Of course, this is a lot less precise than real-world profiling, but it
+ allows you to profile while you're working.
+ It's far more effective to prevent page loading performance problems due
+ to changes in code, because you have the test results within seconds or
+ minutes after you've made these changes!
+\end_layout
+
+\begin_layout Standard
+Of course, you could also use YSlow (see section 
+\begin_inset CommandInset ref
+LatexCommand prettyref
+reference "sub:YSlow"
+
+\end_inset
+
+) or FasterFox 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Fasterfox"
+
+\end_inset
+
+, but then you have to load the page multiple times (i.e.
+ 
+\emph on
+hammer 
+\emph default
+the server, this is where the name comes from).
+ And you'd still have to set up the separate testing conditions for each
+ page load: empty cache, primed cache and for the latter there are again
+ two possible situations: disk cache 
+\emph on
+and
+\emph default
+ memory cache or just disk cache.
+ Memory cache is of course faster than disk cache; that's also why that
+ distinction is important.
+ Finally, it supports exporting the resulting data into CSV format, so you
+ could even create some tools to roughly track page loading performance
+ throughout time.
+\begin_inset Newline newline
+\end_inset
+
+See figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Hammerhead"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/profiling/Hammerhead.png
+	scale 36
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Hammerhead.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Hammerhead"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
 Apache JMeter
 \begin_inset CommandInset label
 LatexCommand label
@@ -1196,7 +1192,70 @@ name "sub:Apache-JMeter"
 \end_layout
 
 \begin_layout Standard
-Apache JMeter
+Apache JMeter 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Apache JMeter"
+
+\end_inset
+
+ is an application 
+\emph on
+designed to load test functional behavior and measure performance
+\emph default
+.
+ In the perspective of profiling page loading performance, the relevant
+ features are: loading of web pages with and without its components and
+ measuring the response time of just the HTML or the HTML and all the components
+ it references.
+\end_layout
+
+\begin_layout Standard
+However, it has several severe limitations:
+\end_layout
+
+\begin_layout Itemize
+Because it only measures from one location – the location from where it's
+ run, it doesn't give a good big picture.
+\end_layout
+
+\begin_layout Itemize
+It isn't an actual browser, so it doesn't download components referenced
+ from CSS or JS files.
+\end_layout
+
+\begin_layout Itemize
+Also because it isn't an actual browser, it doesn't behave the same as browsers
+ when it comes to parallel downloads.
+\end_layout
+
+\begin_layout Itemize
+It requires more setup than Hammerhead (see 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:Hammerhead"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+It can be very useful in case you're doing performance testing (How long
+ does the back-end need to generate certain pages?), load testing (How many
+ concurrent users can the back-end/server setup handle?) and stress testing
+ (How many concurrent users can it handle until errors ensue?)
+\begin_inset Newline newline
+\end_inset
+
+To learn more about load testing Drupal with Apache JMeter, see 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "JMeter Drupal article 1,JMeter Drupal article 2"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -2287,7 +2346,11 @@ key "YSlow 2.0 early preview"
 
 \end_inset
 
-YSlow 2.0 early preview in China, Yahoo! Developer Network, 2008, 
+
+\emph on
+YSlow 2.0 early preview in China
+\emph default
+, Yahoo! Developer Network, 2008, 
 \begin_inset Flex URL
 status collapsed
 
@@ -2319,6 +2382,83 @@ status collapsed
 \begin_layout Plain Layout
 
 http://www.stevesouders.com/blog/2008/12/17/state-of-performance-2008/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Apache JMeter"
+
+\end_inset
+
+
+\emph on
+Apache JMeter
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://jakarta.apache.org/jmeter/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "JMeter Drupal article 1"
+
+\end_inset
+
+
+\emph on
+Load test your Drupal application scalability with Apache JMeter
+\emph default
+, John Quinn, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.johnandcailin.com/blog/john/load-test-your-drupal-application-scalabili
+ty-apache-jmeter
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "JMeter Drupal article 2"
+
+\end_inset
+
+
+\emph on
+Load test your Drupal application scalability with Apache JMeter: part two
+\emph default
+, John Quinn, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.johnandcailin.com/blog/john/load-test-your-drupal-application-scalabili
+ty-apache-jmeter:-part-two
 \end_layout
 
 \end_inset
