@@ -168,7 +168,9 @@ Terminology
 \end_layout
 
 \begin_layout Description
-browser
+browser A web browser is an application that runs on end user computers
+ to view web sites (which live on the World Wide Web).
+ Examples are Firefox, Internet Explorer, Safari and Opera.
 \end_layout
 
 \begin_layout Description
@@ -312,7 +314,9 @@ name "fig:End-user-response-time"
 
 \begin_layout Standard
 It should be obvious now that it's far more effective to focus on front-end
- performance than it is to focus on back-end performance.
+ performance than it is to focus on back-end performance, because it's got
+ a greater potential.
+ It's also easier to optimize than the back-end.
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -359,7 +363,7 @@ key "presentation Design Fast Websites"
 
 \begin_layout Itemize
 Yahoo!: 400 ms of extra load time caused a 5-9% drop in full-page traffic
- 
+ (meaning that they leave before the page has finished loading) 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "presentation Design Fast Websites"
@@ -402,6 +406,8 @@ Now, why is this important to Drupal – because this bachelor thesis is about
  improving Drupal's page loading performance in particular? Because then
  the Drupal Experience is better: a faster web site results in happier users
  and developers.
+ If your site is a commercial one – either through ads or a store, then
+ it also impacts your revenue.
  More generally, a faster Drupal would affect many:
 \end_layout
 
@@ -426,14 +432,6 @@ ns are commonplace).
 \end_layout
 
 \begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
-Existing solutions
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -756,7 +754,7 @@ name "fig:Cuzillion-Safari"
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -869,7 +867,14 @@ and
 \begin_inset Newline newline
 \end_inset
 
-See figure .
+See figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Hammerhead"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -922,6 +927,263 @@ name "sub:YSlow"
 
 \end_layout
 
+\begin_layout Standard
+YSlow 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YSlow"
+
+\end_inset
+
+ also is a Firebug 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Firebug"
+
+\end_inset
+
+ extension (see 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:YSlow-example"
+
+\end_inset
+
+) that can be used to analyze page loading performance through 13 rules.
+ These were part of the original 14 rules 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YSlow Rules"
+
+\end_inset
+
+ – of which there are now 34 – of 
+\begin_inset Quotes eld
+\end_inset
+
+Exceptional Performance
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Exceptional Performance"
+
+\end_inset
+
+, as developed the Yahoo! performance team.
+\end_layout
+
+\begin_layout Standard
+YSlow 1.0 can only evaluate these 13 rules and has a hardcoded grading algorithm.
+ You should also remember that YSlow just checks how well a web page implements
+ these rules.
+ It analyzes the content of your web page (and the headers that were sent
+ with it).
+ For example, it doesn't test the latency or speed of a CDN, it just checks
+ if you are using one.
+ As an example, because you have to tell YSlow (via Firefox' 
+\family typewriter
+about:config
+\family default
+) what the domain name of your CDN is, you can even fool YSlow into thinking
+ any site is using a CDN: see 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Tricking-YSlow"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+That, and the fact that some of the rules it analyzes are only relevant
+ to 
+\emph on
+very
+\emph default
+ big web site.
+ For example, one of the rules (#13, 
+\begin_inset Quotes eld
+\end_inset
+
+Configure ETags
+\begin_inset Quotes erd
+\end_inset
+
+) is only relevant if you're using a cluster of web servers.
+ For a more in-depth article on how to deal with YSlow's evaluation of your
+ web sites, see 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YSlow Jeff Atwood"
+
+\end_inset
+
+.
+ YSlow 2.0 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YSlow 2.0 early preview"
+
+\end_inset
+
+ aims to be more extensible and customizable: it will allow for community
+ contributions, or even web site specific rules.
+\end_layout
+
+\begin_layout Standard
+Since only YSlow 1.0 is available at the time of writing, I'll stick with
+ that.
+ It's a very powerful and helpful tool as it stands, it'll just get better.
+ But remember the two caveats: it only verifies rules (it doesn't measure
+ real-world performance) and some of the rules may not be relevant for your
+ web site.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/profiling/YSlow.png
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+YSlow applied to drupal.org.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:YSlow-example"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/profiling/YSlow drupal.org without CDN.png
+	width 40text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The original YSlow analysis.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/profiling/YSlow drupal.org with CDN.png
+	width 40text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The resulting YSlow analysis.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Tricking YSlow into thinking drupal.org is using a CDN.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Tricking-YSlow"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Apache JMeter
 \begin_inset CommandInset label
@@ -931,6 +1193,10 @@ name "sub:Apache-JMeter"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Apache JMeter
 \end_layout
 
 \begin_layout Subsection
@@ -1339,7 +1605,7 @@ Episodes
 \end_layout
 
 \begin_layout Standard
-Episodes is very, very much like Jiffy.
+Episodes is very much like Jiffy.
  There are two differences:
 \end_layout
 
@@ -1528,29 +1794,91 @@ do-it-all
 
 \begin_layout Standard
 However, for the scope of this thesis, there is one tool that jumps out:
- Episodes.
+ YSlow.
+ It allows you to carefully analyze which things Drupal could be doing better.
+ It's not necessarily meaningful in real-world situations, because it e.g.
+ only checks if you're using a CDN, not how fast that CDN is.
+ However, the fact that it tests whether a CDN is being used (or Expired
+ headers, or gzipped components, or …) is enough to find out what can be
+ improved, to maximize the potential performance.
+\begin_inset Newline newline
+\end_inset
+
+This kind of analysis is exactly what I'll perform in the next section:
+ 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sec:The-State-of-Drupal"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+There is one more tool that jumps out for real, practical use: Episodes.
  This tool, if properly integrated with Drupal, would be a key asset to
- Drupal.
+ Drupal, because it would enable web site owners to track the real-world
+ page loading performance.
  It would allow contributed module developers to support Episodes.
  This, in turn, would be a good indicator for a module's quality and would
  allow the web site owner/administrator/developer to carefully analyze each
  aspect of his Drupal web site.
+\begin_inset Newline newline
+\end_inset
+
+I will create this integration as part of my bachelor thesis, see 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sec:Episodes.module"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section
 The State of Drupal's page loading performance
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:The-State-of-Drupal"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
-Improving Drupal: Episodes integration
+Improving Drupal: Episodes.module
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Episodes.module"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Improving Drupal: JS at the bottom
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:JS-at-the-bottom"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Improving Drupal: CDN integration
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:CDN-integration"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1809,7 +2137,11 @@ key "Firebug"
 
 \end_inset
 
-Firebug, 
+
+\emph on
+Firebug
+\emph default
+, 
 \begin_inset Flex URL
 status collapsed
 
@@ -1851,11 +2183,136 @@ http://fasterfox.mozdev.org/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "YSlow"
+
+\end_inset
+
+
+\emph on
+YSlow
+\emph default
+, Steve Souders, 2007, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://developer.yahoo.com/yslow/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Exceptional Performance"
+
+\end_inset
+
+
+\emph on
+Exceptional Performance
+\emph default
+, 2007, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://developer.yahoo.com/performance/index.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "YSlow Rules"
+
+\end_inset
+
+
+\emph on
+Best Practices for Speeding Up Your Web Site
+\emph default
+, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://developer.yahoo.com/performance/rules.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "YSlow Jeff Atwood"
+
+\end_inset
+
+
+\emph on
+YSlow: Yahoo's Problems Are Not Your Problems
+\emph default
+, Jeff Atwood, 2007, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.codinghorror.com/blog/archives/000932.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "YSlow 2.0 early preview"
+
+\end_inset
+
+YSlow 2.0 early preview in China, Yahoo! Developer Network, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://developer.yahoo.net/blog/archives/2008/12/yslow_20.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "Souders State of Performance 2008"
 
 \end_inset
 
-State of Performance 2008, Steve Souders, 2008, 
+
+\emph on
+State of Performance 2008
+\emph default
+, Steve Souders, 2008, 
 \begin_inset Flex URL
 status collapsed
 
