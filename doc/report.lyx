@@ -168,6 +168,11 @@ Terminology
 \end_layout
 
 \begin_layout Description
+AHAH Asynchronous HTML And HTTP.
+ Similar to AJAX, but the transfered content is HTML instead of XML.
+\end_layout
+
+\begin_layout Description
 browser A web browser is an application that runs on end user computers
  to view web sites (which live on the World Wide Web).
  Examples are Firefox, Internet Explorer, Safari and Opera.
@@ -419,8 +424,14 @@ Drupal is increasinly used for big, high-traffic web sites, thus a faster
 \begin_layout Itemize
 Drupal is still growing in popularity (according to its usage statistics,
  which only includes web sites with the Update Status module enabled, there
- are over 125,000 web sites as of January 25, 2009) and would therefor affect
- ever more people
+ are over 140,000 web sites as of February 22, 2009, see 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal usage statistics"
+
+\end_inset
+
+) and would therefor affect ever more people
 \end_layout
 
 \begin_layout Itemize
@@ -1237,7 +1248,7 @@ reference "sub:Hammerhead"
 
 \end_inset
 
-).
+), so it's less likely that a developer will make JMeter part of his workflow.
 \end_layout
 
 \begin_layout Standard
@@ -1514,10 +1525,24 @@ You're dependent upon the 3rd party service to implement new instrumentations
 
 \begin_layout Subsection
 Jiffy/Episodes
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Jiffy/Episodes"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
 Jiffy
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Jiffy"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1657,14 +1682,31 @@ key "web site WhitePages"
  and has been running on that site.
  At more than 10 million page views per day, it should be clear that Jiffy
  can scale quite well.
+ It's been released as an open source project, but at the time of writing,
+ the last commit was on July 25, 2008.
+ So it's a dead project.
 \end_layout
 
 \begin_layout Subsubsection
 Episodes
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Episodes"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Episodes is very much like Jiffy.
+Episodes 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Episodes home page,Episodes white paper"
+
+\end_inset
+
+ is very much like Jiffy.
  There are two differences:
 \end_layout
 
@@ -1751,7 +1793,8 @@ window.postMessage()
 
 \begin_layout Itemize
 It uses the same query string syntax as Jiffy uses, which means Jiffy's
- Apache configuration, ingestor and reporting toolset can be reused.
+ Apache configuration, ingestor and reporting toolset can be reused, at
+ least partially.
 \end_layout
 
 \begin_layout Itemize
@@ -1835,6 +1878,13 @@ key "Google Analytics"
 
 \begin_layout Subsection
 Conclusion
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:ProfilingTools:Conclusion"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1886,7 +1936,8 @@ There is one more tool that jumps out for real, practical use: Episodes.
 \begin_inset Newline newline
 \end_inset
 
-I will create this integration as part of my bachelor thesis, see 
+I will create this integration as part of my bachelor thesis, see section
+ 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "sec:Episodes.module"
@@ -1894,6 +1945,13 @@ reference "sec:Episodes.module"
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1907,12 +1965,562 @@ name "sec:The-State-of-Drupal"
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Improving Drupal: Episodes.module
 \begin_inset CommandInset label
 LatexCommand label
 name "sec:Episodes.module"
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The work I'll be doing on improving Drupal's page loading performance should
+ be practical, not theoretical.
+ It should have a real-world impact.
+\end_layout
+
+\begin_layout Standard
+To ensure that that also happens, I wrote the Episodes module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Episodes Drupal module project page"
+
+\end_inset
+
+.
+ This module integrates the Episodes framework for timing web pages (see
+ section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:Episodes"
+
+\end_inset
+
+) with Drupal on several levels – 
+\emph on
+all without modifying Drupal core
+\emph default
+:
+\end_layout
+
+\begin_layout Itemize
+Automatically includes the necessary JavaScript files and settings on each
+ appropriate page.
+\end_layout
+
+\begin_layout Itemize
+Automatically inserts the crucial initializiation variables at the top of
+ the 
+\family typewriter
+head
+\family default
+ tag.
+\end_layout
+
+\begin_layout Itemize
+Automatically turns each behavior (in 
+\family typewriter
+Drupal.behaviors
+\family default
+) is automatically into its own episode.
+\end_layout
+
+\begin_layout Itemize
+Provides a centralized mechanism for lazy loading callbacks that perform
+ the lazy loading of content.
+ These are then also automatically measured.
+\end_layout
+
+\begin_layout Itemize
+For measuring the 
+\family typewriter
+episodes
+\family default
+, 
+\family typewriter
+css
+\family default
+, 
+\family typewriter
+headerjs
+\family default
+ and 
+\family typewriter
+footerjs
+\family default
+ episodes, you need to change a couple of lines in the 
+\family typewriter
+page.tpl.php
+\family default
+ file of your theme.
+\end_layout
+
+\begin_layout Itemize
+Provides basic reports with charts to learn more about the collected data.
+\end_layout
+
+\begin_layout Subsection
+The goal
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Relatively brief textual explanation.
+ Big visual explanation, with a timeline referencing parts of a zoomed in,
+ annotated HTML file.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Making episodes.js reusable
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Episodes.module:reusable"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+episodes.js
+\family default
+ file provided at the Episodes example 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Episodes Example"
+
+\end_inset
+
+ was in fact just a rough sample implementation, an implementation that
+ indicates what it should look like.
+ It contained several hardcoded URLs, didn't measure the sensible default
+ episodes, contained a few bugs.
+ In short, it was an excellent and solid start, but it needed some work
+ to be truly reusable.
+\end_layout
+
+\begin_layout Standard
+I improved 
+\family typewriter
+episodes.js
+\family default
+ to make it reusable, so that I could integrate it with Drupal without adding
+ Drupal-specific code to it.
+ I made it so that all you have to do is something like this:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "float,language=HTML,numbers=left,numberstyle={\scriptsize},tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<head>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<!-- Initialize EPISODES.
+ -->
+\end_layout
+
+\begin_layout Plain Layout
+
+<script type="text/javascript">
+\end_layout
+
+\begin_layout Plain Layout
+
+	var EPISODES = EPISODES || {};
+\end_layout
+
+\begin_layout Plain Layout
+
+	EPISODES.frontendStartTime = Number(new Date());
+\end_layout
+
+\begin_layout Plain Layout
+
+	EPISODES.compatScriptUrl = "lib/episodes-compat.js";
+\end_layout
+
+\begin_layout Plain Layout
+
+	EPISODES.logging = true;
+\end_layout
+
+\begin_layout Plain Layout
+
+	EPISODES.beaconUrl = "episodes/beacon";
+\end_layout
+
+\begin_layout Plain Layout
+
+</script>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<!-- Load episodes.js.
+ -->
+\end_layout
+
+\begin_layout Plain Layout
+
+<script type="text/javascript" src="lib/episodes.js" />
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<!-- Rest of head tag.
+ -->
+\end_layout
+
+\begin_layout Plain Layout
+
+<!-- ...
+ -->
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+</head>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This way, you can set the variables to what you need them to be without
+ customizing 
+\family typewriter
+episodes.js
+\family default
+.
+ Line 6 should be as early in the page as possible, because that'll be one
+ of the main reference timestamps.
+\end_layout
+
+\begin_layout Subsection
+Integrating with Drupal
+\end_layout
+
+\begin_layout Standard
+To integrate with Drupal, I did the following:
+\end_layout
+
+\begin_layout Itemize
+Implemented 
+\family typewriter
+hook_install()
+\family default
+, through which I set a module weight of -1000.
+ This ensures my module is executed as the first one for every hook implementati
+on.
+\end_layout
+
+\begin_layout Itemize
+Implemented 
+\family typewriter
+hook_init()
+\family default
+, which is invoked at the end of the Drupal bootstrap process.
+ Through this hook I automatically insert the JavaScript into the 
+\family typewriter
+<head>
+\family default
+ tag that's necessary to make Episodes work (see section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:Episodes.module:reusable"
+
+\end_inset
+
+).
+ Thanks to the extremely low module weight, my JavaScript code are inserted
+ first into the 
+\family typewriter
+<head>
+\family default
+ tag.
+\end_layout
+
+\begin_layout Itemize
+Also through this same hook I add 
+\family typewriter
+Drupal.episodes.js
+\family default
+, which provides the actual integration with Drupal.
+ It automatically creates an episode for each Drupal 
+\begin_inset Quotes eld
+\end_inset
+
+behavior
+\begin_inset Quotes erd
+\end_inset
+
+.
+ A behavior is written in JavaScript and adds interactivity to the web page.
+ Each time new content is added to the page through AHAH, 
+\family typewriter
+Drupal.attachBehaviors()
+\family default
+ is called and automatically attaches behaviors to new content, but not
+ to existing content.
+ Through Drupal.episodes.js, I override Drupal's default 
+\family typewriter
+Drupal.attachBehaviors()
+\family default
+ method – this is very easy in JavaScript.
+ In this overriden version, I automatically measure each behavior as an
+ episode.
+\begin_inset Newline newline
+\end_inset
+
+Thanks to Drupal's existing abstraction and my override, all JavaScript
+ code can be measured through episodes without hacking Drupal core.
+\begin_inset Newline newline
+\end_inset
+
+Here's a simplified version of what it does:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset listings
+lstparams "float,language=Java,tabsize=2"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+Drupal.attachBehaviors = function(context) { 
+\end_layout
+
+\begin_layout Plain Layout
+
+	url = document.location;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	for (behavior in Drupal.behaviors) {
+\end_layout
+
+\begin_layout Plain Layout
+
+		window.postMessage("EPISODES:mark:" + behavior, url);
+\end_layout
+
+\begin_layout Plain Layout
+
+		Drupal.behaviors[behavior](context);
+\end_layout
+
+\begin_layout Plain Layout
+
+		window.postMessage("EPISODES:measure:" + behavior, url);
+\end_layout
+
+\begin_layout Plain Layout
+
+	}
+\end_layout
+
+\begin_layout Plain Layout
+
+};
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Theme layer changes, scanning behaviors with batch api … 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Screenshots!
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Reports
+\end_layout
+
+\begin_layout Standard
+Only basic reports are provided, highlighting the most important statistics
+ and visualizing them through charts.
+ Advanced/detailed reports are beyond the scope of this bachelor thesis,
+ because they require extensive performance research (to be able to handle
+ massive datasets), database indexing optimization and usability research.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Screenshots!
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Insights
+\end_layout
+
+\begin_layout Itemize
+Generating the back-end start time on the server can never work reliably
+ because the clocks of the client (browser) and server are never perfectly
+ in sync, which is required.
+\end_layout
+
+\begin_layout Itemize
+Even just measuring the page execution time on the server cannot work because
+ of this same reason.
+ You 
+\emph on
+can
+\emph default
+ accurately measure this time, but you can't 
+\emph on
+relate
+\emph default
+ it to the measurements in the browser.
+ I implemented this using implementations Drupal's 
+\family typewriter
+hook_boot()
+\family default
+ and 
+\family typewriter
+hook_exit()
+\family default
+ hooks and came to this conclusion.
+\end_layout
+
+\begin_layout Itemize
+Currently the same database as Drupal is being used.
+ Is this scalable enough for sites with millions of page views? No.
+ Writing everything to a SQLite database wouldn't be better.
+ The real solution is to use a different server to log to or even a web
+ service.
+ Better even is to log to a non-app server of your own and then send the
+ logs to an external web service.
+ Then you stay in control of all your data! (Avoiding vendor lock-in.) The
+ main reason I opted for using the same database, is ease of development.
+\begin_inset Newline newline
+\end_inset
+
+Optimizing the profiling tool is not the goal of this bachelor thesis, optimizin
+g page loading performance is.
+\end_layout
+
+\begin_layout Subsection
+Feedback from Steve Souders
+\end_layout
+
+\begin_layout Standard
+I explained Steve Souders what I wanted to achieve through this bachelor
+ thesis and the initial work I had already done on integrating Episodes
+ with Drupal.
+ This is how his reply started:
+\end_layout
+
+\begin_layout Quotation
+Wow.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Quotation
+Wow, this is awesome.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Wait for Steve's further feedback.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
 \end_inset
 
 
@@ -2860,6 +3468,106 @@ status collapsed
 \begin_layout Plain Layout
 
 http://google.com/analytics
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Episodes home page"
+
+\end_inset
+
+
+\emph on
+Episodes
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/episodes/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Episodes white paper"
+
+\end_inset
+
+
+\emph on
+Episodes: a Framework for Measuring Web Page Load Times,
+\emph default
+ Steve Souders, July 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/episodes/paper.php
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Episodes Drupal module project page"
+
+\end_inset
+
+
+\emph on
+Episodes Drupal module
+\emph default
+, Wim Leers, 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/episodes
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Episodes Example"
+
+\end_inset
+
+
+\emph on
+Episodes Example
+\emph default
+, Steve Souders, 2008, 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/episodes/example.php
 \end_layout
 
 \end_inset
