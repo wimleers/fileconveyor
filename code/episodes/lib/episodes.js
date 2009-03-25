@@ -70,7 +70,7 @@ EPISODES.handleEpisodeMessage = function(event) {
 		else if ( "mark" === action ) {
 			// "EPISODES:mark:markName[:markTime]"
 			var markName = aParts[2];
-			EPISODES.marks[markName] = aParts[3] || Number(new Date());
+			EPISODES.marks[markName] = parseInt(aParts[3] || Number(new Date()));
 		}
 		else if ( "measure" === action ) {
 			// "EPISODES:measure:episodeName[:startMarkName|startEpochTime[:endMarkName|endEpochTime]]"
