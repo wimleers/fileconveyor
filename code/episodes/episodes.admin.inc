@@ -31,12 +31,7 @@ function episodes_admin_settings() {
     ),
     '#default_value' => variable_get(EPISODES_STATUS_VARIABLE, EPISODES_DEBUG),
   );
-
-  $form['advanced'] = array(
-    '#type'  => 'fieldset',
-    '#title' => t('Advanced settings'),
-  );
-  $form['advanced'][EPISODES_BEACON_URL_VARIABLE] = array(
+  $form[EPISODES_BEACON_URL_VARIABLE] = array(
     '#type'          => 'textfield',
     '#title'         => t('Beacon URL'),
     '#description'   => t('The beacon URL you would like to use. Can also be
@@ -44,7 +39,14 @@ function episodes_admin_settings() {
                            service that analyzes the logs for you.'),
     '#size'          => 60,
     '#maxlength'     => 255,
-    '#default_value' => variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon')),
+    '#default_value' => variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon', array('absolute' => TRUE))),
+  );
+
+  $form['advanced'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Advanced settings'),
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
   );
   $form['advanced'][EPISODES_LOGGING_VARIABLE] = array(
     '#type'        => 'radios',
@@ -74,36 +76,27 @@ function episodes_admin_settings() {
     '#default_value' => variable_get(EPISODES_EXCLUDED_PATHS_VARIABLE, EPISODES_EXCLUDED_PATHS_DEFAULT),
   );
 
-  $form['ingestor'] = array(
-    '#type'        => 'fieldset',
-    '#title'       => t('Ingestor settings'),
-    '#description' => t('Only when you are using a beacon URL that points to
-                         this same server and have set up Apache properly to
-                         do the logging, only then, you have to configure the
-                         ingestor.<br />
-                         The ingestor runs during cron.'),
-  );
-  $form['ingestor'][EPISODES_INGESTOR_STATUS_VARIABLE] = array(
-    '#type'    => 'radios',
-    '#title'   => t('Status'),
-    '#options' => array(
-      EPISODES_DISABLED => t('Disabled'),
-      EPISODES_ENABLED  => t('Enabled'),
-    ),
-    '#default_value' => variable_get(EPISODES_INGESTOR_STATUS_VARIABLE, EPISODES_INGESTOR_STATUS_DEFAULT),
-  );
-  
-  $form['ingestor'][EPISODES_INGESTOR_LOG_FILE_VARIABLE] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Log file'),
-    '#description'   => t('The <strong>absolute path</strong> to the log file that must be ingested.'),
-    '#size'          => 40,
-    '#maxlength'     => 255,
-    '#default_value' => variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL),
-  );
-  
-
   return system_settings_form($form);
+}
+
+/**
+ * Default validate callback for the settings form.
+ */
+function episodes_admin_settings_validate($form, &$form_state) {
+  if (isset($form_state['values'][EPISODES_BEACON_URL_VARIABLE])) {
+    $url = $form_state['values'][EPISODES_BEACON_URL_VARIABLE];
+
+    // If it's a relative URL, transform it into an absolute URL.
+    if (preg_match('/^\/.*$/', $url)) {
+      $url = "http://{$_SERVER['SERVER_NAME']}{$url}";
+    }
+
+    // Validate the entered URL.
+    $result = drupal_http_request($url);
+    if ($result->data !== '' || $result->code != 200) {
+      form_set_error(EPISODES_BEACON_URL_VARIABLE, t('The beacon URL does not point to a working Episodes Server.'));
+    }
+  }
 }
 
 /**
@@ -111,8 +104,8 @@ function episodes_admin_settings() {
  */
 function episodes_admin_settings_behaviors() {
   // Determine when the last scan was and create a nice string for it.
-  $last_scan = variable_get(EPISODES_LAST_SCAN_VARIABLE, EPISODES_LAST_SCAN_NEVER);
-  if ($last_scan != EPISODES_LAST_SCAN_NEVER) {
+  $last_scan = variable_get(EPISODES_BEHAVIOR_LAST_SCAN_VARIABLE, EPISODES_BEHAVIOR_LAST_SCAN_NEVER);
+  if ($last_scan != EPISODES_BEHAVIOR_LAST_SCAN_NEVER) {
     $timeago = t('!interval ago', array('!interval' => format_interval(time() - $last_scan)));
   }
   else {
@@ -170,7 +163,7 @@ function episodes_admin_settings_behaviors() {
     '#value'  => t('Scan'),
   );
 
-  if ($last_scan != EPISODES_LAST_SCAN_NEVER) {
+  if ($last_scan != EPISODES_BEHAVIOR_LAST_SCAN_NEVER) {
     $form['ignored'] = array(
       '#type'        => 'hierarchical_select',
       '#title'       => t('Ignored behaviors'),
@@ -365,7 +358,7 @@ function episodes_scan_behaviors_results($success, $results, $operations) {
     $detected = time();
     $update_count = 0;
     $new_count = 0;
-    variable_set(EPISODES_LAST_SCAN_VARIABLE, $detected);
+    variable_set(EPISODES_BEHAVIOR_LAST_SCAN_VARIABLE, $detected);
     foreach ($results['mappings'] as $mapping) {
       list($modulename, $filename, $behaviorname) = explode(':', $mapping);
 

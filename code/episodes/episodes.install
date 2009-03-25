@@ -12,7 +12,6 @@
  */
 function episodes_install() {
   drupal_install_schema('episodes');
-  drupal_set_message(t('Schema installed!'));
 
   // Ensure that episodes' hooks are executed before all others.
   db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", -1000, 'episode');
@@ -68,79 +67,6 @@ function episodes_schema() {
       ),
     ),
     'primary key' => array('name'),
-  );
-
-  $schema['episodes_measurement'] = array(
-    'description' => t('Stores all the measurements that were ingested from the log files.'),
-    'fields' => array(
-      'mid' => array(
-        'type'        => 'serial',
-        'description' => "Measurement id.",
-      ),
-      'name' => array(
-        'type'        => 'varchar',
-        'length'      => 32,
-        'not null'    => TRUE,
-        'description' => "The name of the measurement.",
-      ),
-      'duration' => array(
-        'type'        => 'int',
-        'size'        => 'normal',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'description' => "The duration of the measurement.",
-      ),
-      'server_time' => array(
-        'type'        => 'int',
-        'size'        => 'normal',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'description' => "Timestamp from the logging server.",
-      ),
-      'server_host' => array(
-        'type'        => 'varchar',
-        'length'      => 255,
-        'not null'    => TRUE,
-        'description' => "Hostname of the logging server.",
-      ),
-      'uri' => array(
-        'type'        => 'varchar',
-        'length'      => 255,
-        'not null'    => TRUE,
-        'description' => "URI from where the log request originated, i.e. the page where Episodes was running.",
-      ),
-      'client_ip' => array(
-        'type'        => 'varchar',
-        'length'      => 15,
-        'not null'    => TRUE,
-        'description' => "The IP address of the client.",
-      ),
-      'user_agent' => array(
-        'type'        => 'varchar',
-        'length'      => 255,
-        'not null'    => TRUE,
-        'description' => "The user-agent of the client.",
-      ),
-      'browser' => array(
-        'type'        => 'varchar',
-        'length'      => 32,
-        'not null'    => TRUE,
-        'description' => "The browser of the client. Derived from {episodes_measurement}.user_agent.",
-      ),
-      'browser_version' => array(
-        'type'        => 'varchar',
-        'length'      => 8,
-        'not null'    => TRUE,
-        'description' => "The browser version of the client. Derived from {episodes_measurement}.user_agent.",
-      ),
-      'os' => array(
-        'type'        => 'varchar',
-        'length'      => 32,
-        'not null'    => TRUE,
-        'description' => "The OS of the client. Derived from {episodes_measurement}.user_agent.",
-      ),
-    ),
-    'primary key' => array('mid'),
   );
 
   return $schema;

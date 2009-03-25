@@ -7,7 +7,7 @@
  */
 
 
-class EpisodesIngestor extends DrupalWebTestCase {
+class EpisodesServerIngestor extends DrupalWebTestCase {
   /**
    * Implementation of getInfo().
    */
@@ -23,11 +23,11 @@ class EpisodesIngestor extends DrupalWebTestCase {
    * Implementation of setUp().
    */
   public function setUp() {
-    parent::setUp('episodes');
+    parent::setUp('episodes_server');
 
     // Include ingestor .inc file.
-    $path = drupal_get_path('module', 'episodes');
-    require_once "$path/episodes.ingestor.inc";
+    $path = drupal_get_path('module', 'episodes_server');
+    require_once "$path/episodes_server.ingestor.inc";
   }
 
   public function testParseValidEntry() {
@@ -43,7 +43,7 @@ class EpisodesIngestor extends DrupalWebTestCase {
     $reference->browser_version = '3.0.4';
     $reference->os              = 'Apple';
 
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
 
     // Entry is valid.
     $this->assertNotEqual($measurements, FALSE, 'The entry was marked as valid.');
@@ -85,19 +85,19 @@ class EpisodesIngestor extends DrupalWebTestCase {
   public function testParseNon200Entries() {
     // 404
     $entry = '127.0.0.1 [Sunday, 15-Mar-2009 01:09:00 +0100] "?ets=css:72,headerjs:332,domready:800,filefieldValidateAutoAttach:0,HierarchicalSelect:2,collapse:3,teaser:54,textarea:0,DrupalBehaviors:67,frontend:893" 404 "http://dev/d6/node/add/page" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.4) Gecko/2008102920 Firefox/3.0.4" "dev"';
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
     $this->assertEqual($measurements, FALSE, 'The entry was marked as invalid.');
 
     // 500
     $entry = '127.0.0.1 [Sunday, 15-Mar-2009 01:09:00 +0100] "?ets=css:72,headerjs:332,domready:800,filefieldValidateAutoAttach:0,HierarchicalSelect:2,collapse:3,teaser:54,textarea:0,DrupalBehaviors:67,frontend:893" 500 "http://dev/d6/node/add/page" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.4) Gecko/2008102920 Firefox/3.0.4" "dev"';
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
     $this->assertEqual($measurements, FALSE, 'The entry was marked as invalid.');    
   }
 
   public function testParseExoticUserAgents() {
     // Everything unknown.
     $entry = '127.0.0.1 [Sunday, 15-Mar-2009 01:09:00 +0100] "?ets=css:72,headerjs:332,domready:800,filefieldValidateAutoAttach:0,HierarchicalSelect:2,collapse:3,teaser:54,textarea:0,DrupalBehaviors:67,frontend:893" 200 "http://dev/d6/node/add/page" "exotic UA" "dev"';
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
     $this->assertNotEqual($measurements, FALSE, 'The entry was marked as valid.');
     $this->assertEqual($measurements[0]->browser,         'unknown', 'The browser is marked as unknown');
     $this->assertEqual($measurements[0]->browser_version, 'unknown', 'The browser version is marked as unknown');
@@ -105,7 +105,7 @@ class EpisodesIngestor extends DrupalWebTestCase {
 
     // Only browser & browser version known.
     $entry = '127.0.0.1 [Sunday, 15-Mar-2009 01:09:00 +0100] "?ets=css:72,headerjs:332,domready:800,filefieldValidateAutoAttach:0,HierarchicalSelect:2,collapse:3,teaser:54,textarea:0,DrupalBehaviors:67,frontend:893" 200 "http://dev/d6/node/add/page" "Mozilla/5.0 (exotic ua) Gecko/2008102920 Firefox/3.0.4" "dev"';
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
     $this->assertNotEqual($measurements, FALSE, 'The entry was marked as valid.');
     $this->assertEqual($measurements[0]->browser,         'Firefox', 'The browser is detected properly');
     $this->assertEqual($measurements[0]->browser_version, '3.0.4', 'The browser version is detected properly');
@@ -113,7 +113,7 @@ class EpisodesIngestor extends DrupalWebTestCase {
     
     // Only OS known.
     $entry = '127.0.0.1 [Sunday, 15-Mar-2009 01:09:00 +0100] "?ets=css:72,headerjs:332,domready:800,filefieldValidateAutoAttach:0,HierarchicalSelect:2,collapse:3,teaser:54,textarea:0,DrupalBehaviors:67,frontend:893" 200 "http://dev/d6/node/add/page" "exotic UA (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.4) exotic UA" "dev"';
-    $measurements = episodes_ingestor_parse_entry($entry);
+    $measurements = episodes_server_ingestor_parse_entry($entry);
     $this->assertNotEqual($measurements, FALSE, 'The entry was marked as valid.');
     $this->assertEqual($measurements[0]->browser,         'unknown', 'The browser is marked as unknown');
     $this->assertEqual($measurements[0]->browser_version, 'unknown', 'The browser version is marked as unknown');

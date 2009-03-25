@@ -3,7 +3,7 @@ name = Episodes
 description = "Episodes is a module that allows you to measure episodes in a web page's loading sequence."
 
 core = 6.x
-package = Development
+package = Performance
 php = 5.2
 
 dependencies[] = hs_flatlist

@@ -18,24 +18,13 @@ define('EPISODES_BEACON_URL_VARIABLE', 'episodes_beacon_url');
 define('EPISODES_LOGGING_VARIABLE', 'episodes_logging');
 define('EPISODES_EXCLUDED_PATHS_VARIABLE', 'episodes_excluded_paths');
 define('EPISODES_EXCLUDED_PATHS_DEFAULT', 'admin/*');
-define('EPISODES_LAST_SCAN_VARIABLE', 'episodes_last_scan');
-define('EPISODES_LAST_SCAN_NEVER', -1);
-
-
-// Ingestor settings.
-define('EPISODES_INGESTOR_STATUS_VARIABLE', 'episodes_ingestor_status');
-define('EPISODES_INGESTOR_STATUS_DEFAULT', EPISODES_DISABLED);
-define('EPISODES_INGESTOR_LOG_FILE_VARIABLE', 'episodes_ingestor_log_file');
-define('EPISODES_INGESTOR_LINES_PER_RUN_VARIABLE', 'episodes_num_lines_per_run');
-define('EPISODES_INGESTOR_LINES_PER_RUN_DEFAULT', 10000);
-define('EPISODES_INGESTOR_LAST_RUN_VARIABLE', 'episodes_ingestor_last_run');
 
 
 // Behavior settings.
+define('EPISODES_BEHAVIOR_LAST_SCAN_VARIABLE', 'episodes_behavior_last_scan');
+define('EPISODES_BEHAVIOR_LAST_SCAN_NEVER', -1);
 define('EPISODES_BEHAVIOR_NOT_IGNORED', 0);
 define('EPISODES_BEHAVIOR_IGNORED', 1);
-
-
 
 
 //----------------------------------------------------------------------------
@@ -126,73 +115,6 @@ function episodes_init() {
   }
 }
 
-/**
- * Implementation of hook_cron().
- */
-function episodes_cron() {
-  // Start the timer, include necessary files and retrieve the necessary
-  // variables.
-  timer_start('episodes_ingestor');
-  require_once drupal_get_path('module', 'episodes') . '/episodes.ingestor.inc';
-  $log_file      = variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL);
-  $lines_per_run = variable_get(EPISODES_INGESTOR_LINES_PER_RUN_VARIABLE, EPISODES_INGESTOR_LINES_PER_RUN_DEFAULT);
-  $last_run      = variable_get(EPISODES_INGESTOR_LAST_RUN_VARIABLE, NULL);
-
-  // If the log file isn't configured, there's nothing we can do.
-  if (!isset($log_file) || !file_exists($log_file)) {
-    return FALSE;
-  }
-
-  // Open the log file and get the current inode and size.
-  $file = fopen($log_file, 'r');
-  $current_stat = fstat($file);
-  $current_run['inode'] = $current_stat['ino'];
-  $current_run['size']  = $current_stat['size'];
-
-  // If the log file is new or has been truncated, we must reset the offset.
-  $current_run['offset'] = (!isset($last_run)
-                            || $last_run['inode'] != $current_run['inode']
-                            || $last_run['size'] > $current_run['size'])
-                         ? 0
-                         : $last_run['offset'];
-
-  // If the offset equals the size, there's nothing to process.
-  if ($current_run['offset'] == $current_run['size']) {
-    watchdog('episodes', 'Everything already processed.');
-    return FALSE;
-  }
-
-  // Seek to the right offset.
-  fseek($file, $current_run['offset'], SEEK_SET);
-
-  // Parse the log file until we reach the maximum number of lines that should
-  // be processed per run.
-  $line_count = 0;
-  while (!feof($file)) {
-    $entry = fgets($file);
-    if (empty($entry)) {
-      continue;
-    }
-    episodes_ingestor_parse_entry($entry);
-
-    // Stop in time.
-    $line_count++;
-    if ($line_count > $lines_per_run) {
-      break;
-    }
-  }
-
-  // Store the current offset.
-  $current_run['offset'] = ftell($file);
-  variable_set(EPISODES_INGESTOR_LAST_RUN_VARIABLE, $current_run);
-
-  // Close the file, stop the timer and write to watchdog.
-  fclose($file);
-  $timer = timer_stop('cdn_sync');
-  $duration = round($timer['time'] / 1000, 1);
-  watchdog('episodes', 'Processed ' . $line_count . ' entries of the log file in ' . $duration . ' seconds.');
-}
-
 
 //----------------------------------------------------------------------------
 // Public functions.
@@ -233,7 +155,7 @@ function episodes_is_enabled() {
  *   An array of behavior objects that match the set conditions.
  */
 function episodes_behavior_load($name = NULL, $ignored = NULL) {
-  $last_scan = variable_get(EPISODES_LAST_SCAN_VARIABLE, EPISODES_LAST_SCAN_NEVER);
+  $last_scan = variable_get(EPISODES_BEHAVIOR_LAST_SCAN_VARIABLE, EPISODES_BEHAVIOR_LAST_SCAN_NEVER);
   $behaviors = array();
 
   // Build the SQL.

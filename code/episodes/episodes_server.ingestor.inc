@@ -17,7 +17,7 @@
  * @return
  *   All measured episodes when the entry was valid, FALSE otherwise.
  */
-function episodes_ingestor_parse_entry($entry) {
+function episodes_server_ingestor_parse_entry($entry) {
   static $browser;
   $matches = array();
   $measurements = array();
