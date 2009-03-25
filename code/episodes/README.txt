@@ -87,19 +87,16 @@ When a web page does not include the episodes JS framework, the Firebug add-on
 will still measure some basic episodes (backend, frontend, totaltime).
 
 
-Additional measurements: episodes, css, headerjs, footerjs
-----------------------------------------------------------
+Additional measurements: css, headerjs, footerjs
+------------------------------------------------
 It's possible to perform additional measurements but it requires that you
 alter the page.tpl.php file of your theme.
 All you have to do is change this:
 
-    <?php print $head ?>
     <?php print $styles ?>
     <?php print $scripts ?>
 to:
-    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:mark:episodes", document.location);</script><? endif; ?>
-    <?php print $head ?>
-    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:measure:episodes", document.location);window.postMessage("EPISODES:mark:css", document.location);</script><? endif; ?>
+    <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:mark:css", document.location);</script><? endif; ?>
     <?php print $styles ?>
     <?php if (episodes_is_enabled()): ?><script type="text/javascript">window.postMessage("EPISODES:measure:css", document.location);window.postMessage("EPISODES:mark:headerjs", document.location);</script><? endif; ?>
     <?php print $scripts ?>
