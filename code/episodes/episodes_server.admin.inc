@@ -44,3 +44,22 @@ function episodes_server_admin_settings() {
 
   return system_settings_form($form);
 }
+
+/**
+ * Default validate callback for the settings form.
+ */
+function episodes_server_admin_settings_validate($form, &$form_state) {
+  if (isset($form_state['values'][EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE])) {
+    $logfile = $form_state['values'][EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE];
+
+    // Validate the entered log file.
+    if (!file_exists($logfile)) {
+      form_set_error(EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE, t('The log file does not exist.'));
+    }
+    else {
+      if (!@fopen($logfile, 'r')) {
+        form_set_error(EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE, t('The log file could not be opened for reading.'));
+      }
+    }
+  }
+}

@@ -26,7 +26,6 @@ Problems-that-need-thought:
 
 
 Know-how-to-do-but-not-yet-done:
-- Validation of the beacon URL and the log file to ingest
 - Move the ingestor + charts to a separate module: episodes_server.module
 - Charts
 
