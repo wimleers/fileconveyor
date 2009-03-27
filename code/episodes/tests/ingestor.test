@@ -15,7 +15,7 @@ class EpisodesServerIngestor extends DrupalWebTestCase {
     return array(
       'name'        => 'Ingestor',
       'description' => 'Verifies that the ingestor works properly.',
-      'group'       => 'Episodes',
+      'group'       => 'Episodes Server',
     );
   }
 
