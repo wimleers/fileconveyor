@@ -78,7 +78,7 @@ function episodes_server_ingestor_parse_entry($entry) {
       $measurements[] = drupal_clone($measurement);
 
       // Finally, write the measurement object to the database!
-      drupal_write_record('episodes_measurement', $measurement);
+      drupal_write_record('episodes_server_episode', $measurement);
     }
   }
 

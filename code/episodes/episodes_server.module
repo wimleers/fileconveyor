@@ -12,12 +12,12 @@ define('EPISODES_SERVER_DEBUG', 1);
 define('EPISODES_SERVER_ENABLED', 2);
 
 // Ingestor settings.
-define('EPISODES_SERVER_INGESTOR_STATUS_VARIABLE', 'episodes_ingestor_status');
+define('EPISODES_SERVER_INGESTOR_STATUS_VARIABLE', 'episodes_server_ingestor_status');
 define('EPISODES_SERVER_INGESTOR_STATUS_DEFAULT', EPISODES_DISABLED);
-define('EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE', 'episodes_ingestor_log_file');
-define('EPISODES_SERVER_INGESTOR_LINES_PER_RUN_VARIABLE', 'episodes_num_lines_per_run');
+define('EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE', 'episodes_server_ingestor_log_file');
+define('EPISODES_SERVER_INGESTOR_LINES_PER_RUN_VARIABLE', 'episodes_server_num_lines_per_run');
 define('EPISODES_SERVER_INGESTOR_LINES_PER_RUN_DEFAULT', 10000);
-define('EPISODES_SERVER_INGESTOR_LAST_RUN_VARIABLE', 'episodes_ingestor_last_run');
+define('EPISODES_SERVER_INGESTOR_LAST_RUN_VARIABLE', 'episodes_server_ingestor_last_run');
 
 
 //----------------------------------------------------------------------------
@@ -43,21 +43,17 @@ function episodes_server_menu() {
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'file'             => 'episodes_server.admin.inc',
   );
-  /*
   $items['admin/reports/episodes-server'] = array(
-    'title'            => 'Behaviors',
-    'description'      => 'Drupal behaviors settings.',
+    'title'            => 'Episodes analysis',
+    'description'      => 'Analysis of the episodes that were logged through the Episodes Server module',
     'access arguments' => array('administer site configuration'),
-    'page callback'    => 'drupal_get_form',
-    'page arguments'   => array('episodes_server_admin_settings_behaviors'),
+    'page callback'    => 'episodes_server_report',
     'type'             => MENU_LOCAL_TASK,
-    'file'             => 'episodes_server.admin.inc',
+    'file'             => 'episodes_server.reports.inc',
   );
-  */
 
   return $items;
 }
-
 
 /**
  * Implementation of hook_cron().
@@ -65,11 +61,11 @@ function episodes_server_menu() {
 function episodes_server_cron() {
   // Start the timer, include necessary files and retrieve the necessary
   // variables.
-  timer_start('episodes_ingestor');
-  require_once drupal_get_path('module', 'episodes') . '/episodes.ingestor.inc';
-  $log_file      = variable_get(EPISODES_INGESTOR_LOG_FILE_VARIABLE, NULL);
-  $lines_per_run = variable_get(EPISODES_INGESTOR_LINES_PER_RUN_VARIABLE, EPISODES_INGESTOR_LINES_PER_RUN_DEFAULT);
-  $last_run      = variable_get(EPISODES_INGESTOR_LAST_RUN_VARIABLE, NULL);
+  timer_start('episodes_server_ingestor');
+  require_once drupal_get_path('module', 'episodes') . '/episodes_server.ingestor.inc';
+  $log_file      = variable_get(EPISODES_SERVER_INGESTOR_LOG_FILE_VARIABLE, NULL);
+  $lines_per_run = variable_get(EPISODES_SERVER_INGESTOR_LINES_PER_RUN_VARIABLE, EPISODES_SERVER_INGESTOR_LINES_PER_RUN_DEFAULT);
+  $last_run      = variable_get(EPISODES_SERVER_INGESTOR_LAST_RUN_VARIABLE, NULL);
 
   // If the log file isn't configured, there's nothing we can do.
   if (!isset($log_file) || !file_exists($log_file)) {
@@ -106,7 +102,7 @@ function episodes_server_cron() {
     if (empty($entry)) {
       continue;
     }
-    episodes_ingestor_parse_entry($entry);
+    episodes_server_ingestor_parse_entry($entry);
 
     // Stop in time.
     $line_count++;
@@ -117,18 +113,11 @@ function episodes_server_cron() {
 
   // Store the current offset.
   $current_run['offset'] = ftell($file);
-  variable_set(EPISODES_INGESTOR_LAST_RUN_VARIABLE, $current_run);
+  variable_set(EPISODES_SERVER_INGESTOR_LAST_RUN_VARIABLE, $current_run);
 
   // Close the file, stop the timer and write to watchdog.
   fclose($file);
-  $timer = timer_stop('cdn_sync');
+  $timer = timer_stop('episodes_server_ingestor');
   $duration = round($timer['time'] / 1000, 1);
   watchdog('episodes', 'Processed ' . $line_count . ' entries of the log file in ' . $duration . ' seconds.');
 }
-
-
-/*
-  $d1 = new flotData(array(array(0, 1), array(4, 8), array(8, 5)));
-  $d2 = new flotData(array(array(0, 8), array(3, 5), array(8, 0.5)));
-  print theme('flot_graph', array(), array($d1, $d2));
-  */

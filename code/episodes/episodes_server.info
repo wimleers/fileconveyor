@@ -6,4 +6,4 @@ core = 6.x
 package = Performance
 php = 5.2
 
-dependencies[] = flot
+dependencies[] = chart

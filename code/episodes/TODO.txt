@@ -10,27 +10,18 @@ Questions for Steve Souders:
 - Should a domready event (besides the pageready) episode be added to episodes.js?
 - "beacon" is an odd term and therefor "beacon URL" too. Can't we switch to "logging URL"?
 
-
+TODO:
+- filters for the reports: (POSTPONED)
+   1) time (last six months, last month, last week, today)
+   2) browser
+   3) URL (wildcard matching)
+- Encourage module developers to use Drupal.Episodes' lazy loading mechanism (POSTPONED)
 
 Problems-that-need-thought:
-- Handle dev/staging/production.
-- Encourage module developers to support EPISODES when present. Should degrade gracefully.
-  -> lazy loading callbacks
-  -> own episodes
-  -> separate logs because they're not entire page load sequences?
 - On the first page load, the cookie is not yet set and therefor the pageready,
   backend and totaltime times cannot be calculated. Also a problem when cookies are disabled
-- time zone handling: necessary or not (for the ingestor)
-- Display average page load time per continent, zoom, avg page load time per country, zoom, per city
-
-
-
-Know-how-to-do-but-not-yet-done:
-- Move the ingestor + charts to a separate module: episodes_server.module
-- Charts
-
+- time zone handling: necessary or not (for the ingestor)? I.e. should the ingestor convert it to GMT or not?
+- how can the server know how to categorize/associate certain episodes (my use case: Drupal.behaviors)
 
 Drupal core ideas:
-- Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc) and Drupal.lazy.
-
-
+- Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc, these MUST be in HEAD) and Drupal.lazy (can be in footer).
