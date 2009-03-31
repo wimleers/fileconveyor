@@ -1,27 +1,19 @@
-Questions for Steve Souders:
-- Why hardcode the domain name in window.postMessage() calls when you could also just use document.location?
-- Why hardcode scriptUrl? It should be in EPISODES.compatScriptUrl?
-- Should the first byte always be measured explicitly?
-  http://stevesouders.com/episodes/episodes.js suggests you shouldn't: it estimates the start time based on a cookie – BUT WHAT WITH THE FIRST TIME?
-  http://stevesouders.com/episodes/example.php suggests you should measure it explicitly.
-  But firstbyte only starts measuring from the front-end. I also want to measure
-  the back-end. So I'm now setting EPISODES.backendStartTime from the back-end.
-- Is http://stevesouders.com/episodes/episodes.js released under the GPL or the public domain?
-- Should a domready event (besides the pageready) episode be added to episodes.js?
-- "beacon" is an odd term and therefor "beacon URL" too. Can't we switch to "logging URL"?
-
 TODO:
 - filters for the reports: (POSTPONED)
    1) time (last six months, last month, last week, today)
    2) browser
    3) URL (wildcard matching)
-- Encourage module developers to use Drupal.Episodes' lazy loading mechanism (POSTPONED)
+- display average page load time per continent, zoom, avg page load time per
+  country, zoom, per city (POSTPONED)
+- Encourage module developers to use Drupal.Episodes' lazy loading mechanism
+  (POSTPONED)
 
 Problems-that-need-thought:
-- On the first page load, the cookie is not yet set and therefor the pageready,
-  backend and totaltime times cannot be calculated. Also a problem when cookies are disabled
 - time zone handling: necessary or not (for the ingestor)? I.e. should the ingestor convert it to GMT or not?
-- how can the server know how to categorize/associate certain episodes (my use case: Drupal.behaviors)
+- how can the server know how to categorize/associate certain episodes
+  (my use case: Drupal.behaviors), because the server is not necessarily on
+  the same web server as Drupal?
 
 Drupal core ideas:
-- Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc, these MUST be in HEAD) and Drupal.lazy (can be in footer).
+- Not only provide Drupal.behaviors, but Drupal.transformations (carousel etc,
+  these MUST be in HEAD) and Drupal.lazy (can be in footer).
