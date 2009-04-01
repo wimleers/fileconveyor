@@ -173,6 +173,19 @@ Terminology
 \end_layout
 
 \begin_layout Description
+above
+\begin_inset space ~
+\end_inset
+
+the
+\begin_inset space ~
+\end_inset
+
+fold The initially visible part of a web page: the part that you can see
+ without scrolling
+\end_layout
+
+\begin_layout Description
 AHAH Asynchronous HTML And HTTP.
  Similar to AJAX, but the transfered content is HTML instead of XML.
 \end_layout
@@ -197,23 +210,18 @@ component A component of a web page, this can be a CSS style sheet, a JavaScript
 \end_layout
 
 \begin_layout Description
-web
-\begin_inset space ~
-\end_inset
-
-page An (X)HTML document that potentially references components.
+episode An episode in the page loading sequence.
 \end_layout
 
 \begin_layout Description
-page
-\begin_inset space ~
+Episodes The Episodes framework 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Episodes home page"
+
 \end_inset
 
-rendering
-\begin_inset space ~
-\end_inset
-
-performance The time it takes to load a web page and all its components.
+ (note the capital 'e').
 \end_layout
 
 \begin_layout Description
@@ -225,20 +233,27 @@ loading
 \begin_inset space ~
 \end_inset
 
+performance The time it takes to load a web page and all its components.
+\end_layout
+
+\begin_layout Description
+page
+\begin_inset space ~
+\end_inset
+
+rendering
+\begin_inset space ~
+\end_inset
+
 performance The time the server needs to render a web page.
 \end_layout
 
 \begin_layout Description
-above
+web
 \begin_inset space ~
 \end_inset
 
-the
-\begin_inset space ~
-\end_inset
-
-fold The initially visible part of a web page: the part that you can see
- without scrolling
+page An (X)HTML document that potentially references components.
 \end_layout
 
 \begin_layout Standard
@@ -1978,7 +1993,7 @@ name "sec:The-State-of-Drupal"
 \end_layout
 
 \begin_layout Section
-Improving Drupal: Episodes.module
+Improving Drupal: Episodes module
 \begin_inset CommandInset label
 LatexCommand label
 name "sec:Episodes.module"
@@ -2024,8 +2039,8 @@ Automatically includes the necessary JavaScript files and settings on each
 \end_layout
 
 \begin_layout Itemize
-Automatically inserts the crucial initializiation variables at the top of
- the 
+Automatically inserts the crucial initializiation variables at the beginning
+ of the 
 \family typewriter
 head
 \family default
@@ -2049,10 +2064,6 @@ Provides a centralized mechanism for lazy loading callbacks that perform
 \begin_layout Itemize
 For measuring the 
 \family typewriter
-episodes
-\family default
-, 
-\family typewriter
 css
 \family default
 , 
@@ -2071,7 +2082,28 @@ page.tpl.php
 \end_layout
 
 \begin_layout Itemize
-Provides basic reports with charts to learn more about the collected data.
+Provides basic reports with charts to make sense of the collected data.
+\end_layout
+
+\begin_layout Standard
+The Episodes module in fact contains two modules: the Episodes module and
+ the Episodes Server module.
+ The former is the 
+\emph on
+actual
+\emph default
+ integration and can be used without the latter.
+ The latter can be installed on a separate Drupal web site (on a separate
+ server) or on the same.
+ It provides basic reports.
+\end_layout
+
+\begin_layout Standard
+You could also choose to not enable the Episodes Server module and use an
+ external web service to generate reports, but for now, none of these services
+ exist yet.
+ That's a gap that will probably be filled in the next few years by the
+ business world.
 \end_layout
 
 \begin_layout Subsection
@@ -2242,16 +2274,21 @@ This way, you can set the variables to what you need them to be without
 episodes.js
 \family default
 .
- Line 6 should be as early in the page as possible, because that'll be one
- of the main reference timestamps.
+ Line 6 should be as early in the page as possible, because it's the most
+ important reference timestamp.
 \end_layout
 
 \begin_layout Subsection
-Integrating with Drupal
+Episodes module: integrating with Drupal
+\end_layout
+
+\begin_layout Subsubsection
+Implementation
 \end_layout
 
 \begin_layout Standard
-To integrate with Drupal, I did the following:
+Here's a brief overview with the highlights of what had to be done to integrate
+ Drupal with the Episodes framework.
 \end_layout
 
 \begin_layout Itemize
@@ -2260,8 +2297,8 @@ Implemented
 hook_install()
 \family default
 , through which I set a module weight of -1000.
- This ensures my module is executed as the first one for every hook implementati
-on.
+ This ensures the hook implementations of this module are always executed
+ before all others.
 \end_layout
 
 \begin_layout Itemize
@@ -2282,8 +2319,8 @@ reference "sub:Episodes.module:reusable"
 \end_inset
 
 ).
- Thanks to the extremely low module weight, my JavaScript code are inserted
- first into the 
+ Thanks to the extremely low module weight, the JavaScript code it inserts
+ is the first tag in the 
 \family typewriter
 <head>
 \family default
@@ -2305,33 +2342,131 @@ behavior
 \end_inset
 
 .
- A behavior is written in JavaScript and adds interactivity to the web page.
- Each time new content is added to the page through AHAH, 
+ (A behavior is written in JavaScript and adds interactivity to the web
+ page.) Each time new content is added to the page through AHAH, 
 \family typewriter
 Drupal.attachBehaviors()
 \family default
  is called and automatically attaches behaviors to new content, but not
  to existing content.
- Through Drupal.episodes.js, I override Drupal's default 
+ Through 
+\family typewriter
+Drupal.episodes.js
+\family default
+, Drupal's default 
 \family typewriter
 Drupal.attachBehaviors()
 \family default
- method – this is very easy in JavaScript.
- In this overriden version, I automatically measure each behavior as an
- episode.
+ method is overridden – this is very easy in JavaScript.
+ In this overridden version, each behavior is automatically measured as
+ an episode.
 \begin_inset Newline newline
 \end_inset
 
-Thanks to Drupal's existing abstraction and my override, all JavaScript
- code can be measured through episodes without hacking Drupal core.
+Thanks to Drupal's existing abstraction and the override I've implemented,
+ all JavaScript code can be measured through Episodes without hacking Drupal
+ core.
 \begin_inset Newline newline
 \end_inset
 
-Here's a simplified version of what it does:
-\begin_inset Newline newline
+A simplified version of what it does can be seen in listing
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:Drupal.attachBehaviors()"
+
 \end_inset
 
+.
+\end_layout
 
+\begin_layout Itemize
+Some of the Drupal behaviors are too meaningless to measure, so it'd be
+ nice to be able to mark some of the behaviors as ignored.
+ That's also something I implemented.
+ Basically I do this by locating every directory in which one or more 
+\family typewriter
+*.js
+\family default
+ files exist, create a scan job for each of these and queue them in Drupal's
+ Batch API 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal Batch API"
+
+\end_inset
+
+.
+ Each of these jobs scans each 
+\family typewriter
+*.js
+\family default
+ file, looking for behaviors.
+ Every detected behavior is stored in the database and can be marked as
+ ignored through a simple UI that uses the Hierarchical Select module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal Hierarchial Select"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+For measuring the 
+\family typewriter
+css
+\family default
+ and 
+\family typewriter
+headerjs
+\family default
+ episodes, it's necessary to make a couple of simple (copy-and-paste simple)
+ changes to the 
+\family typewriter
+page.tpl.php
+\family default
+ of the Drupal theme(s) you're using.
+ These changes are explained in the 
+\family typewriter
+README.txt
+\family default
+ file that ships with the Episodes module.
+ This is the only manual change to code that 
+\emph on
+can
+\emph default
+ be done – it's recommended, but not required.
+\end_layout
+
+\begin_layout Itemize
+And of course a configuration UI (see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Episodes-module-settings-form"
+
+\end_inset
+
+ and figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Episodes-module-behaviors-settings-form"
+
+\end_inset
+
+) using the Forms API 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal Forms API"
+
+\end_inset
+
+.
+ It ensures the beacon URL exists and is properly configured (i.e.
+ returns a zero-byte file).
+\end_layout
+
+\begin_layout Standard
 \begin_inset listings
 lstparams "float,language=Java,tabsize=2"
 inline false
@@ -2339,7 +2474,11 @@ status open
 
 \begin_layout Plain Layout
 
-Drupal.attachBehaviors = function(context) { 
+\end_layout
+
+\begin_layout Plain Layout
+
+Drupal.attachBehaviors = function(context) {
 \end_layout
 
 \begin_layout Plain Layout
@@ -2381,17 +2520,24 @@ Drupal.attachBehaviors = function(context) {
 };
 \end_layout
 
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Drupal.attachBehaviors() override.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:Drupal.attachBehaviors()"
+
 \end_inset
 
 
 \end_layout
 
-\begin_layout Standard
-\begin_inset Note Note
-status open
+\end_inset
 
-\begin_layout Plain Layout
-Theme layer changes, scanning behaviors with batch api … 
+
 \end_layout
 
 \end_inset
@@ -2399,12 +2545,132 @@ Theme layer changes, scanning behaviors with batch api …
 
 \end_layout
 
+\begin_layout Subsubsection
+Screenshots
+\end_layout
+
 \begin_layout Standard
-\begin_inset Note Note
-status open
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
 
 \begin_layout Plain Layout
-Screenshots!
+\noindent
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/episodes/episodes–admin-settings-episodes.png
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes module settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-module-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/episodes/episodes–admin-settings-episodes-behaviors.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes module behaviors settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-module-behaviors-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/episodes/episodes-firebug.png
+	height 75pheight%
+	rotateAngle 90
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Results of Episodes module in the Episodes Firebug add-on.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Results-of-Episodes-module-in-Firebug"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -2413,7 +2679,7 @@ Screenshots!
 \end_layout
 
 \begin_layout Subsection
-Reports
+Episodes Server module: reports
 \end_layout
 
 \begin_layout Standard
@@ -2424,12 +2690,177 @@ Only basic reports are provided, highlighting the most important statistics
  massive datasets), database indexing optimization and usability research.
 \end_layout
 
+\begin_layout Subsubsection
+Implementation
+\end_layout
+
+\begin_layout Itemize
+First of all, the Apache HTTP server is a requirement, this application's
+ logging component is used for generating the log files.
+ Its logging component has been proven to be scalable, so there's no need
+ to roll our own.
+\begin_inset Newline newline
+\end_inset
+
+The source of this idea lies with Jiffy (see section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:Jiffy"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Itemize
+The user must make some changes to his 
+\family typewriter
+httpd.conf
+\family default
+ configuration file for his Apache HTTP server.
+ As just mentioned, my implementation is derived from Jiffy's, yet every
+ configuration line is different.
+\end_layout
+
+\begin_layout Itemize
+The ingestor parses the Apache log file and moves the data to the database.
+ I was able to borrow a couple of regular expressions from Jiffy's ingestor
+ (which is written in Perl …) but I rewrote it completely to be clean and
+ simple code, conform the Drupal coding guidelines.
+ It detects the browser, browser version and operating system from the User
+ Agent that was logged with the help of the Browser.php library 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Browser.php"
+
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+This is guaranteed to work thanks to the included meticulous unit tests.
+\end_layout
+
+\begin_layout Itemize
+For the reports, I used the Google Chart API 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Google Chart API"
+
+\end_inset
+
+.
+ You can see the result in figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Episodes-Server-module-report"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+And of course again a configuration UI (see figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Episodes-Server-module-settings-form"
+
+\end_inset
+
+) using the Forms API 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal Forms API"
+
+\end_inset
+
+.
+ It ensures the log file exists and is accessible for reading.
+\end_layout
+
+\begin_layout Subsubsection
+Screenshots
+\end_layout
+
 \begin_layout Standard
-\begin_inset Note Note
-status open
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
 
 \begin_layout Plain Layout
-Screenshots!
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/episodes/episodes_server-admin-settings-episodes-server.png
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes Server module settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-Server-module-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/episodes/episodes_server-reports.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Report generated by the Episodes Server module.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-Server-module-report"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -2473,6 +2904,42 @@ hook_boot()
 hook_exit()
 \family default
  hooks and came to this conclusion.
+\end_layout
+
+\begin_layout Itemize
+On the first page load, the 
+\family typewriter
+onbeforeunload
+\family default
+ cookie is not yet set and therefor the 
+\family typewriter
+backend
+\family default
+ episode cannot be calculated, which in turn prevens the 
+\family typewriter
+pageready
+\family default
+ and 
+\family typewriter
+totalti
+\family default
+me episodes from being calculated.
+ This is of course also a problem when cookies are disabled, because then
+ the 
+\family typewriter
+backend
+\family default
+ episode can 
+\emph on
+never
+\emph default
+ be calculated.
+ There is no way around this until the day that browsers provide something
+ like 
+\family typewriter
+document.requestTime
+\family default
+.
 \end_layout
 
 \end_deeper
@@ -2607,16 +3074,30 @@ Episodes
 
 \end_deeper
 \begin_layout Itemize
-APIs
+APIs/libraries
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-Browser.php
+Browser.php 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Browser.php"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
 Google Chart API
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Google Chart API"
+
+\end_inset
+
+
 \end_layout
 
 \end_deeper
@@ -3645,11 +4126,136 @@ Episodes Example
 \emph default
 , Steve Souders, 2008, 
 \begin_inset Flex URL
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
 http://stevesouders.com/episodes/example.php
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal Batch API"
+
+\end_inset
+
+
+\emph on
+Batch API
+\emph default
+, Drupal 6, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://api.drupal.org/api/group/batch/6
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal Forms API"
+
+\end_inset
+
+
+\emph on
+Forms API
+\emph default
+, Drupal 6, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://api.drupal.org/api/group/form_api/6
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal Hierarchial Select"
+
+\end_inset
+
+
+\emph on
+Hierarchical Select module
+\emph default
+, Wim Leers, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/hierarchical_select
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Google Chart API"
+
+\end_inset
+
+
+\emph on
+Google Chart API
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.google.com/apis/chart/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Browser.php"
+
+\end_inset
+
+
+\emph on
+Browser.php
+\emph default
+, Chris Schuld, 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/
 \end_layout
 
 \end_inset
