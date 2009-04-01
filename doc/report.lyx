@@ -64,7 +64,7 @@ Thesis proposed to achieve the degree of bachelor
 \begin_inset Newline newline
 \end_inset
 
-in computer sciene/ICT/knowledge technology
+in computer science/ICT/knowledge technology
 \begin_inset Newline newline
 \end_inset
 
@@ -141,7 +141,12 @@ thispagestyle{empty}
 \end_layout
 
 \begin_layout Standard
-Table of contents here… when it starts working again.
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2437,6 +2442,11 @@ Insights
 \end_layout
 
 \begin_layout Itemize
+Episodes module
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
 Generating the back-end start time on the server can never work reliably
  because the clocks of the client (browser) and server are never perfectly
  in sync, which is required.
@@ -2465,9 +2475,16 @@ hook_exit()
  hooks and came to this conclusion.
 \end_layout
 
+\end_deeper
+\begin_layout Itemize
+Episodes Server module
+\end_layout
+
+\begin_deeper
 \begin_layout Itemize
 Currently the same database as Drupal is being used.
- Is this scalable enough for sites with millions of page views? No.
+ Is this scalable enough for analyzing the logs of web sites with millions
+ of page views? No.
  Writing everything to a SQLite database wouldn't be better.
  The real solution is to use a different server to log to or even a web
  service.
@@ -2482,6 +2499,7 @@ Optimizing the profiling tool is not the goal of this bachelor thesis, optimizin
 g page loading performance is.
 \end_layout
 
+\end_deeper
 \begin_layout Subsection
 Feedback from Steve Souders
 \end_layout
@@ -2548,6 +2566,70 @@ name "sec:CDN-integration"
 
 \end_layout
 
+\begin_layout Section
+Used technologies
+\end_layout
+
+\begin_layout Itemize
+Languages
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+PHP
+\end_layout
+
+\begin_layout Itemize
+JavaScript
+\end_layout
+
+\begin_layout Itemize
+Python
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Frameworks
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Drupal (Forms API, Batch API, menu system, Schema API, etc.)
+\end_layout
+
+\begin_layout Itemize
+jQuery
+\end_layout
+
+\begin_layout Itemize
+Episodes
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+APIs
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Browser.php
+\end_layout
+
+\begin_layout Itemize
+Google Chart API
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Integrates with the following applications
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Apache HTTP Server
+\end_layout
+
+\end_deeper
 \begin_layout Section
 Test cases
 \end_layout
