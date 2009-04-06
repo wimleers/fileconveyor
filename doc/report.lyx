@@ -21,17 +21,17 @@
 \graphics default
 \paperfontsize default
 \spacing single
-\use_hyperref false
-\pdf_bookmarks true
+\use_hyperref true
+\pdf_bookmarks false
 \pdf_bookmarksnumbered false
 \pdf_bookmarksopen false
 \pdf_bookmarksopenlevel 1
 \pdf_breaklinks true
-\pdf_pdfborder false
-\pdf_colorlinks false
+\pdf_pdfborder true
+\pdf_colorlinks true
 \pdf_backref false
-\pdf_pdfusetitle true
-\pdf_quoted_options "linkcolor=blue, citecolor=black, urlcolor=blue, filecolor=blue, pdftex"
+\pdf_pdfusetitle false
+\pdf_quoted_options "linkcolor=blue, citecolor=blue, urlcolor=blue, filecolor=blue, pdftex"
 \papersize a4paper
 \use_geometry false
 \use_amsmath 1
@@ -3061,7 +3061,7 @@ Frameworks
 
 \begin_deeper
 \begin_layout Itemize
-Drupal (Forms API, Batch API, menu system, Schema API, etc.)
+Drupal (Forms API, Batch API, menu system, Schema API, etc.) 
 \end_layout
 
 \begin_layout Itemize
@@ -3069,7 +3069,14 @@ jQuery
 \end_layout
 
 \begin_layout Itemize
-Episodes
+Episodes 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Episodes home page"
+
+\end_inset
+
+
 \end_layout
 
 \end_deeper
