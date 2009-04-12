@@ -6,10 +6,19 @@ moves.
 
 Modified files are detected by looking at the mtime.
 
-Use initial_scan() and scan() afterwards.
+Instructions:
+- Use initial_scan() to build the fill the database.
+- Use scan() afterwards, to get the changes.
+- Use remove() to remove all the metadata for a path from the database.
 
 TODO: unit tests (with *many* mock functions). Stable enough without them.
 """
+
+
+__author__ = "Wim Leers (work@wimleers.com)"
+__version__ = "$Rev$"
+__date__ = "$Date$"
+__license__ = "GPL"
 
 
 import os
@@ -128,6 +137,12 @@ class PathScanner(object):
         return scan_result
 
 
+    def remove(self, path):
+        """remove the metadata for a given path and all its subdirectories"""
+        self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
+        self.dbcon.commit()
+
+
     def __scanhelper(self, old_files, new_files):
         """helper function for scan()
 
@@ -170,5 +185,7 @@ if __name__ == "__main__":
     path = "/Users/wimleers/Downloads"
     db = sqlite3.connect("pathscanner.db")
     scanner = PathScanner(db)
+    # Force a rescan
+    #scanner.remove(path)
     scanner.initial_scan(path)
     print scanner.scan(path)
