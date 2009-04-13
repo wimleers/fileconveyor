@@ -46,9 +46,8 @@ class PathScanner(object):
     def __walktree(self, path):
         rows = []
         for path, filename, mtime, is_dir in self.__listdir(path):
-            if not is_dir:
-                rows.append((path, filename, mtime))
-            else:
+            rows.append((path, filename, mtime if not is_dir else -1))
+            if is_dir:
                 for childrows in self.__walktree(os.path.join(path, filename)):
                     yield childrows
         yield rows
@@ -103,6 +102,10 @@ class PathScanner(object):
         """scan a directory (without recursion!) for changes
         
         The database is also updated to reflect the new situation, of course.
+
+        By design, so that this function can be used by scan_tree():
+        - Cannot detect newly created directory trees.
+        - Can detect deleted directory trees.
         """
 
         # Fetch the old metadata from the DB.
@@ -114,10 +117,9 @@ class PathScanner(object):
         # Get the current metadata.
         new_files = {}
         for path, filename, mtime, is_dir in scanner.__listdir(path):
-            if not is_dir:
-                new_files[filename] = (filename, mtime)
+            new_files[filename] = (filename, mtime if not is_dir else -1)
 
-        scan_result = self.__scanhelper(old_files, new_files)
+        scan_result = self.__scanhelper(path, old_files, new_files)
 
         # Add the created files to the DB.
         for filename in scan_result["created"]:
@@ -131,10 +133,42 @@ class PathScanner(object):
         self.dbcon.commit()
         # Remove the deleted files from the DB.
         for filename in scan_result["deleted"]:
-            self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), (path, filename))
+            if len(os.path.dirname(filename)):
+                realpath = path + os.sep + os.path.dirname(filename)
+            else:
+                realpath = path
+            realfilename = os.path.basename(filename)
+            self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), (realpath, realfilename))
         self.dbcon.commit()
 
         return scan_result
+
+
+    def scan_tree(self, path):
+        """scan a directory tree for changes"""
+
+        # Scan the current directory for changes.
+        result = self.scan(path)
+
+        # Prepend the current path.
+        for key in result.keys():
+            tmp = Set()
+            for filename in result[key]:
+                tmp.add(path + os.sep + filename)
+            result[key] = tmp
+        yield (path, result)
+
+        # Also scan each subdirectory.
+        filenames = os.listdir(path)
+        for filename in filenames:
+            try:
+                st = os.stat(os.path.join(path, filename))
+                is_dir = stat.S_ISDIR(st.st_mode)
+            except os.error:
+                continue
+            if is_dir:
+                for subpath, subresult in self.scan_tree(os.path.join(path, filename)):
+                    yield (subpath, subresult)
 
 
     def remove(self, path):
@@ -143,7 +177,7 @@ class PathScanner(object):
         self.dbcon.commit()
 
 
-    def __scanhelper(self, old_files, new_files):
+    def __scanhelper(self, path, old_files, new_files):
         """helper function for scan()
 
         old_files and new_files should be dictionaries of (filename, mtime)
@@ -165,8 +199,10 @@ class PathScanner(object):
 
         # Step 1: find newly created files.
         result["created"] = new_filenames.difference(old_filenames)
+
         # Step 2: find deleted files.
         result["deleted"] = old_filenames.difference(new_filenames)
+
         # Step 3: find modified files.
         # Only files that are not created and not deleted can be modified!
         possibly_modified_files = new_filenames.union(old_filenames)
@@ -177,15 +213,45 @@ class PathScanner(object):
             (filename, new_mtime) = new_files[filename]
             if old_mtime != new_mtime:
                 result["modified"].add(filename)
+
+        # Step 4
+        # If a directory was deleted, we also need to retrieve the filenames
+        # and paths of the files within that subtree.
+        deleted_tree = Set()
+        for deleted_file in result["deleted"]:
+            (filename, mtime) = old_files[deleted_file]
+            # An mtime of -1 means that this is a directory.
+            if mtime == -1:
+                dirpath = path + os.sep + filename
+                self.dbcur.execute("SELECT * FROM %s WHERE path LIKE ?" % (self.table), (dirpath + "%",))
+                files_in_dir = self.dbcur.fetchall()
+                # Mark all files below the deleted directory also as deleted.
+                for (subpath, subfilename, submtime) in files_in_dir:
+                    deleted_tree.add(os.path.join(subpath, subfilename)[len(path) + 1:])
+        result["deleted"] = result["deleted"].union(deleted_tree)
+        
         return result
 
 
 if __name__ == "__main__":
     # Sample usage
-    path = "/Users/wimleers/Downloads"
+    path = "/Users/wimleers/Drupal"
     db = sqlite3.connect("pathscanner.db")
     scanner = PathScanner(db)
     # Force a rescan
     #scanner.remove(path)
     scanner.initial_scan(path)
-    print scanner.scan(path)
+
+    # Detect changes in a single directory
+    #print scanner.scan(path)
+
+    # Detect changes in the entire tree
+    report = {}
+    report["created"] = Set()
+    report["deleted"] = Set()
+    report["modified"] = Set()
+    for path, result in scanner.scan_tree(path):
+        report["created"] = report["created"].union(result["created"])
+        report["deleted"] = report["deleted"].union(result["deleted"])
+        report["modified"] = report["modified"].union(result["modified"])
+    print report
