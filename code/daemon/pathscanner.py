@@ -98,6 +98,43 @@ class PathScanner(object):
         self.dbcon.commit()
 
 
+    def purge_path(self, path):
+        """purge the metadata for a given path and all its subdirectories"""
+        self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
+        self.dbcur.execute("VACUUM %s" % (self.table))
+        self.dbcon.commit()
+
+
+    def add_files(self, files):
+        """add file metadata to the database
+        
+        Expected format: a set of (path, filename, mtime) tuples.
+        """
+        for row in files:
+            self.dbcur.execute("INSERT INTO %s VALUES(?, ?, ?)" % (self.table), row)
+        self.dbcon.commit()
+
+
+    def update_files(self, files):
+        """update file metadata in the database
+
+        Expected format: a set of (path, filename, mtime) tuples.
+        """
+        for row in files:
+            self.dbcur.execute("UPDATE %s SET mtime=? WHERE path=? AND filename=?" % (self.table), row)
+        self.dbcon.commit()
+
+
+    def delete_files(self, files):
+        """delete file metadata from the database
+
+        Expected format: a set of (path, filename) tuples.
+        """
+        for row in files:
+            self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), row)
+        self.dbcon.commit()
+
+
     def scan(self, path):
         """scan a directory (without recursion!) for changes
         
@@ -122,24 +159,27 @@ class PathScanner(object):
         scan_result = self.__scanhelper(path, old_files, new_files)
 
         # Add the created files to the DB.
+        files = Set()
         for filename in scan_result["created"]:
             (filename, mtime) = new_files[filename]
-            self.dbcur.execute("INSERT INTO %s VALUES(?, ?, ?)" % (self.table), (path, filename, mtime))
-        self.dbcon.commit()
+            files.add((path, filename, mtime))
+        self.add_files(files)
         # Update the modified files in the DB.
+        files = Set()
         for filename in scan_result["modified"]:
             (filename, mtime) = new_files[filename]
-            self.dbcur.execute("UPDATE %s SET mtime=? WHERE path=? AND filename=?" % (self.table), (mtime, path, filename))
-        self.dbcon.commit()
+            files.add((path, filename, mtime))
+        self.update_files(files)
         # Remove the deleted files from the DB.
+        files = Set()
         for filename in scan_result["deleted"]:
             if len(os.path.dirname(filename)):
                 realpath = path + os.sep + os.path.dirname(filename)
             else:
                 realpath = path
             realfilename = os.path.basename(filename)
-            self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), (realpath, realfilename))
-        self.dbcon.commit()
+            files.add((realpath, realfilename))
+        self.delete_files(files)
 
         return scan_result
 
@@ -169,12 +209,6 @@ class PathScanner(object):
             if is_dir:
                 for subpath, subresult in self.scan_tree(os.path.join(path, filename)):
                     yield (subpath, subresult)
-
-
-    def remove(self, path):
-        """remove the metadata for a given path and all its subdirectories"""
-        self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
-        self.dbcon.commit()
 
 
     def __scanhelper(self, path, old_files, new_files):
@@ -235,11 +269,11 @@ class PathScanner(object):
 
 if __name__ == "__main__":
     # Sample usage
-    path = "/Users/wimleers/Drupal"
+    path = "/Users/wimleers/Downloads"
     db = sqlite3.connect("pathscanner.db")
     scanner = PathScanner(db)
     # Force a rescan
-    #scanner.remove(path)
+    #scanner.purge_path(path)
     scanner.initial_scan(path)
 
     # Detect changes in a single directory
