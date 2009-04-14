@@ -9,7 +9,9 @@ Modified files are detected by looking at the mtime.
 Instructions:
 - Use initial_scan() to build the fill the database.
 - Use scan() afterwards, to get the changes.
-- Use remove() to remove all the metadata for a path from the database.
+- Use purge_path() to purge all the metadata for a path from the database.
+- Use (add|update|remove)_files() to add/update/remove files manually (useful
+  when your application has more/faster knowledge of changes)
 
 TODO: unit tests (with *many* mock functions). Stable enough without them.
 """
@@ -33,12 +35,14 @@ class PathScanner(object):
         self.dbcon = dbcon
         self.dbcur = dbcon.cursor()
         self.table = table
+        self.uncommitted_statements = 0
         self.commit_interval = commit_interval
         self.__prepare_db()
-        
+
 
     def __prepare_db(self):
         """prepare the database (create the table structure)"""
+
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(path text, filename text, mtime integer)" % (self.table))
         self.dbcon.commit()
 
@@ -82,24 +86,13 @@ class PathScanner(object):
         if self.dbcur.fetchone()[0] > 0:
             return False
         
-        # Commit to the database in batches, to reduce concurrency: collect
-        # self.commit_interval rows, then commit.
-        num_uncommitted_rows = 0
-        for files in scanner.__walktree(path):
-            if len(files):
-                for row in files:
-                    # Save the metadata for each found file to the DB.
-                    self.dbcur.execute("INSERT INTO %s VALUES(?, ?, ?)" % (self.table), row)
-                    num_uncommitted_rows += 1
-                    if (num_uncommitted_rows == self.commit_interval):
-                        self.dbcon.commit()
-                        num_uncommitted_rows = 0
-        # Commit the remaining rows.
-        self.dbcon.commit()
+        for files in self.__walktree(path):
+            add_files(files)
 
 
     def purge_path(self, path):
         """purge the metadata for a given path and all its subdirectories"""
+
         self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
         self.dbcur.execute("VACUUM %s" % (self.table))
         self.dbcon.commit()
@@ -110,9 +103,12 @@ class PathScanner(object):
         
         Expected format: a set of (path, filename, mtime) tuples.
         """
+
         for row in files:
             self.dbcur.execute("INSERT INTO %s VALUES(?, ?, ?)" % (self.table), row)
-        self.dbcon.commit()
+            self.__db_batched_commit()
+        # Commit the remaining rows.
+        self.__db_batched_commit(True)
 
 
     def update_files(self, files):
@@ -120,9 +116,14 @@ class PathScanner(object):
 
         Expected format: a set of (path, filename, mtime) tuples.
         """
+
         for row in files:
-            self.dbcur.execute("UPDATE %s SET mtime=? WHERE path=? AND filename=?" % (self.table), row)
-        self.dbcon.commit()
+            (path, filename, mtime) = row
+            self.dbcur.execute("UPDATE %s SET mtime=? WHERE path=? AND filename=?" % (self.table), (mtime, path, filename))
+            self.__db_batched_commit()
+        # Commit the remaining rows.
+        self.__db_batched_commit(True)
+
 
 
     def delete_files(self, files):
@@ -130,10 +131,24 @@ class PathScanner(object):
 
         Expected format: a set of (path, filename) tuples.
         """
+
         for row in files:
             self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), row)
-        self.dbcon.commit()
+            self.__db_batched_commit()
+        # Commit the remaining rows.
+        self.__db_batched_commit(True)
 
+
+    def __db_batched_commit(self, force=False):
+        """docstring for __db_commit"""
+        # Commit to the database in batches, to reduce concurrency: collect
+        # self.commit_interval rows, then commit.
+        
+        self.uncommitted_statements += 1
+        if force == True or self.uncommitted_statements == self.commit_interval:
+            self.dbcon.commit()
+            self.uncommitted_rows = 0
+            
 
     def scan(self, path):
         """scan a directory (without recursion!) for changes
@@ -153,7 +168,7 @@ class PathScanner(object):
 
         # Get the current metadata.
         new_files = {}
-        for path, filename, mtime, is_dir in scanner.__listdir(path):
+        for path, filename, mtime, is_dir in self.__listdir(path):
             new_files[filename] = (filename, mtime if not is_dir else -1)
 
         scan_result = self.__scanhelper(path, old_files, new_files)
