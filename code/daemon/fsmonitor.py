@@ -168,7 +168,7 @@ def get_fsmonitor():
     if system == "Linux":
         kernel = platform.release().split(".")
         # Available in Linux kernel 2.6.13 and higher.
-        if kernel[0] == 2 and kernel[1] == 6 and kernel[2] >= 13:
+        if int(kernel[0]) == 2 and int(kernel[1]) == 6 and kernel[2][:2] >= 13:
             return __get_class_reference("fsmonitor_inotify", "FSMonitorInotify")
     elif system == "Windows":
         # See:
