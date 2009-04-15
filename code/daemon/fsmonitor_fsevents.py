@@ -7,7 +7,6 @@ TODO:
 - 
 """
 
-
 __author__ = "Wim Leers (work@wimleers.com)"
 __version__ = "$Rev$"
 __date__ = "$Date$"
@@ -19,6 +18,11 @@ from FSEvents import kCFAllocatorDefault, \
                      CFRunLoopGetCurrent, \
                      kCFRunLoopDefaultMode, \
                      CFRunLoopRun, \
+                     CFRunLoopStop, \
+                     CFRunLoopAddTimer, \
+                     CFRunLoopTimerCreate, \
+                     CFAbsoluteTimeGetCurrent, \
+                     NSAutoreleasePool, \
                      kFSEventStreamEventIdSinceNow, \
                      kFSEventStreamCreateFlagWatchRoot, \
                      kFSEventStreamEventFlagMustScanSubDirs, \
@@ -29,6 +33,8 @@ from FSEvents import kCFAllocatorDefault, \
                      FSEventStreamCreate, \
                      FSEventStreamStart, \
                      FSEventStreamStop, \
+                     FSEventStreamInvalidate, \
+                     FSEventStreamRelease, \
                      FSEventStreamShow
 import os
 
@@ -45,7 +51,7 @@ class FSMonitorFSEvents(FSMonitor):
 
     # These 3 settings are hardcoded. See FSMonitor's documentation for an
     # explanation.
-    latency = 3.0
+    latency = 1.0
     sinceWhen = kFSEventStreamEventIdSinceNow
     flags = kFSEventStreamCreateFlagWatchRoot
 
@@ -53,10 +59,12 @@ class FSMonitorFSEvents(FSMonitor):
     def __init__(self, callback, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, True, dbfile)
         self.latest_event_id = None
+        self.die = False
+        self.auto_release_pool = None
 
 
-    def add_dir(self, path, event_mask):
-        """override of FSMonitor.add_dir()"""
+    def __add_dir(self, path, event_mask):
+        """override of FSMonitor.__add_dir()"""
         # Perform an initial scan of the directory structure. If this has
         # already been done, then it will return immediately.
         self.pathscanner.initial_scan(path)
@@ -69,30 +77,21 @@ class FSMonitorFSEvents(FSMonitor):
                                         self.__class__.sinceWhen,
                                         self.__class__.latency,
                                         self.__class__.flags)
-        FSEventStreamShow(streamRef)
+        # Debug output.
+        #FSEventStreamShow(streamRef)
 
         if streamRef is None:
             raise MonitorError, "Could not monitor %s" % path
             return None
         else:
-            # Schedule stream on a loop.
-            FSEventStreamScheduleWithRunLoop(streamRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
-
-            # Register with the FS Events service to receive events.
-            started = FSEventStreamStart(streamRef)
-            if not started:
-                raise CouldNotStartError
-
-            # Store it as a MonitoredPath.
             self.monitored_paths[path] = MonitoredPath(path, event_mask, streamRef)
-
             return self.monitored_paths[path]
 
 
-    def remove_dir(self, path):
-        """override of FSMonitor.remove_dir()"""
-        if path in self.streamRefs.keys():
-            streamRef = self.monitored_paths[path].data
+    def __remove_dir(self, path):
+        """override of FSMonitor.__remove_dir()"""
+        if path in self.monitored_paths.keys():
+            streamRef = self.monitored_paths[path].fsmonitor_ref
             # Stop, unschedule, invalidate and release the stream refs.
             FSEventStreamStop(streamRef)
             # We don't use FSEventStreamUnscheduleFromRunLoop prior to
@@ -107,18 +106,89 @@ class FSMonitorFSEvents(FSMonitor):
         pass
 
 
-    def start(self):
-        """override of FSMonitor.start()"""
+    def run(self):
+        # Necessary because we're using PyObjC in a thread other than the main
+        # thread.
+        self.auto_release_pool = NSAutoreleasePool.alloc().init()
+
+        # Setup. Ensure that this isn't interleaved with any other thread, so
+        # that the DB setup continues as expected.
+        self.lock.acquire()
+        FSMonitor.setup(self)
+        self.lock.release()
+
+        # Set up a callback to a function that process the queues frequently.
+        CFRunLoopAddTimer(
+           CFRunLoopGetCurrent(),
+           CFRunLoopTimerCreate(None, CFAbsoluteTimeGetCurrent(), 0.5, 0, 0, self.__process_queues, None),
+           kCFRunLoopDefaultMode
+        )
+
+        # Start the run loop.
         CFRunLoopRun()
 
 
     def stop(self):
         """override of FSMonitor.stop()"""
+
+        # Let the thread know it should die.
+        self.lock.acquire()
+        self.die = True
+        self.lock.release()
+
         # Stop monitoring each monitored path.
         for path in self.monitored_paths.keys():
-            remove_dir(path)
+            self.__remove_dir(path)
+
         # Store the latest event ID so we know where we left off.
         # TODO: separate table in DB to store this?
+
+        # Delete the auto release pool.
+        del self.auto_release_pool
+
+
+    def __process_queues(self, timer, context):
+        # Die when asked to.
+        self.lock.acquire()
+        if self.die:
+            CFRunLoopStop(CFRunLoopGetCurrent())
+        self.lock.release()
+
+
+        # Process add queue.
+        self.lock.acquire()
+        if not self.add_queue.empty():
+            (path, event_mask) = self.add_queue.get()
+            self.lock.release()
+            self.__add_dir(path, event_mask)
+        else:
+            self.lock.release()
+
+        # Process remove queue.
+        self.lock.acquire()
+        if not self.remove_queue.empty():
+            path = self.add_queue.get()
+            self.lock.release()
+            self.__remove_dir(path)
+        else:
+            self.lock.release()
+
+        # Ensure all monitored paths are actually being monitored. If they're
+        # not yet being monitored, start doing so.
+        for path in self.monitored_paths.keys():
+            if self.monitored_paths[path].monitoring:
+                continue
+            streamRef = self.monitored_paths[path].fsmonitor_ref
+            
+            # Schedule stream on a loop.
+            FSEventStreamScheduleWithRunLoop(streamRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
+
+            # Register with the FS Events service to receive events.
+            started = FSEventStreamStart(streamRef)
+            if not started:
+                raise CouldNotStartError
+            else:
+                self.monitored_paths[path].monitoring = True
 
 
     def __fsevents_callback(self, streamRef, clientCallBackInfo, numEvents, eventPaths, eventFlags, eventIDs):

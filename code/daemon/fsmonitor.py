@@ -45,6 +45,8 @@ __license__ = "GPL"
 
 import platform
 import sqlite3
+import threading
+import Queue
 from pathscanner import PathScanner
 
 
@@ -52,7 +54,7 @@ from pathscanner import PathScanner
 class FSMonitorError(Exception): pass
 
 
-class FSMonitor(object):
+class FSMonitor(threading.Thread):
     """docstring for FSMonitor"""
 
     # Identifiers for each event.
@@ -76,26 +78,41 @@ class FSMonitor(object):
         self.dbcur = None
         self.pathscanner = None
         self.callback = callback
-        if self.persistent:
-            self.__setup_db()
-            self.__setup_pathscanner()
+        self.lock = threading.Lock()
+        self.add_queue = Queue.Queue(0)
+        self.remove_queue = Queue.Queue(0)
+        threading.Thread.__init__(self)
 
 
     def generate_missed_events(self):
         """generate the missed events for a persistent DB"""
         raise NotImplemented
 
-    def start(self):
+
+    def run(self):
         """start the file system monitor (starts a separate thread)"""
         raise NotImplemented
 
+
     def add_dir(self, path, event_mask):
         """add a directory to monitor"""
+        self.lock.acquire()
+        self.add_queue.put((path, event_mask))
+        self.lock.release()
+
+
+    def __add_dir(self, path, event_mask):
         raise NotImplemented
 
 
     def remove_dir(self, path):
         """stop monitoring a directory"""
+        self.lock.acquire()
+        self.remove_queue.put(path)
+        self.lock.release()
+
+
+    def __remove_dir(self, path):
         raise NotImplemented
 
 
@@ -118,15 +135,13 @@ class FSMonitor(object):
             self.callback(monitored_path, event_path, event)
 
 
-    def __setup_db(self):
-        """set up the database"""
+    def setup(self):
+        """set up the database and pathscanner"""
+        # Database.
         if self.dbcur is None:
             self.dbcon = sqlite3.connect(self.dbfile)
             self.dbcur = self.dbcon.cursor()
-
-
-    def __setup_pathscanner(self):
-        """set up the pathscanner"""
+        # PathScanner.
         if self.persistent == True and self.dbcur is not None:
             self.pathscanner = PathScanner(self.dbcon, "pathscanner")
             
@@ -137,6 +152,7 @@ class MonitoredPath(object):
         self.path = path
         self.event_mask = event_mask
         self.fsmonitor_ref = fsmonitor_ref
+        self.monitoring = False
 
 
 def __get_class_reference(modulename, classname):
@@ -172,11 +188,16 @@ def get_fsmonitor():
 
 
 if __name__ == "__main__":
+    import time
+
     def callbackfunc(monitored_path, event_path, event):
         """docstring for callback"""
         print "CALLBACK FIRED, params: monitored_path=%s', event_path='%s', event='%d'" % (monitored_path, event_path, event)
 
     fsmonitor_class = get_fsmonitor()
     fsmonitor = fsmonitor_class(callbackfunc)
-    fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
     fsmonitor.start()
+    fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
+    time.sleep(30)
+    fsmonitor.stop()
+    
