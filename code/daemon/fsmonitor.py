@@ -58,16 +58,13 @@ class FSMonitor(threading.Thread):
     """docstring for FSMonitor"""
 
     # Identifiers for each event.
-    EVENTS = (
-        CREATED,
-        MODIFIED,
-        DELETED,
-        MOVED_FROM,
-        MOVED_TO,
-        ATTRIBUTES,
-        MONITORED_DIR_MOVED,
-        DROPPED_EVENTS
-    ) = range(8)
+    EVENTS = {
+        "CREATED"             : 0x00000001,
+        "MODIFIED"            : 0x00000002,
+        "DELETED"             : 0x00000004,
+        "MONITORED_DIR_MOVED" : 0x00000008,
+        "DROPPED_EVENTS"      : 0x00000016,
+    }
 
 
     def __init__(self, callback, persistent=False, dbfile="fsmonitor.db"):
@@ -186,6 +183,11 @@ def get_fsmonitor():
         # A polling mechanism
         pass
 
+# Make EVENTS' members directly accessible through the class dictionary.
+for name, mask in FSMonitor.EVENTS.iteritems():
+    setattr(FSMonitor, name, mask)
+
+
 
 if __name__ == "__main__":
     import time
@@ -197,7 +199,7 @@ if __name__ == "__main__":
     fsmonitor_class = get_fsmonitor()
     fsmonitor = fsmonitor_class(callbackfunc)
     fsmonitor.start()
-    fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
+    fsmonitor.add_dir("/tmp", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
     time.sleep(30)
     fsmonitor.stop()
     
