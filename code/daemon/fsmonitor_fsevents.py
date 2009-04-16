@@ -223,10 +223,13 @@ class FSMonitorFSEvents(FSMonitor):
 
     def __trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
         """trigger events for pathscanner result"""
-        # TODO: only trigger event if it's an event that was in the event_mask
-        for filename in result["created"]:
-            FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.CREATED)
-        for filename in result["modified"]:
-            FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.MODIFIED)                
-        for filename in result["deleted"]:
-            FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.DELETED)
+        event_mask = self.monitored_paths[monitored_path].event_mask
+        if event_mask & FSMonitor.CREATED:
+            for filename in result["created"]:
+                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.CREATED)
+        if event_mask & FSMonitor.MODIFIED:
+            for filename in result["modified"]:
+                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.MODIFIED)                
+        if event_mask & FSMonitor.DELETED:
+            for filename in result["deleted"]:
+                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.DELETED)
