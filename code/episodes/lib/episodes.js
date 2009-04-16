@@ -143,7 +143,7 @@ EPISODES.findStartTime = function() {
 					startTime = aSubCookies[j].substring(2);
 				}
 				else if ( 0 === aSubCookies[j].indexOf("r=") ) {
-					var startPage = aSubCookies[j].substring(2, aSubCookies[j].length - 1);
+					var startPage = aSubCookies[j].substring(2, aSubCookies[j].length);
 					bReferrerMatch = ( escape(document.referrer) == startPage );
 				}
 			}
