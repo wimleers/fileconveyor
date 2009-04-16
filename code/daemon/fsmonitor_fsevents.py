@@ -1,11 +1,8 @@
 """fsmonitor_fsevents.py FSMonitor subclass for FSEvents on Mac OS X >= 10.5
 
 Always works in persistent mode by (FSEvent's) design.
-
-TODO:
-- threading (CFRunLoopRun() blocks everything else, so move it to a separate thread)
-- 
 """
+
 
 __author__ = "Wim Leers (work@wimleers.com)"
 __version__ = "$Rev$"
@@ -99,6 +96,8 @@ class FSMonitorFSEvents(FSMonitor):
             # automatically unschedules the stream from all run loops.
             FSEventStreamInvalidate(streamRef)
             FSEventStreamRelease(streamRef)
+
+            del self.monitored_paths[path]
 
 
     def generate_missed_events(self):
@@ -224,6 +223,7 @@ class FSMonitorFSEvents(FSMonitor):
 
     def __trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
         """trigger events for pathscanner result"""
+        # TODO: only trigger event if it's an event that was in the event_mask
         for filename in result["created"]:
             FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.CREATED)
         for filename in result["modified"]:
