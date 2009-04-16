@@ -4,7 +4,7 @@ How it works:
 - Uses inotify on Linux (kernel 2.6 and higher)
 - Uses FileSystemWatcher on Windows (TODO)
 - Uses FSEvents on Mac OS X (10.5 and higher)
-- Falls back to manual scanning (TODO)
+- Falls back to polling
 
 A persistent mode is also supported, in which all metadata is stored in a
 database. This allows you to even track changes when your program wasn't
@@ -59,6 +59,7 @@ class FSMonitorError(Exception): pass
 
 class FSMonitor(threading.Thread):
     """cross-platform file system monitor"""
+
 
     # Identifiers for each event.
     EVENTS = {
@@ -182,9 +183,9 @@ def get_fsmonitor():
         # Available in Mac OS X 10.5 and higher.
         if (major >= 5):
             return __get_class_reference("fsmonitor_fsevents", "FSMonitorFSEvents")
-    else:
-        # A polling mechanism
-        pass
+
+    # Default to a polling mechanism
+    return __get_class_reference("fsmonitor_polling", "FSMonitorPolling")
 
 
 # Make EVENTS' members directly accessible through the class dictionary.
@@ -201,6 +202,7 @@ if __name__ == "__main__":
         print "CALLBACK FIRED, params: monitored_path=%s', event_path='%s', event='%d'" % (monitored_path, event_path, event)
 
     fsmonitor_class = get_fsmonitor()
+    print "Using class", fsmonitor_class
     fsmonitor = fsmonitor_class(callbackfunc)
     fsmonitor.start()
     fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
