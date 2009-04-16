@@ -1,7 +1,7 @@
 """fsmonitor.py Cross-platform file system monitor
 
 How it works:
-- Uses inotify on Linux (kernel 2.6 and higher) (TODO) => use pyinotify
+- Uses inotify on Linux (kernel 2.6 and higher)
 - Uses FileSystemWatcher on Windows (TODO)
 - Uses FSEvents on Mac OS X (10.5 and higher)
 - Falls back to manual scanning (TODO)
@@ -17,6 +17,11 @@ up.
 To make this class work consistently, less critical features that are only
 available for specific file system monitors are abstracted away. And other
 features are emulated.
+It comes down to the fact that FSMonitor's API is very simple to use and only
+supports 5 different events: CREATED, MODIFIED, DELETED, MONITORED_DIR_MOVED
+and DROPPED_EVENTS. The last 2 events are only triggered for inotify and
+FSEvents.
+
 This implies that the following features are not available through FSMonitor:
 - inotify:
   * auto_add: is always assumed to be True (FSEvents has no setting for this)
@@ -32,8 +37,6 @@ This implies that the following features are not available through FSMonitor:
 And the following features are emulated:
 - FSEvents:
   * inotify's mask, which allows you to listen only to certain events
-Finally, the manual scanning implementation only supports a limited number of
-events: CREATED, MODIFIED and DELETED. This is for performance reasons.
 """
 
 
@@ -55,7 +58,7 @@ class FSMonitorError(Exception): pass
 
 
 class FSMonitor(threading.Thread):
-    """docstring for FSMonitor"""
+    """cross-platform file system monitor"""
 
     # Identifiers for each event.
     EVENTS = {
@@ -144,7 +147,7 @@ class FSMonitor(threading.Thread):
             
 
 class MonitoredPath(object):
-    """docstring for MonitoredPath"""
+    """A simple container for all metadata related to a monitored path"""
     def __init__(self, path, event_mask, fsmonitor_ref=None):
         self.path = path
         self.event_mask = event_mask
@@ -153,7 +156,7 @@ class MonitoredPath(object):
 
 
 def __get_class_reference(modulename, classname):
-    """docstring for __get_class_reference"""
+    """get a reference to a class"""
     module = __import__(modulename, globals(), locals(), [classname])
     class_reference = getattr(module, classname)
     return class_reference
@@ -183,9 +186,11 @@ def get_fsmonitor():
         # A polling mechanism
         pass
 
+
 # Make EVENTS' members directly accessible through the class dictionary.
 for name, mask in FSMonitor.EVENTS.iteritems():
     setattr(FSMonitor, name, mask)
+
 
 
 
@@ -193,13 +198,11 @@ if __name__ == "__main__":
     import time
 
     def callbackfunc(monitored_path, event_path, event):
-        """docstring for callback"""
         print "CALLBACK FIRED, params: monitored_path=%s', event_path='%s', event='%d'" % (monitored_path, event_path, event)
 
     fsmonitor_class = get_fsmonitor()
     fsmonitor = fsmonitor_class(callbackfunc)
     fsmonitor.start()
-    fsmonitor.add_dir("/tmp", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
+    fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
     time.sleep(30)
     fsmonitor.stop()
-    
