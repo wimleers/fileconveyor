@@ -7,8 +7,10 @@ moves.
 Modified files are detected by looking at the mtime.
 
 Instructions:
-- Use initial_scan() to build the fill the database.
+- Use initial_scan() to build the initial database.
 - Use scan() afterwards, to get the changes.
+- Use scan_tree() (which uses scan()) to get the changes in an entire
+  directory structure.
 - Use purge_path() to purge all the metadata for a path from the database.
 - Use (add|update|remove)_files() to add/update/remove files manually (useful
   when your application has more/faster knowledge of changes)
