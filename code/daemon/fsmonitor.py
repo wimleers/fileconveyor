@@ -50,6 +50,7 @@ import platform
 import sqlite3
 import threading
 import Queue
+import os
 from pathscanner import PathScanner
 
 
@@ -85,11 +86,6 @@ class FSMonitor(threading.Thread):
         threading.Thread.__init__(self)
 
 
-    def generate_missed_events(self):
-        """generate the missed events for a persistent DB"""
-        raise NotImplemented
-
-
     def run(self):
         """start the file system monitor (starts a separate thread)"""
         raise NotImplemented
@@ -115,6 +111,12 @@ class FSMonitor(threading.Thread):
 
     def __remove_dir(self, path):
         raise NotImplemented
+
+
+    def generate_missed_events(self, path):
+        """generate the missed events for a persistent DB"""
+        for event_path, result in self.pathscanner.scan_tree(path):
+            self.trigger_events_for_pathscanner_result(path, event_path, result)
 
 
     def stop(self):
@@ -145,7 +147,21 @@ class FSMonitor(threading.Thread):
         # PathScanner.
         if self.persistent == True and self.dbcur is not None:
             self.pathscanner = PathScanner(self.dbcon, "pathscanner")
-            
+
+
+    def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
+        """trigger events for pathscanner result"""
+        event_mask = self.monitored_paths[monitored_path].event_mask
+        if event_mask & FSMonitor.CREATED:
+            for filename in result["created"]:
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.CREATED)
+        if event_mask & FSMonitor.MODIFIED:
+            for filename in result["modified"]:
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.MODIFIED)                
+        if event_mask & FSMonitor.DELETED:
+            for filename in result["deleted"]:
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.DELETED)
+
 
 class MonitoredPath(object):
     """A simple container for all metadata related to a monitored path"""
@@ -203,7 +219,7 @@ if __name__ == "__main__":
 
     fsmonitor_class = get_fsmonitor()
     print "Using class", fsmonitor_class
-    fsmonitor = fsmonitor_class(callbackfunc)
+    fsmonitor = fsmonitor_class(callbackfunc, True)
     fsmonitor.start()
     fsmonitor.add_dir("/Users/wimleers/Downloads", FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
     time.sleep(30)

@@ -68,6 +68,11 @@ class FSMonitorInotify(FSMonitor):
         else:
             self.monitored_paths[path] = MonitoredPath(path, event_mask, wdd)
             self.monitored_paths[path].monitoring = True
+
+            # Generate the missed events.
+            if self.persistent:
+                FSMonitor.generate_missed_events(self, path)
+            
             return self.monitored_paths[path]
 
 
@@ -80,11 +85,6 @@ class FSMonitorInotify(FSMonitor):
             #self.wm.rm_watch(wd, rec=True, quiet=True)
 
             del self.monitored_paths[path]
-
-
-    def generate_missed_events(self):
-        # TODO: use PathScanner()
-        pass
 
 
     def run(self):

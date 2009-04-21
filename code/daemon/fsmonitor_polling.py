@@ -12,8 +12,6 @@ __license__ = "GPL"
 
 from fsmonitor import *
 import time
-import os
-
 
 
 # Define exceptions.
@@ -24,10 +22,10 @@ class FSMonitorPolling(FSMonitor):
     """polling support for FSMonitor"""
 
 
-    interval = 30
+    interval = 10
 
 
-    def __init__(self, callback, dbfile="fsmonitor.db"):
+    def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, True, dbfile)
         self.die = False
 
@@ -41,6 +39,11 @@ class FSMonitorPolling(FSMonitor):
 
         self.monitored_paths[path] = MonitoredPath(path, event_mask, None)
         self.monitored_paths[path].monitoring = True
+
+        # Generate the missed events.
+        if self.persistent:
+            FSMonitor.generate_missed_events(self, path)
+
         return self.monitored_paths[path]
 
 
@@ -48,11 +51,6 @@ class FSMonitorPolling(FSMonitor):
         """override of FSMonitor.__remove_dir()"""
         if path in self.monitored_paths.keys():
             del self.monitored_paths[path]
-
-
-    def generate_missed_events(self):
-        # TODO: use PathScanner()
-        pass
 
 
     def run(self):
@@ -67,7 +65,6 @@ class FSMonitorPolling(FSMonitor):
             # Sleep some time.
             # TODO: make this configurable!
             time.sleep(self.__class__.interval)
-            
 
 
     def stop(self):
@@ -110,19 +107,5 @@ class FSMonitorPolling(FSMonitor):
 
         # Scan all paths.
         for monitored_path in self.monitored_paths.keys():
-            for path, result in self.pathscanner.scan_tree(monitored_path):
-                self.__trigger_events_for_pathscanner_result(monitored_path, monitored_path, result)
-
-
-    def __trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
-        """trigger events for pathscanner result"""
-        event_mask = self.monitored_paths[monitored_path].event_mask
-        if event_mask & FSMonitor.CREATED:
-            for filename in result["created"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.CREATED)
-        if event_mask & FSMonitor.MODIFIED:
-            for filename in result["modified"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.MODIFIED)                
-        if event_mask & FSMonitor.DELETED:
-            for filename in result["deleted"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.DELETED)
+            for event_path, result in self.pathscanner.scan_tree(monitored_path):
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)

@@ -33,7 +33,6 @@ from FSEvents import kCFAllocatorDefault, \
                      FSEventStreamInvalidate, \
                      FSEventStreamRelease, \
                      FSEventStreamShow
-import os
 
 
 # Define exceptions.
@@ -53,7 +52,7 @@ class FSMonitorFSEvents(FSMonitor):
     flags = kFSEventStreamCreateFlagWatchRoot
 
 
-    def __init__(self, callback, dbfile="fsmonitor.db"):
+    def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, True, dbfile)
         self.latest_event_id = None
         self.die = False
@@ -98,11 +97,6 @@ class FSMonitorFSEvents(FSMonitor):
             FSEventStreamRelease(streamRef)
 
             del self.monitored_paths[path]
-
-
-    def generate_missed_events(self):
-        # TODO: use FSEventsGetLastEventIdForDeviceBeforeTime()
-        pass
 
 
     def run(self):
@@ -189,6 +183,12 @@ class FSMonitorFSEvents(FSMonitor):
             else:
                 self.monitored_paths[path].monitoring = True
 
+            # Generate the missed events.
+            # TODO: use FSEvents' sinceWhen parameter instead of the current
+            # inefficient scanning method.
+            if self.persistent:
+                FSMonitor.generate_missed_events(self, path)
+
 
     def __fsevents_callback(self, streamRef, clientCallBackInfo, numEvents, eventPaths, eventFlags, eventIDs):
         """private callback function for use with FSEventStreamCreate"""
@@ -215,21 +215,7 @@ class FSMonitorFSEvents(FSMonitor):
 
             elif eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs:
                 result = self.pathscanner.scan_tree(event_path)
-                self.__trigger_events_for_pathscanner_result(monitored_path, event_path, result)
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
             else:
                 result = self.pathscanner.scan(event_path)
-                self.__trigger_events_for_pathscanner_result(monitored_path, event_path, result)
-
-
-    def __trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
-        """trigger events for pathscanner result"""
-        event_mask = self.monitored_paths[monitored_path].event_mask
-        if event_mask & FSMonitor.CREATED:
-            for filename in result["created"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.CREATED)
-        if event_mask & FSMonitor.MODIFIED:
-            for filename in result["modified"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.MODIFIED)                
-        if event_mask & FSMonitor.DELETED:
-            for filename in result["deleted"]:
-                FSMonitor.trigger_event(self, monitored_path, os.path.join(event_path, filename), FSMonitor.DELETED)
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
