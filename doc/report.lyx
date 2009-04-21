@@ -3030,6 +3030,18 @@ introductory text here, with all major aspects
 
 \begin_layout Subsection
 Goals
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:Goals"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Easy to use: the configuration file is the interface, so it should speak
+ for itself
 \end_layout
 
 \begin_layout Itemize
@@ -3074,11 +3086,64 @@ Design for reuse wherever possible
 \end_layout
 
 \begin_layout Subsection
+Configuration file design
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:Configuration-file-design"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since the configuration file is the interface and I had a good idea of the
+ features I wanted to support, I started by writing a configuration file.
+ That might be unorthodox, but in the end, this is the most important part
+ of the daemon.
+ If it's too hard to configure, nobody will use it.
+ If it's easy to use, more people will be inclined to give it a try.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+explain the config file structure
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
 Python modules
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+All modules have been written with reusability in mind: none of them make
+ assumptions about the daemon itself and are therefor reusable in other
+ Python applications.
 \end_layout
 
 \begin_layout Subsubsection
 filter.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:filter.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -3135,7 +3200,7 @@ The five conditions are:
 \family typewriter
 paths
 \family default
-: a list of paths in which the file can reside
+: a list of paths (separated by colons) in which the file can reside
 \end_layout
 
 \begin_layout Enumerate
@@ -3143,7 +3208,7 @@ paths
 \family typewriter
 extensions
 \family default
-: a list of extensions the file can have
+: a list of extensions (separated by colons) the file can have
 \end_layout
 
 \begin_layout Enumerate
@@ -3151,9 +3216,13 @@ extensions
 \family typewriter
 ignoredDirs
 \family default
-: a list of directories that should be ignored, meaning that if the file
- is inside one of those directories, it will be ignored (this is useful
- to ignore data in typical 
+: a list of directories (separated by colons) that should be ignored, meaning
+ that if the file is inside one of those directories, 
+\family typewriter
+Filter
+\family default
+ will mark this as a negative match – this is useful to ignore data in typical
+ 
 \family typewriter
 CVS
 \family default
@@ -3161,7 +3230,7 @@ CVS
 \family typewriter
 .svn
 \family default
- directories)
+ directories
 \end_layout
 
 \begin_layout Enumerate
@@ -3208,6 +3277,13 @@ This module is fully unit-tested and is therefor guaranteed to work flawlessly.
 
 \begin_layout Subsubsection
 pathscanner.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:pathscanner.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -3233,9 +3309,14 @@ PathScanner
  to detect changes in a directory structure.
  For efficiency, only creations, deletions and modifications are detected,
  not moves.
-\begin_inset Newline newline
-\end_inset
+ This class is used to scan the file system for changes when no supported
+ filesystem monitor is installed on the current operating system.
+ It is also used for persistent storage: when the daemon has been stopped,
+ the database built and maintained through/by this class is used as a reference,
+ to detect changes that have happened before it was started again.
+\end_layout
 
+\begin_layout Standard
 The database schema is very simple: (
 \family typewriter
 path
@@ -3339,6 +3420,235 @@ a lot
 
 \begin_layout Subsubsection
 fsmonitor.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:fsmonitor.py"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This time around, there's more to it than it seems.
+ 
+\family typewriter
+fsmonitor.py
+\family default
+ provides 
+\family typewriter
+FSMonitor
+\family default
+, a base class from which subclasses derive.
+ 
+\family typewriter
+fsmonitor_inotify.py
+\family default
+ has the 
+\family typewriter
+FSMonitorInotify
+\family default
+ class, 
+\family typewriter
+fsmonitor_fsevents.py
+\family default
+ has 
+\family typewriter
+FSMonitorFSEvents
+\family default
+ and 
+\family typewriter
+fsmonitor_polling.py
+\family default
+ has 
+\family typewriter
+FSMonitorPolling
+\family default
+.
+\begin_inset Newline newline
+\end_inset
+
+Put these together, and you have a single, simple to use abstraction to
+ use each operating system's file system monitor:
+\end_layout
+
+\begin_layout Itemize
+Uses inotify 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "inotify"
+
+\end_inset
+
+ on Linux (kernel 2.6.13 and higher)
+\end_layout
+
+\begin_layout Itemize
+Uses FSEvents 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "FSEvents,FSEvents review"
+
+\end_inset
+
+ on Mac OS X (10.5 and higher)
+\end_layout
+
+\begin_layout Itemize
+Falls back to polling
+\end_layout
+
+\begin_layout Standard
+Windows support is possible, but hasn't been implemented yet due to time
+ constraints.
+\end_layout
+
+\begin_layout Subsubsection*
+Implementation obstacles
+\end_layout
+
+\begin_layout Standard
+To make this class work consistently, less critical features that are only
+ available for specific file system monitors are abstracted away.
+ And other features are emulated.
+ It comes down to the fact that 
+\family typewriter
+FSMonitor
+\family default
+'s API is very simple to use and only supports 5 different events: 
+\family typewriter
+CREATED
+\family default
+, 
+\family typewriter
+MODIFIED
+\family default
+, 
+\family typewriter
+DELETED
+\family default
+, 
+\family typewriter
+MONITORED_DIR_MOVED
+\family default
+ and 
+\family typewriter
+DROPPED_EVENTS
+\family default
+.
+ The last 2 events are only triggered for inotify and FSEvents.
+\begin_inset Newline newline
+\end_inset
+
+A persistent mode is also supported, in which all metadata is stored in
+ a database.
+ This allows you to even track changes when your program wasn't running.
+\end_layout
+
+\begin_layout Standard
+As you can see, only 3 
+\begin_inset Quotes eld
+\end_inset
+
+real
+\begin_inset Quotes erd
+\end_inset
+
+ events of interest are supported: the most common ones.
+ This is because not every API supports all features of the other APIs.
+\begin_inset Newline newline
+\end_inset
+
+inotify is the most complete in this regard: it supports a boatload of different
+ events, on a file-level.
+ But it only provides realtime events: it doesn't maintain a complete history
+ of events.
+ And that's understandable: it's impossible to maintain a history of 
+\emph on
+every
+\emph default
+ file system event.
+ There wouldn't be any space left to store actual data.
+\begin_inset Newline newline
+\end_inset
+
+FSEvents on the other hand, works on the directory-level, so you have to
+ maintain your own directory tree state to detect created, modified and
+ deleted files.
+ It only triggers a 
+\begin_inset Quotes eld
+\end_inset
+
+a change has occurred in this directory
+\begin_inset Quotes erd
+\end_inset
+
+ event.
+ This is why for example there is no 
+\begin_inset Quotes eld
+\end_inset
+
+file moved
+\begin_inset Quotes erd
+\end_inset
+
+ event: it'd be too resource-intensive to detect that, or at the very least
+ it wouldn't scale.
+ On the plus side, FSEvents maintains a complete history of events.
+\end_layout
+
+\begin_layout Standard
+Implementations that don't support file-level events (FSEvents and polling)
+ are persistent by design.
+ Because the directory tree state must be maintained to be able to trigger
+ the correct events, 
+\family typewriter
+PathScanner
+\family default
+ (see section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:daemon:modules:pathscanner.py"
+
+\end_inset
+
+) is used for storage.
+ They use 
+\family typewriter
+PathScanner
+\family default
+'s 
+\family typewriter
+(add|update|remove)_files()
+\family default
+ functions to keep the database up-to-date.
+ And because the entire directory tree state is always stored, you can compare
+ the current directory tree state with the stored one to detect changes,
+ either as they occur (by being notified of changes on the directory level)
+ or as they have occurred (by scanning the directory tree manually).
+\end_layout
+
+\begin_layout Standard
+For the persistent mode, we could take advantage of 
+\family typewriter
+FSEvents
+\family default
+' ability to look back in time.
+ However, again due to time constraints, the same approach is used for every
+ implementation: a manual scanning procedure – using 
+\family typewriter
+PathScanner
+\family default
+ – is started after the file system monitor starts listening for new events
+ on a given path.
+ That way, no new events are missed.
+ This works equally well as using FSEvents' special support for this: it's
+ just slower.
+ But it's sufficient for now.
+\end_layout
+
+\begin_layout Subsection
+Putting it all together
 \end_layout
 
 \begin_layout Standard
@@ -3438,15 +3748,57 @@ key "Google Chart API"
 \end_layout
 
 \begin_layout Itemize
-FSEvents (through the Python-Objective-C bridge)
+FSEvents 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "FSEvents,FSEvents review"
+
+\end_inset
+
+ (through the Python-Objective-C bridge 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "PyObjC"
+
+\end_inset
+
+)
 \end_layout
 
 \begin_layout Itemize
-inotify (through the Python pyinotify module)
+inotify 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "inotify"
+
+\end_inset
+
+ (through the Python pyinotify 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "pyinotify"
+
+\end_inset
+
+ module)
 \end_layout
 
 \begin_layout Itemize
-SQLite (through the Python sqlite3 module)
+SQLite 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SQLite"
+
+\end_inset
+
+ (through the Python sqlite3 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "pysqlite"
+
+\end_inset
+
+ module)
 \end_layout
 
 \begin_layout Itemize
@@ -4252,7 +4604,7 @@ Velocity 2008,
 \emph on
 video of the Jiffy presentation
 \emph default
-, Scotth Ruthfield, 2008, 
+, Scott Ruthfield, 2008, 
 \begin_inset Flex URL
 status collapsed
 
@@ -4609,6 +4961,182 @@ status collapsed
 \begin_layout Plain Layout
 
 http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "inotify"
+
+\end_inset
+
+
+\emph on
+inotify
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://en.wikipedia.org/wiki/Inotify
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pyinotify"
+
+\end_inset
+
+
+\emph on
+pyinotify
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://pyinotify.sourceforge.net/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "FSEvents"
+
+\end_inset
+
+
+\emph on
+FSEvents Programming Guide
+\emph default
+, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://developer.apple.com/documentation/Darwin/Conceptual/FSEvents_ProgGuide/Intr
+oduction/Introduction.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "FSEvents review"
+
+\end_inset
+
+
+\emph on
+FSEvents review
+\emph default
+, John Siracusa, 2007, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://arstechnica.com/apple/reviews/2007/10/mac-os-x-10-5.ars/7
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "PyObjC"
+
+\end_inset
+
+
+\emph on
+PyObj
+\emph default
+C, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://pyobjc.sourceforge.net/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "SQLite"
+
+\end_inset
+
+
+\emph on
+SQLite
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.sqlite.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pysqlite"
+
+\end_inset
+
+
+\emph on
+pysqlite
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://docs.python.org/library/sqlite3.html
 \end_layout
 
 \end_inset
