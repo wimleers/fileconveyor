@@ -3012,11 +3012,337 @@ Wait for Steve's further feedback.
 \end_layout
 
 \begin_layout Section
-Improving Drupal: JS at the bottom
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:JS-at-the-bottom"
+Daemon
+\end_layout
 
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+introductory text here, with all major aspects
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Goals
+\end_layout
+
+\begin_layout Itemize
+Transparency: the transfer protocol(s) supported by the CDN should be irrelevant
+\end_layout
+
+\begin_layout Itemize
+Mixing CDNs and static ﬁle servers
+\end_layout
+
+\begin_layout Itemize
+Processing before sync: image optimization, video transcoding …
+\end_layout
+
+\begin_layout Itemize
+Detect (& sync) new ﬁles instantly: through inotify on Linux, FSEvents on
+ Mac OS X and WMI on Windows
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+WMI is not correct, there are actually 3 distinct API's, each with their
+ own limitations
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Robustness: when the daemon is stopped (or when it crashed), it should know
+ where it left off and sync all added, modified and deleted files
+\end_layout
+
+\begin_layout Itemize
+Unit testing wherever feasible
+\end_layout
+
+\begin_layout Itemize
+Design for reuse wherever possible
+\end_layout
+
+\begin_layout Subsection
+Python modules
+\end_layout
+
+\begin_layout Subsubsection
+filter.py
+\end_layout
+
+\begin_layout Standard
+This module provides the 
+\family typewriter
+Filter
+\family default
+ class.
+ Through this class, you can check if a given file path matches a set of
+ conditions.
+ This class is used to determine which processors should be applied to a
+ given file and to which CDN it should be synced.
+\end_layout
+
+\begin_layout Standard
+This class has just 2 methods: 
+\family typewriter
+set_conditions()
+\family default
+ and 
+\family typewriter
+matches()
+\family default
+.
+ There are 5 different conditions you can set.
+ Only the first 2 are required.
+ The latter 2 should be used with care, because they are a lot slower than
+ the first three.
+ Especially the last one can be very slow, because it requires a call back
+ to the kernel, to access the file system.
+\begin_inset Newline newline
+\end_inset
+
+If there are several valid options within a single condition, a match with
+ 
+\emph on
+any
+\emph default
+ of them is sufficient (OR).
+ Finally, 
+\emph on
+all
+\emph default
+ conditions must be satisfied (AND) before a given file path will result
+ in a positive match.
+\begin_inset Newline newline
+\end_inset
+
+The five conditions are:
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+paths
+\family default
+: a list of paths in which the file can reside
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+extensions
+\family default
+: a list of extensions the file can have
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+ignoredDirs
+\family default
+: a list of directories that should be ignored, meaning that if the file
+ is inside one of those directories, it will be ignored (this is useful
+ to ignore data in typical 
+\family typewriter
+CVS
+\family default
+ and 
+\family typewriter
+.svn
+\family default
+ directories)
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+pattern
+\family default
+: a regular expression the file path must match
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+size
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+
+\family typewriter
+conditionType
+\family default
+: either 
+\family typewriter
+minimum
+\family default
+ or 
+\family typewriter
+maximum
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+treshold
+\family default
+: the treshold in bytes
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+This module is fully unit-tested and is therefor guaranteed to work flawlessly.
+\end_layout
+
+\begin_layout Subsubsection
+pathscanner.py
+\end_layout
+
+\begin_layout Standard
+As is to be expected, this module provides the 
+\family typewriter
+PathScanner
+\family default
+ class, which scans paths and stores them in a SQLite 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+ref
+\end_layout
+
+\end_inset
+
+ database.
+ You can use 
+\family typewriter
+PathScanner
+\family default
+ to detect changes in a directory structure.
+ For efficiency, only creations, deletions and modifications are detected,
+ not moves.
+\begin_inset Newline newline
+\end_inset
+
+The database schema is very simple: (
+\family typewriter
+path
+\family default
+, 
+\family typewriter
+filename
+\family default
+, 
+\family typewriter
+mtime
+\family default
+).
+ Directories are also stored; in that case, 
+\family typewriter
+path
+\family default
+ is the path of the parent directory, 
+\family typewriter
+filename
+\family default
+ is the directory name and 
+\family typewriter
+mtime
+\family default
+ is set to -1.
+ Modified files are detected by looking comparing the current mtime with
+ the value stored in the 
+\family typewriter
+mtime
+\family default
+ column.
+\end_layout
+
+\begin_layout Standard
+This class provides you with 8 methods:
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+initial_scan()
+\family default
+ to build the initial database – works recursively
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+scan()
+\family default
+ to get the changes – doesn't work recursively
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+scan_tree()
+\family default
+ (uses 
+\family typewriter
+scan()
+\family default
+) to get the changes in an entire directory structure – obviously works
+ recursively
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+purge_path()
+\family default
+ to purge all the metadata for a path from the database
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+add_files(),
+\family default
+ 
+\family typewriter
+update_files()
+\family default
+, 
+\family typewriter
+remove_files()
+\family default
+ to add/update/remove files manually (useful when your application has more/fast
+er knowledge of changes)
+\end_layout
+
+\begin_layout Standard
+This module doesn't have any tests yet, because it requires 
+\emph on
+a lot
+\emph default
+ of mock functions to simulate system calls.
+ It's been tested manually thoroughly though.
+\end_layout
+
+\begin_layout Subsubsection
+fsmonitor.py
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
 \end_inset
 
 
@@ -3052,6 +3378,10 @@ JavaScript
 
 \begin_layout Itemize
 Python
+\end_layout
+
+\begin_layout Itemize
+SQL
 \end_layout
 
 \end_deeper
@@ -3097,7 +3427,7 @@ key "Browser.php"
 \end_layout
 
 \begin_layout Itemize
-Google Chart API
+Google Chart API 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Google Chart API"
@@ -3105,6 +3435,22 @@ key "Google Chart API"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Itemize
+FSEvents (through the Python-Objective-C bridge)
+\end_layout
+
+\begin_layout Itemize
+inotify (through the Python pyinotify module)
+\end_layout
+
+\begin_layout Itemize
+SQLite (through the Python sqlite3 module)
+\end_layout
+
+\begin_layout Itemize
+Amazon S3 (through the Python boto module)
 \end_layout
 
 \end_deeper
