@@ -36,7 +36,6 @@ class FSMonitorInotify(FSMonitor):
 
     def __init__(self, callback, persistent=False, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, persistent, dbfile)
-        self.die = False
         self.wm = None
         self.notifier = None
 

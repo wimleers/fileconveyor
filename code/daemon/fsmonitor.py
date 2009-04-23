@@ -1,7 +1,7 @@
 """fsmonitor.py Cross-platform file system monitor
 
 How it works:
-- Uses inotify on Linux (kernel 2.6 and higher)
+- Uses inotify on Linux (kernel 2.6.13 and higher)
 - Uses FileSystemWatcher on Windows (TODO)
 - Uses FSEvents on Mac OS X (10.5 and higher)
 - Falls back to polling
@@ -83,6 +83,7 @@ class FSMonitor(threading.Thread):
         self.lock = threading.Lock()
         self.add_queue = Queue.Queue(0)
         self.remove_queue = Queue.Queue(0)
+        self.die = False
         threading.Thread.__init__(self)
 
 
@@ -131,6 +132,7 @@ class FSMonitor(threading.Thread):
         """
         if self.persistent:
             self.pathscanner.purge_path(path)
+
 
     def trigger_event(self, monitored_path, event_path, event):
         """trigger one of the standardized events"""

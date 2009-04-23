@@ -27,7 +27,6 @@ class FSMonitorPolling(FSMonitor):
 
     def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, True, dbfile)
-        self.die = False
 
 
     def __add_dir(self, path, event_mask):

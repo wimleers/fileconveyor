@@ -55,7 +55,6 @@ class FSMonitorFSEvents(FSMonitor):
     def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, True, dbfile)
         self.latest_event_id = None
-        self.die = False
         self.auto_release_pool = None
 
 
