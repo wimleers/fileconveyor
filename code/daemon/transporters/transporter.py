@@ -40,7 +40,7 @@ class Transporter(threading.Thread):
         self.storage = False
         self.is_ready = False
         self.lock = threading.Lock()
-        self.queue = Queue.Queue(0)
+        self.queue = Queue.Queue()
         self.callback = callback
         self.die = False
         threading.Thread.__init__(self)

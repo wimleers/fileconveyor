@@ -81,8 +81,8 @@ class FSMonitor(threading.Thread):
         self.pathscanner = None
         self.callback = callback
         self.lock = threading.Lock()
-        self.add_queue = Queue.Queue(0)
-        self.remove_queue = Queue.Queue(0)
+        self.add_queue = Queue.Queue()
+        self.remove_queue = Queue.Queue()
         self.die = False
         threading.Thread.__init__(self)
 
