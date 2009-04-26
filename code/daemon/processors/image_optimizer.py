@@ -37,7 +37,6 @@ class ImageOptimizer(Processor):
                              )
         format = p.communicate()[0].rstrip()
 
-        # Convert to PNG if plain (not-animated) GIF.
         if format == "GIF":
             tmp_file = os.path.join(self.working_dir, name + ".tmp.png")
             self.output_file = os.path.join(self.working_dir, name + ".png")
@@ -48,12 +47,10 @@ class ImageOptimizer(Processor):
             # Remove temporary PNG.
             os.remove(tmp_file)
 
-        # Optimize PNG file.
         elif format == "PNG":
             self.output_file = os.path.join(self.working_dir, filename)
             subprocess.call("pngcrush -rem alla -reduce %s %s" % (self.input_file, self.output_file), shell=True, stdout=subprocess.PIPE)
 
-        # Optmize JPEG file.
         elif format == "JPEG":
             self.output_file = os.path.join(self.working_dir, filename)
             filesize = os.stat(self.input_file)[stat.ST_SIZE]
@@ -64,7 +61,7 @@ class ImageOptimizer(Processor):
             else:
                 subprocess.call("jpegtran -copy %s -progressive -optimize %s > %s" % (self.__class__.jpegtran_copy_metadata, self.input_file, self.output_file), shell=True, stdout=subprocess.PIPE)
 
-        # Optimize animaged GIF's.
+        # Animated GIF
         elif len(format) >= 6 and format[0:6] == "GIFGIF":
             self.output_file = os.path.join(self.working_dir, filename)
             subprocess.call("gifsicle -O2 %s > %s" % (self.input_file, self.output_file), shell=True, stdout=subprocess.PIPE)
