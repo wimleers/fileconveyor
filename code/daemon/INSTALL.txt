@@ -1,0 +1,26 @@
+Processor: Image Optimizer
+--------------------------
+You only have to install these libraries if you don't have them already. This
+processor only works on UNIX, at least for now.
+
+- imagemagick
+  * homepage: http://imagemagick.org
+  * instructions:
+    1. download the binary release from http://imagemagick.org/script/binary-releases.php
+    2. copy the executables from the bin directory to a directory that is referenced by $PATH
+- pngcrush
+  * homepage: http://pmt.sourceforge.net/pngcrush/
+  * instructions:
+    1. download the source
+    2. make
+    3. copy the executable into a directory that is referenced by $PATH
+- jpegtran
+  * homepage: http://jpegclub.org/
+  * instructions: http://www.phpied.com/installing-jpegtran-mac-unix-linux/
+- gifsicle
+  * homepage: http://www.lcdf.org/gifsicle/
+  * instructions:
+    1. download the source
+    2. ./configure
+    3. make
+    4. make install
