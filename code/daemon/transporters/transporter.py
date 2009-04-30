@@ -38,7 +38,7 @@ class Transporter(threading.Thread):
 
         self.settings = settings
         self.storage = False
-        self.is_ready = False
+        self.ready = False
         self.lock = threading.Lock()
         self.queue = Queue.Queue()
         self.callback = callback
@@ -48,29 +48,39 @@ class Transporter(threading.Thread):
 
     def run(self):
         while not self.die:
-            self.lock.acquire()
-            try:
-                (filepath, path) = self.queue.get_nowait()
-                self.lock.release()
+            # Sleep a little bit if there's no work.
+            if self.queue.qsize() == 0:
+                self.ready = True
+                time.sleep(0.5)
+            else:
+                self.ready = False
+            
+                self.lock.acquire()
+                try:
+                    (filepath, path) = self.queue.get_nowait()
+                    self.lock.release()
 
-                # Sync the file.
-                f = File(open(filepath, "rb"))
-                target = os.path.join(path, filepath)
-                if self.storage.exists(target):
-                    self.storage.delete(target)
-                self.storage.save(target, f)
-                f.close()
+                    if filepath.startswith("/"):
+                        safe_filepath = filepath[1:]
+                    else:
+                        safe_filepath = filepath
 
-                # Call the callback function.
-                url = self.storage.url(filepath)
-                url = self.alter_url(url)
-                self.callback(filepath, url)
+                    # Sync the file.
+                    f = File(open(filepath, "rb"))
+                    target = os.path.join(path, safe_filepath)
+                    if self.storage.exists(target):
+                        self.storage.delete(target)
+                    self.storage.save(target, f)
+                    f.close()
 
-            except Exception, e:
-                self.lock.release()
+                    # Call the callback function.
+                    url = self.storage.url(safe_filepath)
+                    url = self.alter_url(url)
+                    self.callback(filepath, url)
 
-            # Sleep a little bit.
-            time.sleep(0.1)
+                except Exception, e:
+                    print e
+                    self.lock.release()
 
 
     def alter_url(self, url):
@@ -97,3 +107,7 @@ class Transporter(threading.Thread):
         self.lock.acquire()
         self.queue.put((filepath, path))
         self.lock.release()
+
+
+    def is_ready(self):
+        return self.ready
