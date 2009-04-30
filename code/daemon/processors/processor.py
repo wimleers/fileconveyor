@@ -12,6 +12,7 @@ class FileIOError(ProcessorError): pass
 
 import threading
 import os.path
+from distutils.dir_util import mkpath
 
 
 class Processor(threading.Thread):
@@ -25,6 +26,8 @@ class Processor(threading.Thread):
         self.output_file = None
         self.callback    = callback
         self.working_dir = working_dir
+        if not os.path.exists(self.working_dir):
+            mkpath(self.working_dir)
         threading.Thread.__init__(self)
 
 
