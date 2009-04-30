@@ -1,13 +1,42 @@
-Processor: Image Optimizer
---------------------------
+Addressing Processors
+---------------------
+You can address a specific processor by first specifying its Processor module
+and then the exact Processor name (which is its class name):
+  ProcessorModuleName.ProcessorName
+E.g.:
+- unique_filename.MD5
+- image_optimizer.KeepMetadata
+
+
+Processor module: unique_filename
+---------------------------------
+Available Processors:
+1) Mtime
+   Changes a filename based on the file's mtime. E.g.:
+     logo.gif --> logo_1240668971.gif
+2) MD5
+   Changes a filename based on the file's MD5 hash. E.g.:
+     logo.gif --> logo_2f0342a2b9aaf48f9e75aa7ed1d58c48.gif
+
+
+Processor module: image_optimizer
+---------------------------------
 It's important to note that all metadata is stripped from JPEG images, as that
 is the most effective way to reduce the image size. However, this might also
 strip copyright information, i.e. this can also have legal consequences.
-You can disable the stripping of metadata by editing image_optimizer.py. Do
-this by replacing this line
-    jpegtran_copy_metadata = "none"
-with
-    jpegtran_copy_metadata = "all"
+Choose one of the "keep metadata" classes if you want to avoid this.
+When optimizing GIF images, they are converted to the PNG format, which also
+changes their filename. This means they have to be stored
+
+Available Processors:
+1) Max
+   optimizes image files losslessly (GIF, PNG, JPEG, animated GIF)
+2) KeepMetadata
+   same as Max, but keeps JPEG metadata
+3) KeepFilename
+   same as Max, but keeps the original filename (no GIF optimization)
+4) KeepMetadataAndFilename
+   same as Max, but keeps JPEG metadata and the original filename (no GIF optimization)
 
 
 Transporter: CloudFront - Creating a CloudFront distribution
