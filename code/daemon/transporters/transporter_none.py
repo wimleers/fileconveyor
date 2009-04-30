@@ -42,7 +42,7 @@ if __name__ == "__main__":
     none.sync_file("transporter.py")
     none.sync_file("drupal-5-6.png")
     none.sync_file("subdir/bmi-chart.png")
-    subprocess.call("echo yarhar > $TMPDIR/foobar.txt && chmod 777 $TMPDIR/foobar.txt", shell=True, stdout=subprocess.PIPE)
+    subprocess.call("echo yarhar > $TMPDIR/foobar.txt", shell=True, stdout=subprocess.PIPE)
     none.sync_file(os.path.join(tempfile.gettempdir(), "foobar.txt"))
     time.sleep(5)
     none.stop()
