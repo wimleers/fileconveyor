@@ -67,7 +67,6 @@ class Transporter(threading.Thread):
                 self.callback(filepath, url)
 
             except Exception, e:
-                print e
                 self.lock.release()
 
             # Sleep a little bit.
