@@ -99,7 +99,13 @@ class Config(object):
     def __parse_filter(self, filterNode):
         conditions = {}
         for conditionNode in filterNode.getchildren():
-            conditions[conditionNode.tag] = conditionNode.text
+            if conditionNode.tag == "size":
+                conditions[conditionNode.tag] = {
+                    "conditionType" : conditionNode.get("conditionType"),
+                    "treshold"      : conditionNode.text,
+                }
+            else:
+                conditions[conditionNode.tag] = conditionNode.text
         return conditions
 
 
