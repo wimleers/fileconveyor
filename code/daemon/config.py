@@ -8,22 +8,35 @@ __license__ = "GPL"
 
 
 import os
+import os.path
 import xml.etree.ElementTree as etree
+import logging
+
+
+# Define exceptions.
+class ConfigError(Exception): pass
+class SourceDoesNotExist(ConfigError): pass
 
 
 class Config(object):
-    def __init__(self):
+    def __init__(self, parentLogger):
         self.sources = {}
         self.servers = {}
         self.rules   = {}
+        self.logger  = logging.getLogger(".".join([parentLogger, "Config"]))
+        self.errors  = 0
 
 
     def load(self, filename):
         doc = etree.parse(filename)
         root = doc.getroot()
+        self.logger.info("Parsing sources.")
         self.__parse_sources(root)
+        self.logger.info("Parsing servers.")
         self.__parse_servers(root)
+        self.logger.info("Parsing rules.")
         self.__parse_rules(root)
+        return self.errors
 
 
     def __parse_sources(self, root):
@@ -31,6 +44,9 @@ class Config(object):
         for source in sources:
             name      = source.get("name")
             directory = source.get("directory")
+            if not os.path.exists(directory):
+                self.logger.error("The %s directory ('%s') does not exist." % (name, directory))
+                self.errors += 1
             self.sources[name] = directory
 
 
@@ -102,7 +118,16 @@ class Config(object):
 
 
 if __name__ == '__main__':
-    config = Config()
+    import logging.handlers
+
+    # Set up logging.
+    logger = logging.getLogger("test")
+    logger.setLevel(logging.DEBUG)
+    handler = logging.handlers.RotatingFileHandler("config.log")
+    logger.addHandler(handler)
+
+    # Use the Config class.
+    config = Config("test")
     config.load("config.sample.xml")
     print "sources", config.sources
     print "servers", config.servers
