@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <!-- Sources -->
+  <sources>
+    <source name="drupal" directory="/htdocs/drupal" />
+    <source name="wordpress" directory="/htdocs/wordpress" />
+  </sources>
+
+  <!-- Servers -->
+  <servers>
+    <server name="edgecast" transporter="none">
+      <location>/htdocs/drupal/staticfiles</location>
+      <url>http://example.com/staticfiles</url>
+    </server>
+    <server name="simplecdn" transporter="ftp">
+      <host>ftp.simplecdn.com</host>
+      <port>21</port>
+      <username>foo</username>
+      <password>bar</password>
+    </server>
+  </servers>
+
+  <!-- Rules -->
+  <rules>
+    <rule for="drupal" label="CSS, JS, images and Flash">
+      <filter>
+        <paths>modules:misc</paths>
+        <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
+        <ignoredDirs>CVS:.svn</ignoredDirs>
+        <pattern></pattern>
+        <size conditionType="minimum">5000</size>
+      </filter>
+      <processorChain>
+        <processor name="image_optimizer.KeepFilename" />
+        <processor name="unique_filename.Mtime" />
+      </processorChain>
+      <destination server="edgecast">
+        <url>http://me.edgecast.com/static/</url>
+      </destination>
+    </rule>
+
+    <rule for="drupal" label="Videos">
+      <filter>
+        <paths>modules:misc</paths>
+        <extensions>flv:mov:avi:wmv</extensions>
+        <ignoredDirs>CVS:.svn</ignoredDirs>
+        <size conditionType="minimum">1000000</size>
+      </filter>
+      <processorChain>
+        <processor name="transcode_to_flash.py" />
+        <processor name="unique_filename.MD5" />
+      </processorChain>
+      <destination server="simplecdn">
+        <path>/videos</path>
+        <url>http://me.simplecdn.com/videos</url>
+      </destination>
+    </rule>
+  </rules>
+</config>
