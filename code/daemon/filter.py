@@ -106,6 +106,8 @@ class Filter(object):
         # If a pattern condition is set, ensure that it's got a valid regular
         # expression.
         if conditions.has_key("pattern"):
+            if conditions["pattern"] is None:
+                raise InvalidPatternConditionError
             try:
                 re.compile(conditions["pattern"])
             except re.error:
