@@ -121,7 +121,9 @@ class Filter(object):
                 raise InvalidSizeConditionError, "The 'size' condition misses either of 'conditionType' and 'treshold'"
             if size["conditionType"] != "minimum" and size["conditionType"] != "maximum":
                 raise InvalidSizeConditionError, "The 'size' condition has an invalid 'conditionType', valid values are 'maximum' and 'minimum'"
-            if type(size["treshold"]) != types.IntType:
+            try:
+                size["treshold"] = int(size["treshold"])
+            except ValueError:
                 raise InvalidSizeConditionError, "The 'size' condition has an invalid 'treshold', only integer values are valid'"
 
 

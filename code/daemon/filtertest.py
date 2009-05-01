@@ -80,6 +80,8 @@ class TestConditions(unittest.TestCase):
         """'maximum' and 'minimum' are the allowed conditionTypes for the size condition"""
         self.assertTrue(self.filter.set_conditions({"extensions" : "gif:png", "paths" : "foo/bar:baz", "size" : { "conditionType" : "minimum", "treshold" : 1000000}}))
         self.assertTrue(self.filter.set_conditions({"extensions" : "gif:png", "paths" : "foo/bar:baz", "size" : { "conditionType" : "maximum", "treshold" : 1000000}}))
+        # Strings should also work and should be converted to integers automatically.
+        self.assertTrue(self.filter.set_conditions({"extensions" : "gif:png", "paths" : "foo/bar:baz", "size" : { "conditionType" : "maximum", "treshold" : "1000000"}}))
 
 
 class TestMatching(unittest.TestCase):
