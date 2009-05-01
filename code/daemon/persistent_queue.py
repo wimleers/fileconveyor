@@ -20,12 +20,13 @@ class Empty(PersistentQueueError): pass
 class PersistentQueue(object):
     """docstring for PersistentQueue"""
 
-    def __init__(self, dbfile="persistent_queue.db", max_in_memory=100, min_in_memory=50):
+    def __init__(self, dbfile="persistent_queue.db", table="persistent_queue", max_in_memory=100, min_in_memory=50):
         self.size = 0
 
         # Initialize the database.
         self.dbcon = None
         self.dbcur = None
+        self.table = table
         self.__prepare_db(dbfile)
 
         # Initialize the memory queue.
@@ -43,7 +44,7 @@ class PersistentQueue(object):
         sqlite3.register_converter("pickle", cPickle.loads)
         self.dbcon = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.dbcur = self.dbcon.cursor()
-        self.dbcur.execute("CREATE TABLE IF NOT EXISTS persistent_queue(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle)")
+        self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle)" % (self.table))
         self.dbcon.commit()
 
         
@@ -62,7 +63,7 @@ class PersistentQueue(object):
 
     def put(self, item):
         # Insert the item into the database.
-        self.dbcur.execute("INSERT INTO persistent_queue (item) VALUES(?)", (cPickle.dumps(item), ))
+        self.dbcur.execute("INSERT INTO %s (item) VALUES(?)" % (self.table), (cPickle.dumps(item), ))
         self.dbcon.commit()
         id = self.dbcur.lastrowid
         self.size += 1
@@ -74,7 +75,7 @@ class PersistentQueue(object):
         else:
             # If the memory queue is too small, update it using the database.
             if self.memory_queue.qsize() < self.min_in_memory:
-                self.dbcur.execute("SELECT id, item FROM persistent_queue WHERE id > ? ORDER BY id ASC LIMIT 0,%d " % (self.max_in_memory - self.memory_queue.qsize()), (self.highest_id_in_queue, ))
+                self.dbcur.execute("SELECT id, item FROM %s WHERE id > ? ORDER BY id ASC LIMIT 0,%d " % (self.table, self.max_in_memory - self.memory_queue.qsize()), (self.highest_id_in_queue, ))
                 resultList = self.dbcur.fetchall()
                 for id, item in resultList:
                     self.memory_queue.put((id, item))
@@ -83,7 +84,7 @@ class PersistentQueue(object):
             # Get the item from the memory queue and immediately delete it
             # from the database.
             (id, return_value) = self.memory_queue.get()
-            self.dbcur.execute("DELETE FROM persistent_queue WHERE id = ?", (id, ))
+            self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
             self.dbcon.commit()
 
             # Update the size.
