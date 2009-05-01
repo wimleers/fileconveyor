@@ -89,7 +89,7 @@ class PathScanner(object):
             return False
         
         for files in self.__walktree(path):
-            add_files(files)
+            self.add_files(files)
 
 
     def purge_path(self, path):
