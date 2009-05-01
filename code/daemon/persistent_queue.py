@@ -36,7 +36,7 @@ class PersistentQueue(object):
         self.highest_id_in_queue = 0
 
         # Update the size property.
-        self.dbcur.execute("SELECT COUNT(id) FROM persistent_queue")
+        self.dbcur.execute("SELECT COUNT(id) FROM %s" % (self.table))
         self.size = self.dbcur.fetchone()[0]
 
 
