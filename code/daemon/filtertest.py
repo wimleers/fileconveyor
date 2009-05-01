@@ -63,6 +63,7 @@ class TestConditions(unittest.TestCase):
     def testInvalidPatternCondition(self):
         """Filter should fail when setting an invalid pattern filter condition"""
         self.assertRaises(InvalidPatternConditionError, self.filter.set_conditions, {"extensions" : "gif:png", "paths" : "foo/bar:baz", "pattern" : "foo(bar"})
+        self.assertRaises(InvalidPatternConditionError, self.filter.set_conditions, {"extensions" : "gif:png", "paths" : "foo/bar:baz", "pattern" : None})
 
     def testInvalidSizeCondition(self):
         """Filter should fail when setting an invalid size filter condition"""
