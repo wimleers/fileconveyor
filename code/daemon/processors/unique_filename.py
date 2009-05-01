@@ -16,8 +16,8 @@ class Mtime(Processor):
     """gives the file a unique filename based on its mtime"""
 
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
-        Processor.__init__(self, input_file, callback, working_dir="/tmp")
+    def __init__(self, input_file, working_dir="/tmp"):
+        Processor.__init__(self, input_file, working_dir)
 
 
     def run(self):
@@ -25,23 +25,22 @@ class Mtime(Processor):
 
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
-            return self.callback(self.input_file, self.input_file)
+            return self.input_file
 
         mtime = os.stat(self.input_file)[stat.ST_MTIME]
         self.output_file = os.path.join(self.working_dir, name + "_" + str(mtime) + extension)
 
         shutil.copyfile(self.input_file, self.output_file)
 
-        # We're done, perform the callback!
-        self.callback(self.input_file, self.output_file)
+        return self.output_file
 
 
 class MD5(Processor):
     """gives the file a unique filename based on its MD5 hash"""
 
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
-        Processor.__init__(self, input_file, callback, working_dir="/tmp")
+    def __init__(self, input_file, working_dir="/tmp"):
+        Processor.__init__(self, input_file, working_dir)
 
 
     def run(self):
@@ -49,15 +48,14 @@ class MD5(Processor):
 
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
-            return self.callback(self.input_file, self.input_file)
+            return self.input_file
 
         md5 = self.md5(self.input_file)
         self.output_file = os.path.join(self.working_dir, name + "_" + md5 + extension)
 
         shutil.copyfile(self.input_file, self.output_file)
 
-        # We're done, perform the callback!
-        self.callback(self.input_file, self.output_file)
+        return self.output_file
 
 
     def md5(self, filename):
@@ -80,10 +78,7 @@ class MD5(Processor):
 if __name__ == "__main__":
     import time
 
-    def callbackfunc(input_file, output_file):
-        print "CALLBACK FIRED: intput_file=%s, output_file=%s" % (input_file, output_file)
-
-    p = Mtime("logo.gif", callbackfunc)
-    p.run()
-    p = MD5("logo.gif", callbackfunc)
-    p.run()
+    p = Mtime("logo.gif")
+    print p.run()
+    p = MD5("logo.gif")
+    print p.run()

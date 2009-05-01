@@ -11,24 +11,23 @@ class FileIOError(ProcessorError): pass
 
 
 import threading
+import os
 import os.path
+import logging
+import copy
 from distutils.dir_util import mkpath
 
 
-class Processor(threading.Thread):
-    """Base class for threaded file processors"""
+class Processor(object):
+    """base class for file processors"""
 
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
-        if not callable(callback):
-            raise InvalidCallbackError
+    def __init__(self, input_file, working_dir="/tmp"):
         self.input_file  = input_file
         self.output_file = None
-        self.callback    = callback
         self.working_dir = working_dir
         if not os.path.exists(self.working_dir):
             mkpath(self.working_dir)
-        threading.Thread.__init__(self)
 
 
     def run(self):
@@ -54,3 +53,90 @@ class Processor(threading.Thread):
             return False
 
         return True
+
+
+class ProcessorChain(threading.Thread):
+    """chains the given file processors (runs them in sequence)"""
+
+
+    def __init__(self, processors, input_file, callback, parent_logger, working_dir="/tmp"):
+        if not callable(callback):
+            raise InvalidCallbackError
+        self.processors    = processors
+        self.input_file    = input_file
+        self.output_file   = None
+        self.callback      = callback
+        self.working_dir   = working_dir
+        self.logger        = logging.getLogger(".".join([parent_logger, "ProcessorChain"]))
+        threading.Thread.__init__(self)
+
+
+    def run(self):
+        self.output_file = self.input_file
+
+        # Run all processors in the chain.
+        while len(self.processors):
+            # Get next processor.
+            processor_classname = self.processors.pop(0)
+
+            # Get a reference to that class.
+            (modulename, classname) = processor_classname.split(".")
+            module = __import__(modulename, globals(), locals(), [classname])
+            processor_class = getattr(module, classname)
+
+            # Run the processor.
+            old_output_file = self.output_file
+            processor = processor_class(self.output_file, self.working_dir)
+            self.logger.info("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
+            self.output_file = processor.run()
+            self.logger.info("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.output_file, self.output_file))
+
+            # Delete the old output file if applicable. But never ever remove
+            # the input file!
+            if old_output_file != self.output_file and old_output_file != self.input_file:
+                os.remove(old_output_file)
+
+        # All done, call the callback!
+        self.callback(self.input_file, self.output_file)
+
+
+class ProcessorChainFactory(object):
+    """produces ProcessorChain objects whenever requested"""
+
+
+    def __init__(self, processors, callback, parent_logger, working_dir="/tmp"):
+        self.processors    = processors
+        self.callback      = callback
+        self.parent_logger = parent_logger
+        self.working_dir   = working_dir
+
+
+    def make_chain_for(self, input_file):
+        processors = copy.copy(self.processors)
+        return ProcessorChain(processors, input_file, self.callback, self.parent_logger, self.working_dir)
+
+
+if __name__ == '__main__':
+    import time
+    import logging.handlers
+
+    def callbackfunc(input_file, output_file):
+        print "CALLBACK FIRED, input_file='%s', output_file='%s'" % (input_file, output_file)
+
+    # Set up logging.
+    logger = logging.getLogger("test")
+    logger.setLevel(logging.DEBUG)
+    handler = logging.handlers.RotatingFileHandler("processor.log")
+    logger.addHandler(handler)
+
+    # Use a ProcessorChainFactory.
+    processors = [
+        "image_optimizer.KeepFilename",
+        "unique_filename.Mtime"
+    ]
+    factory = ProcessorChainFactory(processors, callbackfunc, "test")
+    chain = factory.make_chain_for("test.jpg")
+    chain.run()
+    chain = factory.make_chain_for("test.png")
+    chain.run()
+    

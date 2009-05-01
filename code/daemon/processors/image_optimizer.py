@@ -23,8 +23,8 @@ class Base(Processor):
     valid_extensions = (".gif", ".png", ".jpg", ".jpeg")
 
 
-    def __init__(self, input_file, callback, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
-        Processor.__init__(self, input_file, callback, working_dir)
+    def __init__(self, input_file, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
+        Processor.__init__(self, input_file, working_dir)
         self.copy_metadata    = copy_metadata
         self.filename_mutable = filename_mutable
         self.devnull = open(os.devnull, 'w')
@@ -35,7 +35,7 @@ class Base(Processor):
 
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self, self.__class__.valid_extensions):
-            return self.callback(self.input_file, self.input_file)
+            return self.input_file
 
         format = self.__identify_format(self.input_file)
 
@@ -61,8 +61,7 @@ class Base(Processor):
         # Clean up things.
         self.devnull.close()
 
-        # We're done, perform the callback!
-        self.callback(self.input_file, self.output_file)
+        return self.output_file
 
 
     def __identify_format(self, filename):
@@ -122,10 +121,9 @@ class Base(Processor):
 class Max(Base):
     """optimizes image files losslessly (GIF, PNG, JPEG, animated GIF)"""
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
+    def __init__(self, input_file, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
-                      callback,
                       working_dir="/tmp",
                       copy_metadata=COPY_METADATA_NONE, # Don't keep metadata
                       filename_mutable=FILENAME_MUTABLE # Do change filenames
@@ -135,10 +133,9 @@ class Max(Base):
 class KeepMetadata(Base):
     """same as Max, but keeps JPEG metadata"""
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
+    def __init__(self, input_file, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
-                      callback,
                       working_dir,
                       copy_metadata=COPY_METADATA_ALL,  # Do keep metadata
                       filename_mutable=FILENAME_MUTABLE # Don't change filenames
@@ -148,10 +145,9 @@ class KeepMetadata(Base):
 class KeepFilename(Base):
     """same as Max, but keeps the original filename (no GIF optimization)"""
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
+    def __init__(self, input_file, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
-                      callback,
                       working_dir,
                       copy_metadata=COPY_METADATA_NONE,   # Don't keep metadata
                       filename_mutable=FILENAME_IMMUTABLE # Do keep filenames
@@ -161,10 +157,9 @@ class KeepFilename(Base):
 class KeepMetadataAndFilename(Base):
     """same as Max, but keeps JPEG metadata and the original filename (no GIF optimization)"""
 
-    def __init__(self, input_file, callback, working_dir="/tmp"):
+    def __init__(self, input_file, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
-                      callback,
                       working_dir,
                       copy_metadata=COPY_METADATA_ALL,    # Do keep metadata
                       filename_mutable=FILENAME_IMMUTABLE # Do keep filenames
@@ -174,31 +169,28 @@ class KeepMetadataAndFilename(Base):
 if __name__ == "__main__":
     import time
 
-    def callbackfunc(input_file, output_file):
-        print "CALLBACK FIRED: input_file=%s, output_file=%s" % (input_file, output_file)
-
-    p = Max("logo.gif", callbackfunc)
-    p.run()
-    p = Max("test.png", callbackfunc)
-    p.run()
-    p = Max("test.jpg", callbackfunc)
-    p.run()
-    p = Max("animated.gif", callbackfunc)
-    p.run()
-    p = Max("processor.pyc", callbackfunc)
-    p.run()
+    p = Max("logo.gif")
+    print p.run()
+    p = Max("test.png")
+    print p.run()
+    p = Max("test.jpg")
+    print p.run()
+    p = Max("animated.gif")
+    print p.run()
+    p = Max("processor.pyc")
+    print p.run()
 
     # Should result in a JPEG file that contains all original metadata.
-    p = KeepMetadata("test.jpg", callbackfunc, "/tmp/KeepMetadata")
-    p.run()
+    p = KeepMetadata("test.jpg", "/tmp/KeepMetadata")
+    print p.run()
 
     # Should keep the original GIF file, as the only possible optimizaton is
     # to convert it from GIF to PNG, but that would change the filename.
-    p = KeepFilename("test.gif", callbackfunc, "/tmp/KeepFilename")
-    p.run()
+    p = KeepFilename("test.gif", "/tmp/KeepFilename")
+    print p.run()
 
     # Should act as the combination of the two above
-    p = KeepMetadataAndFilename("test.jpg", callbackfunc, "/tmp/KeepMetadataAndFilename")
-    p.run()
-    p = KeepMetadataAndFilename("test.gif", callbackfunc, "/tmp/KeepMetadataAndFilename")
-    p.run()
+    p = KeepMetadataAndFilename("test.jpg", "/tmp/KeepMetadataAndFilename")
+    print p.run()
+    p = KeepMetadataAndFilename("test.gif", "/tmp/KeepMetadataAndFilename")
+    print p.run()
