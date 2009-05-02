@@ -9,12 +9,14 @@ __license__ = "GPL"
 
 from persistent_queue import *
 import os
+import os.path
 import unittest
 
 
 class TestConditions(unittest.TestCase):
     def setUp(self):
-        os.remove("persistent_queue.db")
+        if os.path.exists("persistent_queue.db"):
+            os.remove("persistent_queue.db")
 
 
     def testEmpty(self):
