@@ -16,17 +16,23 @@ import unittest
 class TestConditions(unittest.TestCase):
     def setUp(self):
         self.table = "persistent_list_test"
-        if os.path.exists("persistent_list.db"):
-            os.remove("persistent_list.db")
+        self.db = "persistent_list_test.db"
+        if os.path.exists(self.db):
+            os.remove(self.db)
+
+
+    def tearDown(self):
+        if os.path.exists(self.db):
+            os.remove(self.db)
 
 
     def testEmpty(self):
-        pl = PersistentList(self.table)
+        pl = PersistentList(self.table, self.db)
         self.assertEqual(0, len(pl))
 
-    
+
     def testBasicUsage(self):
-        pl = PersistentList(self.table)
+        pl = PersistentList(self.table, self.db)
         items = ["abc", 99, "xyz", 123]
         received_items = []
     
@@ -38,7 +44,7 @@ class TestConditions(unittest.TestCase):
         # Ensure persistency is really working, by deleting the PersistentList
         # and then loading it again.
         del pl
-        pl = PersistentList(self.table)
+        pl = PersistentList(self.table, self.db)
 
         # Get the items from the persistent list.
         for i in range(0, len(pl)):
@@ -52,7 +58,7 @@ class TestConditions(unittest.TestCase):
 
         # A second persistent list that uses the same table should get the
         # same data.
-        pl2 = PersistentList(self.table)
+        pl2 = PersistentList(self.table, self.db)
         for i in range(0, len(pl2)):
             self.assertEqual(pl[i], pl2[i])
         del pl2
