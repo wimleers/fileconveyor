@@ -1,4 +1,4 @@
-"""persistent_queue.py An infinite persistent queue that uses sqlite for storage and Queue for an in-memory cache"""
+"""persistent_queue.py An infinite persistent queue that uses sqlite for storage and Queue for a partial in-memory cache"""
 
 
 __author__ = "Wim Leers (work@wimleers.com)"
@@ -18,7 +18,7 @@ class Empty(PersistentQueueError): pass
 
 
 class PersistentQueue(object):
-    """docstring for PersistentQueue"""
+    """a persistent queue with sqlite back-end designed for infinite queues"""
 
     def __init__(self, dbfile="persistent_queue.db", table="persistent_queue", max_in_memory=100, min_in_memory=50):
         self.size = 0
