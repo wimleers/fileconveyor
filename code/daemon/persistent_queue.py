@@ -20,7 +20,7 @@ class Empty(PersistentQueueError): pass
 class PersistentQueue(object):
     """a persistent queue with sqlite back-end designed for infinite queues"""
 
-    def __init__(self, dbfile="persistent_queue.db", table="persistent_queue", max_in_memory=100, min_in_memory=50):
+    def __init__(self, table, dbfile="persistent_queue.db", max_in_memory=100, min_in_memory=50):
         self.size = 0
 
         # Initialize the database.

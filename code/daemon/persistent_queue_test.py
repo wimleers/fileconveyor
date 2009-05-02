@@ -15,17 +15,18 @@ import unittest
 
 class TestConditions(unittest.TestCase):
     def setUp(self):
+        self.table = "persistent_queue_test"
         if os.path.exists("persistent_queue.db"):
             os.remove("persistent_queue.db")
 
 
     def testEmpty(self):
-        pq = PersistentQueue()
+        pq = PersistentQueue(self.table)
         self.assertRaises(Empty, pq.get)
 
 
     def testBasicUsage(self):
-        pq = PersistentQueue()
+        pq = PersistentQueue(self.table)
         items = ["abc", 99, "xyz", 123]
         received_items = []
     
@@ -42,7 +43,7 @@ class TestConditions(unittest.TestCase):
 
 
     def testAdvancedUsage(self):
-        pq = PersistentQueue(dbfile="persistent_queue.db", max_in_memory=5, min_in_memory=2)
+        pq = PersistentQueue(self.table, dbfile="persistent_queue.db", max_in_memory=5, min_in_memory=2)
         items = range(1, 100)
         received_items = []
     
