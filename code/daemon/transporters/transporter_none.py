@@ -1,3 +1,10 @@
+if __name__ == "__main__":
+    import sys
+    import os
+    import os.path
+    sys.path.append(os.path.abspath('../dependencies'))
+
+
 from transporter import *
 from storages.SymlinkOrCopyStorage import *
 
@@ -30,13 +37,11 @@ if __name__ == "__main__":
     import time
     import subprocess
     import tempfile
-    import os.path
-    import sys
     import os
-    sys.path.append(os.path.abspath('../dependencies'))
+    import os.path
 
-    def callbackfunc(filepath, url):
-        print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)
+    def callbackfunc(filepath, url, action):
+        print "CALLBACK FIRED: filepath='%s', url='%s', action=%d" % (filepath, url, action)
 
     settings = {
         "location"     : "/htdocs/static.example.com/",
@@ -50,5 +55,6 @@ if __name__ == "__main__":
     none.sync_file("subdir/bmi-chart.png")
     subprocess.call("echo yarhar > $TMPDIR/foobar.txt", shell=True, stdout=subprocess.PIPE)
     none.sync_file(os.path.join(tempfile.gettempdir(), "foobar.txt"))
+    none.sync_file("subdir/bmi-chart.png", Transporter.DELETE)
     time.sleep(5)
     none.stop()

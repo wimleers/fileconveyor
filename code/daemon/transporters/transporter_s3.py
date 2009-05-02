@@ -1,3 +1,10 @@
+if __name__ == "__main__":
+    import sys
+    import os
+    import os.path
+    sys.path.append(os.path.abspath('../dependencies'))
+
+
 from transporter import *
 from storages.S3BotoStorage import *
 
@@ -45,8 +52,8 @@ if __name__ == "__main__":
     import os
     sys.path.append(os.path.abspath('../dependencies'))
 
-    def callbackfunc(filepath, url):
-        print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)
+    def callbackfunc(filepath, url, action):
+        print "CALLBACK FIRED: filepath='%s', url='%s', action=%d" % (filepath, url, action)
 
     settings = {
         "access_key_id"      : "your access key id",
@@ -58,5 +65,6 @@ if __name__ == "__main__":
     s3.sync_file("transporter.py")
     s3.sync_file("drupal-5-6.png")
     s3.sync_file("subdir/bmi-chart.png")
+    s3.sync_file("subdir/bmi-chart.png", Transporter.DELETE)
     time.sleep(5)
     s3.stop()

@@ -22,11 +22,19 @@ class ConnectionError(TransporterError): pass
 import threading
 import Queue
 import time
+import os.path
 from sets import Set, ImmutableSet
 
 
 class Transporter(threading.Thread):
     """threaded abstraction around a Django Storage subclass"""
+
+
+    ACTIONS = {
+        "ADD_MODIFY" : 0x00000001,
+        "DELETE"     : 0x00000002,
+    }
+
 
     def __init__(self, settings, callback):
         if not callable(callback):
@@ -53,29 +61,38 @@ class Transporter(threading.Thread):
             
                 self.lock.acquire()
                 try:
-                    (filepath, path) = self.queue.get_nowait()
+                    (filepath, parent_path, action) = self.queue.get_nowait()
                     self.lock.release()
 
+                    # Calculate the target filepath.
                     if filepath.startswith("/"):
                         safe_filepath = filepath[1:]
                     else:
                         safe_filepath = filepath
+                    target_filepath = os.path.join(parent_path, safe_filepath)
 
-                    # Sync the file.
-                    f = File(open(filepath, "rb"))
-                    target = os.path.join(path, safe_filepath)
-                    if self.storage.exists(target):
-                        self.storage.delete(target)
-                    self.storage.save(target, f)
-                    f.close()
+                    # Sync the file: either add/modify it, or delete it.
+                    if action == Transporter.ADD_MODIFY:
+                        # Sync the file.
+                        f = File(open(filepath, "rb"))
+                        if self.storage.exists(target_filepath):
+                            self.storage.delete(target_filepath)
+                        self.storage.save(target_filepath, f)
+                        f.close()
+                        # Calculate the URL.
+                        url = self.storage.url(safe_filepath)
+                        url = self.alter_url(url)
+                    else:
+                        if self.storage.exists(target_filepath):
+                            self.storage.delete(target_filepath)
+                        url = None
 
                     # Call the callback function.
-                    url = self.storage.url(safe_filepath)
-                    url = self.alter_url(url)
-                    self.callback(filepath, url)
+                    self.callback(filepath, url, action)
 
                 except Exception, e:
                     print e
+                    print Exception
                     self.lock.release()
 
 
@@ -98,12 +115,20 @@ class Transporter(threading.Thread):
             raise MissingSettingError
 
 
-    def sync_file(self, filepath, path=""):
-        """sync a file"""
+    def sync_file(self, filepath, action=None, parent_path=""):
+        # Set the default value here because Python won't allow it sooner.
+        if action is None:
+            action = Transporter.ADD_MODIFY
+
         self.lock.acquire()
-        self.queue.put((filepath, path))
+        self.queue.put((filepath, parent_path, action))
         self.lock.release()
 
 
     def is_ready(self):
         return self.ready
+
+
+# Make EVENTS' members directly accessible through the class dictionary.
+for name, mask in Transporter.ACTIONS.iteritems():
+    setattr(Transporter, name, mask)

@@ -1,3 +1,10 @@
+if __name__ == "__main__":
+    import sys
+    import os
+    import os.path
+    sys.path.append(os.path.abspath('../dependencies'))
+
+
 from transporter import *
 from transporter_s3 import TransporterS3
 
@@ -61,8 +68,8 @@ if __name__ == "__main__":
     import os
     sys.path.append(os.path.abspath('../dependencies'))
 
-    def callbackfunc(filepath, url):
-        print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)
+    def callbackfunc(filepath, url, action):
+        print "CALLBACK FIRED: filepath='%s', url='%s', action=%d" % (filepath, url, action)
 
     settings = {
         "access_key_id"      : "your access key id",
@@ -75,5 +82,6 @@ if __name__ == "__main__":
     cf.sync_file("transporter.py")
     cf.sync_file("drupal-5-6.png")
     cf.sync_file("subdir/bmi-chart.png")
+    cf.sync_file("subdir/bmi-chart.png", Transporter.DELETE)
     time.sleep(5)
     cf.stop()
