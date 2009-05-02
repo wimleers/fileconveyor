@@ -104,16 +104,14 @@ class ProcessorChainFactory(object):
     """produces ProcessorChain objects whenever requested"""
 
 
-    def __init__(self, processors, callback, parent_logger, working_dir="/tmp"):
-        self.processors    = processors
+    def __init__(self, callback, parent_logger, working_dir="/tmp"):
         self.callback      = callback
         self.parent_logger = parent_logger
         self.working_dir   = working_dir
 
 
-    def make_chain_for(self, input_file):
-        processors = copy.copy(self.processors)
-        return ProcessorChain(processors, input_file, self.callback, self.parent_logger, self.working_dir)
+    def make_chain_for(self, input_file, processors):
+        return ProcessorChain(copy.copy(processors), input_file, self.callback, self.parent_logger, self.working_dir)
 
 
 if __name__ == '__main__':
