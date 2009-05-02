@@ -7,10 +7,6 @@ __date__ = "$Date$"
 __license__ = "GPL"
 
 
-import sys
-import os
-sys.path.append(os.path.abspath('../dependencies'))
-
 from django.core.files.storage import Storage
 from django.core.files import File
 
@@ -99,7 +95,7 @@ class Transporter(threading.Thread):
             raise InvalidSettingError
 
         if len(required_settings.difference(settings)):
-            raise InvalidSettingError
+            raise MissingSettingError
 
 
     def sync_file(self, filepath, path=""):

@@ -2,6 +2,9 @@ from transporter import *
 from storages.FTPStorage import *
 
 
+TRANSPORTER_CLASS = "TransporterFTP"
+
+
 class TransporterFTP(Transporter):
 
 
@@ -29,6 +32,9 @@ class TransporterFTP(Transporter):
 
 if __name__ == "__main__":
     import time
+    import sys
+    import os
+    sys.path.append(os.path.abspath('../dependencies'))
 
     def callbackfunc(filepath, url):
         print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)

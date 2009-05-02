@@ -2,6 +2,9 @@ from transporter import *
 from storages.S3BotoStorage import *
 
 
+TRANSPORTER_CLASS = "TransporterS3"
+
+
 class TransporterS3(Transporter):
 
 
@@ -38,6 +41,9 @@ class TransporterS3(Transporter):
 
 if __name__ == "__main__":
     import time
+    import sys
+    import os
+    sys.path.append(os.path.abspath('../dependencies'))
 
     def callbackfunc(filepath, url):
         print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)

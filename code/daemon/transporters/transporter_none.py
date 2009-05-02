@@ -2,6 +2,9 @@ from transporter import *
 from storages.SymlinkOrCopyStorage import *
 
 
+TRANSPORTER_CLASS = "TransporterNone"
+
+
 class TransporterNone(Transporter):
 
 
@@ -28,6 +31,9 @@ if __name__ == "__main__":
     import subprocess
     import tempfile
     import os.path
+    import sys
+    import os
+    sys.path.append(os.path.abspath('../dependencies'))
 
     def callbackfunc(filepath, url):
         print "CALLBACK FIRED: filepath=%s, url=%s" % (filepath, url)
