@@ -15,7 +15,7 @@ class SymlinkOrCopyStorage(FileSystemStorage):
 
     def __init__(self, location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL, symlinkWithin=None):
         FileSystemStorage.__init__(self, location, base_url)
-        self.symlinkWithin = symlinkWithin
+        self.symlinkWithin = symlinkWithin.split(":")
 
     def _save(self, name, content):
         full_path_dst = self.path(name)
@@ -28,9 +28,14 @@ class SymlinkOrCopyStorage(FileSystemStorage):
 
         full_path_src = os.path.abspath(content.name)
 
-        if full_path_src.startswith(self.symlinkWithin):
-            os.symlink(full_path_src, full_path_dst)
-        else:
+        symlinked = False
+        for path in self.symlinkWithin:
+            if full_path_src.startswith(path):
+                os.symlink(full_path_src, full_path_dst)
+                symlinked = True
+                break
+
+        if not symlinked:
             FileSystemStorage._save(self, name, content)
 
         return name
