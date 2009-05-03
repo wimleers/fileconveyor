@@ -17,6 +17,7 @@ class SymlinkOrCopyStorage(FileSystemStorage):
         FileSystemStorage.__init__(self, location, base_url)
         self.symlinkWithin = symlinkWithin.split(":")
 
+
     def _save(self, name, content):
         full_path_dst = self.path(name)
 
