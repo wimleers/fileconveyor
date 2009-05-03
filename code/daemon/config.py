@@ -12,6 +12,8 @@ import os.path
 import xml.etree.ElementTree as etree
 import logging
 
+from filter import *
+
 
 # Define exceptions.
 class ConfigError(Exception): pass
@@ -19,11 +21,11 @@ class SourceDoesNotExist(ConfigError): pass
 
 
 class Config(object):
-    def __init__(self, parentLogger):
+    def __init__(self, parent_logger):
         self.sources = {}
         self.servers = {}
         self.rules   = {}
-        self.logger  = logging.getLogger(".".join([parentLogger, "Config"]))
+        self.logger  = logging.getLogger(".".join([parent_logger, "Config"]))
         self.errors  = 0
 
 
@@ -54,13 +56,15 @@ class Config(object):
         servers = root.find("servers")
         for server in servers:
             settings = {}
-            name        = server.get("name")
-            transporter = server.get("transporter")
+            name           = server.get("name")
+            transporter    = server.get("transporter")
+            maxConnections = server.get("maxConnections")
             for setting in server.getchildren():
                 settings[setting.tag] = setting.text
             self.servers[name] = {
-                "transporter" : transporter,
-                "settings"    : settings,
+                "maxConnections" : maxConnections,
+                "transporter"    : transporter,
+                "settings"       : settings,
             }
 
 
@@ -71,56 +75,82 @@ class Config(object):
             label      = rule.get("label")
 
             # 1: filter (required)
-            filterNode = rule.find("filter")
-            conditions = self.__parse_filter(filterNode)
+            filter_node = rule.find("filter")
+            conditions = self.__parse_filter(filter_node, label)
 
             # 2: processorChain (optional)
-            processorChain = None
-            processorChainNode = rule.find("processorChain")
-            if not processorChainNode is None:
-                processorChain = self.__parse_processorChain(processorChainNode)
+            processor_chain = None
+            processor_chain_node = rule.find("processorChain")
+            if not processor_chain_node is None:
+                processor_chain = self.__parse_processor_chain(processor_chain_node, label)
 
             # 3: destination (optional)
             destination = None
-            destinationNode = rule.find("destination")
-            if not destinationNode is None:
-                destination = self.__parse_destination(destinationNode)
+            destination_node = rule.find("destination")
+            if not destination_node is None:
+                destination = self.__parse_destination(destination_node, label)
+
+            if processor_chain_node is None and destination_node is None:
+                self.logger.error("In rule '%s': either a processChain or a destination must be configured, but neither is." % (label))
+                self.errors += 1
 
             if not self.rules.has_key(for_source):
                 self.rules[for_source] = []
             self.rules[for_source].append({
-                "label"          : label,
-                "filter"         : conditions,
-                "processorChain" : processorChain,
-                "destination"    : destination,
+                "label"           : label,
+                "filterConditions": conditions,
+                "processorChain"  : processor_chain,
+                "destination"     : destination,
             })
 
 
-    def __parse_filter(self, filterNode):
+    def __parse_filter(self, filter_node, rule_label):
         conditions = {}
-        for conditionNode in filterNode.getchildren():
-            if conditionNode.tag == "size":
-                conditions[conditionNode.tag] = {
-                    "conditionType" : conditionNode.get("conditionType"),
-                    "treshold"      : conditionNode.text,
+        for condition_node in filter_node.getchildren():
+            if condition_node.tag == "size":
+                conditions[condition_node.tag] = {
+                    "conditionType" : condition_node.get("conditionType"),
+                    "treshold"      : condition_node.text,
                 }
             else:
-                conditions[conditionNode.tag] = conditionNode.text
+                conditions[condition_node.tag] = condition_node.text
+
+        # Validate the conditions by trying to create a Filter object with it.
+        try:
+            f = Filter(conditions)
+        except FilterError, e:
+            message = e.message
+            if message == "":
+                message = "none"
+            self.logger.error("In rule '%s': invalid filter condition: %s (details: \"%s\")." % (rule_label, e.__class__.__name__, message))
+            self.errors += 1
+
         return conditions
 
 
-    def __parse_processorChain(self, processorChainNode):
-        processorChain = []
-        for processorNode in processorChainNode.getchildren():
-            processorChain.append(processorNode.get("name"))
-        return processorChain
+    def __parse_processor_chain(self, processor_chain_node, rule_label):
+        processor_chain = []
+        for processor_node in processor_chain_node.getchildren():
+            processor_chain.append(processor_node.get("name"))
+        return processor_chain
 
 
-    def __parse_destination(self, destinationNode):
-        settings = {}
-        for settingNode in destinationNode.getchildren():
-            settings[settingNode.tag] = settingNode.text
-        return settings
+    def __parse_destination(self, destination_node, rule_label):
+        destination = {}
+        destination["settings"] = {}
+        destination["server"] = destination_node.get("server")
+        for setting_node in destination_node.getchildren():
+            destination["settings"][setting_node.tag] = setting_node.text
+
+        # Validate "server" attribute.
+        if destination["server"] is None:
+            self.logger.error("In rule '%s': invalid destination: 'server' attribute is missing." % (rule_label))
+            self.errors += 1
+        elif destination["server"] not in self.servers.keys():
+            self.logger.error("In rule '%s': invalid destination: 'server' attribute references a non-existing source." % (rule_label))
+            self.errors += 1
+
+        return destination
 
 
 if __name__ == '__main__':
