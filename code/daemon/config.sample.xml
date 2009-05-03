@@ -10,13 +10,14 @@
   <servers>
     <server name="edgecast" transporter="none">
       <location>/htdocs/drupal/staticfiles</location>
-      <url>http://example.com/staticfiles</url>
+      <url>http://me.edgecast.com/staticfiles</url>
     </server>
-    <server name="simplecdn" transporter="ftp">
+    <server name="simplecdn" transporter="ftp" maxConnections="2">
       <host>ftp.simplecdn.com</host>
       <port>21</port>
       <username>foo</username>
       <password>bar</password>
+      <url>http://me.simplecdn.com</url>
     </server>
   </servers>
 
@@ -27,16 +28,12 @@
         <paths>modules:misc</paths>
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
         <ignoredDirs>CVS:.svn</ignoredDirs>
-        <pattern></pattern>
-        <size conditionType="minimum">5000</size>
       </filter>
       <processorChain>
         <processor name="image_optimizer.KeepFilename" />
         <processor name="unique_filename.Mtime" />
       </processorChain>
-      <destination server="edgecast">
-        <url>http://me.edgecast.com/static/</url>
-      </destination>
+      <destination server="edgecast" />
     </rule>
 
     <rule for="drupal" label="Videos">
@@ -52,7 +49,6 @@
       </processorChain>
       <destination server="simplecdn">
         <path>/videos</path>
-        <url>http://me.simplecdn.com/videos</url>
       </destination>
     </rule>
   </rules>
