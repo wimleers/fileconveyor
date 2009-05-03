@@ -10,6 +10,7 @@ __license__ = "GPL"
 import os
 import os.path
 import xml.etree.ElementTree as etree
+import re
 import logging
 
 from filter import *
@@ -27,6 +28,8 @@ class Config(object):
         self.rules   = {}
         self.logger  = logging.getLogger(".".join([parent_logger, "Config"]))
         self.errors  = 0
+
+        self.source_name_regex = re.compile('^[a-zA-Z0-9-_]*$')
 
 
     def load(self, filename):
@@ -46,10 +49,15 @@ class Config(object):
         for source in sources:
             name      = source.get("name")
             directory = source.get("directory")
+            self.sources[name] = directory
+
+            # Validate.
+            if not self.source_name_regex.match(name):
+                self.logger.error("The name '%s' for a source is invalid. Only use alphanumeric characters, the dash and the underscore." % (name))
+                self.errors += 1
             if not os.path.exists(directory):
                 self.logger.error("The %s directory ('%s') does not exist." % (name, directory))
                 self.errors += 1
-            self.sources[name] = directory
 
 
     def __parse_servers(self, root):
