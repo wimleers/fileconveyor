@@ -60,7 +60,8 @@ class TestConditions(unittest.TestCase):
 
         # Peeking should not affect the queue.
         size_before = pq.qsize()
-        pq.peek()
+        first_item = pq.peek()
+        self.assertEqual(first_item, items[0], "Peeking works correctly.")
         size_after = pq.qsize()
         self.assertEqual(size_before, size_after, "Peeking should not affect the queue.")
 

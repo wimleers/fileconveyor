@@ -73,7 +73,10 @@ class PersistentQueue(object):
             raise Empty
         else:
             self.__update_memory_queue()
-            return self.memory_queue[0]
+            # Index 0: the first element in the list
+            # Index 1: 
+            (id, item) = self.memory_queue[0]
+            return item
 
 
     def get(self):
@@ -84,14 +87,14 @@ class PersistentQueue(object):
 
             # Get the item from the memory queue and immediately delete it
             # from the database.
-            (id, return_value) = self.memory_queue.pop(0)
+            (id, item) = self.memory_queue.pop(0)
             self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
             self.dbcon.commit()
 
             # Update the size.
             self.size -= 1
 
-            return return_value
+            return item
 
 
     def __update_memory_queue(self):
