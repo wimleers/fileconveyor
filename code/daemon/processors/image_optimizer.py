@@ -65,7 +65,7 @@ class Base(Processor):
 
 
     def __identify_format(self, filename):
-        p = subprocess.Popen("identify -format %%m %s" % (filename),
+        p = subprocess.Popen("identify -format %%m \"%s\"" % (filename),
                              shell=True,
                              stdout=subprocess.PIPE
                              )
@@ -79,7 +79,7 @@ class Base(Processor):
                         stdout=subprocess.PIPE
                         )
         # Optimize temporary PNG.
-        subprocess.call("pngcrush -rem alla -reduce %s %s" % (tmp_file, output_file),
+        subprocess.call("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (tmp_file, output_file),
                         shell=True,
                         stdout=subprocess.PIPE
                         )
@@ -89,7 +89,7 @@ class Base(Processor):
 
 
     def __optimize_PNG(self, input_file, output_file):
-        subprocess.call("pngcrush -rem alla -reduce %s %s" % (input_file, output_file),
+        subprocess.call("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (input_file, output_file),
                         shell=True,
                         stdout=subprocess.PIPE
                         )
@@ -100,19 +100,19 @@ class Base(Processor):
         # If the file is 10 KB or larger, JPEG's progressive mode
         # typically results in a higher compression ratio.
         if filesize < 10 * 1024:
-            subprocess.call("jpegtran -copy %s -optimize %s > %s" % (copy_metadata, input_file, output_file),
+            subprocess.call("jpegtran -copy %s -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file),
                             shell=True,
                             stdout=subprocess.PIPE
                             )
         else:
-            subprocess.call("jpegtran -copy %s -progressive -optimize %s > %s" % (copy_metadata, input_file, output_file),
+            subprocess.call("jpegtran -copy %s -progressive -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file),
                             shell=True,
                             stdout=subprocess.PIPE
                             )
 
 
     def __optimize_animated_GIF(self, input_file, output_file):
-        subprocess.call("gifsicle -O2 %s > %s" % (input_file, output_file),
+        subprocess.call("gifsicle -O2 \"%s\" > \"%s\"" % (input_file, output_file),
                         shell=True,
                         stdout=subprocess.PIPE
                         )
