@@ -155,7 +155,7 @@ class Config(object):
             self.logger.error("In rule '%s': invalid destination: 'server' attribute is missing." % (rule_label))
             self.errors += 1
         elif destination["server"] not in self.servers.keys():
-            self.logger.error("In rule '%s': invalid destination: 'server' attribute references a non-existing source." % (rule_label))
+            self.logger.error("In rule '%s': invalid destination: 'server' attribute references a non-existing server." % (rule_label))
             self.errors += 1
 
         return destination
