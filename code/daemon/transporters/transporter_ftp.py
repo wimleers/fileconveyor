@@ -43,8 +43,8 @@ if __name__ == "__main__":
     import os
     sys.path.append(os.path.abspath('../dependencies'))
 
-    def callbackfunc(filepath, url, action):
-        print "CALLBACK FIRED: filepath='%s', url='%s', action=%d" % (filepath, url, action)
+    def callbackfunc(src, dst, url, action):
+        print "CALLBACK FIRED:\n\tsrc='%s'\n\tdst='%s'\n\turl='%s'\n\taction=%d" % (src, dst, url, action)
 
     settings = {
         "host"     : "your ftp host",
@@ -57,6 +57,6 @@ if __name__ == "__main__":
     ftp.sync_file("transporter.py")
     ftp.sync_file("drupal-5-6.png")
     ftp.sync_file("subdir/bmi-chart.png")
-    ftp.sync_file("subdir/bmi-chart.png", Transporter.DELETE)
+    ftp.sync_file("subdir/bmi-chart.png", "subdir/bmi-chart.png", Transporter.DELETE)
     time.sleep(5)
     ftp.stop()

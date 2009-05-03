@@ -61,35 +61,28 @@ class Transporter(threading.Thread):
                 self.ready = False
 
                 self.lock.acquire()
-                (filepath, parent_path, action) = self.queue.get_nowait()
+                (src, dst, action) = self.queue.get_nowait()
                 self.lock.release()
-
-                # Calculate the target filepath.
-                if filepath.startswith("/"):
-                    safe_filepath = filepath[1:]
-                else:
-                    safe_filepath = filepath
-                target_filepath = os.path.join(parent_path, safe_filepath)
 
                 try:
                     # Sync the file: either add/modify it, or delete it.
                     if action == Transporter.ADD_MODIFY:
                         # Sync the file.
-                        f = File(open(filepath, "rb"))
-                        if self.storage.exists(target_filepath):
-                            self.storage.delete(target_filepath)
-                        self.storage.save(target_filepath, f)
+                        f = File(open(src, "rb"))
+                        if self.storage.exists(dst):
+                            self.storage.delete(dst)
+                        self.storage.save(dst, f)
                         f.close()
                         # Calculate the URL.
-                        url = self.storage.url(safe_filepath)
+                        url = self.storage.url(dst)
                         url = self.alter_url(url)
                     else:
-                        if self.storage.exists(target_filepath):
-                            self.storage.delete(target_filepath)
+                        if self.storage.exists(dst):
+                            self.storage.delete(dst)
                         url = None
 
                     # Call the callback function.
-                    self.callback(filepath, url, action)
+                    self.callback(src, dst, url, action)
 
                 except Exception, e:
                     raise ConnectionError(e)
@@ -114,15 +107,21 @@ class Transporter(threading.Thread):
             raise MissingSettingError
 
 
-    def sync_file(self, filepath, action=None, parent_path=""):
+    def sync_file(self, src, dst=None, action=None):
         # Set the default value here because Python won't allow it sooner.
+        if dst is None:
+            dst = src
         if action is None:
             action = Transporter.ADD_MODIFY
         elif action not in Transporter.ACTIONS.values():
             raise InvalidActionError
 
+        # If dst is relative to the root, strip the leading slash.
+        if dst.startswith("/"):
+            dst = dst[1:]
+
         self.lock.acquire()
-        self.queue.put((filepath, parent_path, action))
+        self.queue.put((src, dst, action))
         self.lock.release()
 
 
