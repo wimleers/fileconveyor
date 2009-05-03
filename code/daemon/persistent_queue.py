@@ -1,4 +1,4 @@
-"""persistent_queue.py An infinite persistent queue that uses sqlite for storage and Queue for a partial in-memory cache"""
+"""persistent_queue.py An infinite persistent queue that uses sqlite for storage and a list for a partial in-memory cache (to allow for peeking)"""
 
 
 __author__ = "Wim Leers (work@wimleers.com)"
@@ -9,7 +9,6 @@ __license__ = "GPL"
 
 import sqlite3
 import cPickle
-import Queue
 
 
 # Define exceptions.
@@ -32,7 +31,7 @@ class PersistentQueue(object):
         # Initialize the memory queue.
         self.max_in_memory = max_in_memory
         self.min_in_memory = min_in_memory
-        self.memory_queue = Queue.Queue(self.max_in_memory)
+        self.memory_queue = []
         self.highest_id_in_queue = 0
 
         # Update the size property.
@@ -47,7 +46,7 @@ class PersistentQueue(object):
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle)" % (self.table))
         self.dbcon.commit()
 
-        
+
     def qsize(self):
         return self.size
 
@@ -69,21 +68,23 @@ class PersistentQueue(object):
         self.size += 1
 
 
+    def peek(self):
+        if self.empty():
+            raise Empty
+        else:
+            self.__update_memory_queue()
+            return self.memory_queue[0]
+
+
     def get(self):
         if self.empty():
             raise Empty
         else:
-            # If the memory queue is too small, update it using the database.
-            if self.memory_queue.qsize() < self.min_in_memory:
-                self.dbcur.execute("SELECT id, item FROM %s WHERE id > ? ORDER BY id ASC LIMIT 0,%d " % (self.table, self.max_in_memory - self.memory_queue.qsize()), (self.highest_id_in_queue, ))
-                resultList = self.dbcur.fetchall()
-                for id, item in resultList:
-                    self.memory_queue.put((id, item))
-                    self.highest_id_in_queue = id
+            self.__update_memory_queue()
 
             # Get the item from the memory queue and immediately delete it
             # from the database.
-            (id, return_value) = self.memory_queue.get()
+            (id, return_value) = self.memory_queue.pop(0)
             self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
             self.dbcon.commit()
 
@@ -91,3 +92,13 @@ class PersistentQueue(object):
             self.size -= 1
 
             return return_value
+
+
+    def __update_memory_queue(self):
+        # If the memory queue is too small, update it using the database.
+        if len(self.memory_queue) < self.min_in_memory:
+            self.dbcur.execute("SELECT id, item FROM %s WHERE id > ? ORDER BY id ASC LIMIT 0,%d " % (self.table, self.max_in_memory - len(self.memory_queue)), (self.highest_id_in_queue, ))
+            resultList = self.dbcur.fetchall()
+            for id, item in resultList:
+                self.memory_queue.append((id, item))
+                self.highest_id_in_queue = id

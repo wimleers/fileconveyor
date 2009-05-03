@@ -35,12 +35,12 @@ class TestConditions(unittest.TestCase):
         pq = PersistentQueue(self.table, self.db)
         items = ["abc", 99, "xyz", 123]
         received_items = []
-    
+
         # Queue the items.
         for item in items:
             pq.put(item)
         self.assertEqual(len(items), pq.qsize(), "The size of the original list matches the size of the queue.")
-    
+
         # Dequeue the items.
         while not pq.empty():
             item = pq.get()
@@ -52,12 +52,18 @@ class TestConditions(unittest.TestCase):
         pq = PersistentQueue(self.table, self.db, max_in_memory=5, min_in_memory=2)
         items = range(1, 100)
         received_items = []
-    
+
         # Queue the items.
         for item in items:
             pq.put(item)
         self.assertEqual(len(items), pq.qsize(), "The size of the original list matches the size of the queue.")
-    
+
+        # Peeking should not affect the queue.
+        size_before = pq.qsize()
+        pq.peek()
+        size_after = pq.qsize()
+        self.assertEqual(size_before, size_after, "Peeking should not affect the queue.")
+
         # Dequeue the items.
         while not pq.empty():
             item = pq.get()
