@@ -36,14 +36,17 @@ class TransporterS3(Transporter):
             self.settings["bucket_prefix"] = ""
 
         # Map the settings to the format expected by S3Storage.
-        self.storage = S3BotoStorage(
-            self.settings["bucket_name"],
-            self.settings["bucket_prefix"],
-            self.settings["access_key_id"],
-            self.settings["secret_access_key"],
-            "public-read",
-            self.__class__.headers
-        )
+        try:
+            self.storage = S3BotoStorage(
+                self.settings["bucket_name"],
+                self.settings["bucket_prefix"],
+                self.settings["access_key_id"],
+                self.settings["secret_access_key"],
+                "public-read",
+                self.__class__.headers
+            )
+        except Exception, e:
+            raise ConnectionError(e)
 
 
 if __name__ == "__main__":

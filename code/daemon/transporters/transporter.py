@@ -17,6 +17,7 @@ class InvalidSettingError(TransporterError): pass
 class MissingSettingError(TransporterError): pass
 class InvalidCallbackError(TransporterError): pass
 class ConnectionError(TransporterError): pass
+class InvalidActionError(TransporterError): pass
 
 
 import threading
@@ -58,19 +59,19 @@ class Transporter(threading.Thread):
                 time.sleep(0.5)
             else:
                 self.ready = False
-            
+
                 self.lock.acquire()
+                (filepath, parent_path, action) = self.queue.get_nowait()
+                self.lock.release()
+
+                # Calculate the target filepath.
+                if filepath.startswith("/"):
+                    safe_filepath = filepath[1:]
+                else:
+                    safe_filepath = filepath
+                target_filepath = os.path.join(parent_path, safe_filepath)
+
                 try:
-                    (filepath, parent_path, action) = self.queue.get_nowait()
-                    self.lock.release()
-
-                    # Calculate the target filepath.
-                    if filepath.startswith("/"):
-                        safe_filepath = filepath[1:]
-                    else:
-                        safe_filepath = filepath
-                    target_filepath = os.path.join(parent_path, safe_filepath)
-
                     # Sync the file: either add/modify it, or delete it.
                     if action == Transporter.ADD_MODIFY:
                         # Sync the file.
@@ -91,9 +92,7 @@ class Transporter(threading.Thread):
                     self.callback(filepath, url, action)
 
                 except Exception, e:
-                    print e
-                    print Exception
-                    self.lock.release()
+                    raise ConnectionError(e)
 
 
     def alter_url(self, url):
@@ -119,6 +118,8 @@ class Transporter(threading.Thread):
         # Set the default value here because Python won't allow it sooner.
         if action is None:
             action = Transporter.ADD_MODIFY
+        elif action not in Transporter.ACTIONS.values():
+            raise InvalidActionError
 
         self.lock.acquire()
         self.queue.put((filepath, parent_path, action))
