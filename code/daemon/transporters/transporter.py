@@ -61,7 +61,7 @@ class Transporter(threading.Thread):
                 self.ready = False
 
                 self.lock.acquire()
-                (src, dst, action) = self.queue.get_nowait()
+                (src, dst, action, callback) = self.queue.get_nowait()
                 self.lock.release()
 
                 try:
@@ -81,8 +81,13 @@ class Transporter(threading.Thread):
                             self.storage.delete(dst)
                         url = None
 
-                    # Call the callback function.
-                    self.callback(src, dst, url, action)
+                    # Call the callback function. Use the callback function
+                    # defined for this Transporter (self.callback), unless
+                    # an alternative one was defined for this file (callback).
+                    if not callback is None:
+                        callback(src, dst, url, action)
+                    else:
+                        self.callback(src, dst, url, action)
 
                 except Exception, e:
                     raise ConnectionError(e)
@@ -107,7 +112,7 @@ class Transporter(threading.Thread):
             raise MissingSettingError
 
 
-    def sync_file(self, src, dst=None, action=None):
+    def sync_file(self, src, dst=None, action=None, callback=None):
         # Set the default value here because Python won't allow it sooner.
         if dst is None:
             dst = src
@@ -121,7 +126,7 @@ class Transporter(threading.Thread):
             dst = dst[1:]
 
         self.lock.acquire()
-        self.queue.put((src, dst, action))
+        self.queue.put((src, dst, action, callback))
         self.lock.release()
 
 
