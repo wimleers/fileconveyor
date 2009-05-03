@@ -10,6 +10,7 @@ __license__ = "GPL"
 import os
 import os.path
 import xml.etree.ElementTree as etree
+from xml.parsers.expat import ExpatError
 import re
 import logging
 
@@ -33,14 +34,18 @@ class Config(object):
 
 
     def load(self, filename):
-        doc = etree.parse(filename)
-        root = doc.getroot()
-        self.logger.info("Parsing sources.")
-        self.__parse_sources(root)
-        self.logger.info("Parsing servers.")
-        self.__parse_servers(root)
-        self.logger.info("Parsing rules.")
-        self.__parse_rules(root)
+        try:
+            doc = etree.parse(filename)
+            root = doc.getroot()
+            self.logger.info("Parsing sources.")
+            self.__parse_sources(root)
+            self.logger.info("Parsing servers.")
+            self.__parse_servers(root)
+            self.logger.info("Parsing rules.")
+            self.__parse_rules(root)
+        except ExpatError, e:
+            self.logger.error("The XML file is invalid; %s." % (e))
+            self.errors += 1
         return self.errors
 
 
