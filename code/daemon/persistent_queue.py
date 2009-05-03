@@ -102,3 +102,30 @@ class PersistentQueue(object):
             for id, item in resultList:
                 self.memory_queue.append((id, item))
                 self.highest_id_in_queue = id
+
+
+class PersistentDataManager(object):
+    def __init__(self, dbfile="persistent_queue.db"):
+        # Initialize the database.
+        self.dbcon = None
+        self.dbcur = None
+        self.__prepare_db(dbfile)
+
+
+    def __prepare_db(self, dbfile):
+        self.dbcon = sqlite3.connect(dbfile)
+        self.dbcur = self.dbcon.cursor()
+
+
+    def list(self, table):
+        self.dbcur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?", (table, ))
+        resultList = self.dbcur.fetchall()
+        tables = []
+        for row in resultList:
+            tables.append(row[0])
+        return tables
+
+
+    def delete(self, table):
+        self.dbcur.execute("DROP TABLE '%s'" % (table))
+        self.dbcon.commit()
