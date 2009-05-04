@@ -146,11 +146,17 @@ class Arbitrator(threading.Thread):
         self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_FILE)
         self.logger.info("Initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
         self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_FILE)
-        self.logger.info("Initialized 'files_in_pipeline' persistent list, contains %d items." % (len(self.files_in_pipeline)))
+        num_files_in_pipeline = len(self.files_in_pipeline)
+        self.logger.info("Initialized 'files_in_pipeline' persistent list, contains %d items." % (num_files_in_pipeline))
         # Move files from pipeline to pipeline queue. This is what prevents
         # files from being dropped from the pipeline!
-        #for i in range(0, len(self.files_in_pipeline)):
-        #    item = self.files_in_pipeline[]
+        pipelined_items = []
+        for item in self.files_in_pipeline:
+            pipelined_items.append(item)
+            self.pipeline_queue.put(item)
+        for item in pipelined_items:
+            self.files_in_pipeline.remove(item)
+        self.logger.info("Moved %d items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue" % (num_files_in_pipeline))
         # Queues.
         self.discover_queue  = Queue.Queue()
         self.filter_queue    = Queue.Queue()
@@ -350,7 +356,9 @@ class Arbitrator(threading.Thread):
                     # Calculate src and dst for the file, then queue it to be
                     # transported.
                     src = output_file
-                    dst = self.__calculate_transporter_dst(src, parent_path)
+                    relative_paths = [WORKING_DIR, self.config.sources[rule["source"]]]
+                    dst = self.__calculate_transporter_dst(src, parent_path, relative_paths)
+                    print "transporting", src, dst
                     transporter.sync_file(src, dst, action, curried_callback)
                     self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d)." % (output_file, server, id + 1, len(self.transporters[server])))
                 else:
@@ -366,7 +374,7 @@ class Arbitrator(threading.Thread):
             self.lock.release()
 
             # TODO
-            print "Finalizing: storing in DB:", (input_file, event, rule, output_file, transported_file, url)
+            print "Finalizing: storing in DB:", (input_file, os.path.basename(output_file), url)
             
             self.lock.acquire()
             self.files_in_pipeline.remove((input_file, event))
@@ -418,12 +426,17 @@ class Arbitrator(threading.Thread):
         return transporter
 
 
-    def __calculate_transporter_dst(self, src, parent_path=None):
+    def __calculate_transporter_dst(self, src, parent_path=None, relative_paths=[]):
         dst = src
 
-        # Strip off the working directory.
-        if dst.startswith(WORKING_DIR):
-            dst = dst[len(WORKING_DIR):]
+        # Strip off any relative paths.
+        for relative_path in relative_paths:
+            if dst.startswith(relative_path):
+                dst = dst[len(relative_path):]
+
+        # Ensure no absolute path is returned, which would make os.path.join()
+        # fail.
+        dst = dst.lstrip(os.sep)
 
         # Prepend any possible parent path.
         if not parent_path is None:
