@@ -29,6 +29,10 @@ class Processor(object):
         if not os.path.exists(self.working_dir):
             mkpath(self.working_dir)
 
+        # Calculate the path to the processors in the Processor class so
+        # subclasses don't have to.
+        self.processors_path = os.path.dirname(os.path.realpath(__file__))
+
 
     def run(self):
         raise NotImplemented

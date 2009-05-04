@@ -6,6 +6,7 @@ and then the exact Processor name (which is its class name):
 E.g.:
 - unique_filename.MD5
 - image_optimizer.KeepMetadata
+- yui_compressor.YUICompressor
 
 
 Processor module: unique_filename
@@ -37,6 +38,18 @@ Available Processors:
    same as Max, but keeps the original filename (no GIF optimization)
 4) KeepMetadataAndFilename
    same as Max, but keeps JPEG metadata and the original filename (no GIF optimization)
+
+
+Processor module: YUI Compressor
+--------------------------------
+Available Processors:
+1) YUICompressor
+   Compresses .css and .js files with the YUI Compressor
+
+
+Transporter: S3
+---------------
+More than 4 concurrent connections doesn't show a significant speedup.
 
 
 Transporter: CloudFront - Creating a CloudFront distribution

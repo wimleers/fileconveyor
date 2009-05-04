@@ -1,3 +1,11 @@
+Processor: YUI Compressor
+-------------------------
+* instructions:
+  1. download from http://www.julienlecomte.net/yuicompressor/
+  2. copy the executable from the "build" directory to the "processors" directory of the daemon
+  3. rename the executable from e.g. "yuicompressor-2.4.2.jar" to "yuicompressor.jar"
+
+
 Processor: Image Optimizer
 --------------------------
 You only have to install these libraries if you don't have them already. This
@@ -7,7 +15,7 @@ processor only works on UNIX, at least for now.
   * homepage: http://imagemagick.org
   * instructions:
     1. download the binary release from http://imagemagick.org/script/binary-releases.php
-    2. copy the executables from the bin directory to a directory that is referenced by $PATH
+    2. copy the executables from the "bin" directory to a directory that is referenced by $PATH
 - pngcrush
   * homepage: http://pmt.sourceforge.net/pngcrush/
   * instructions:
