@@ -41,21 +41,21 @@ class Base(Processor):
 
         if format == "GIF":
             if self.filename_mutable == FILENAME_MUTABLE:
-                tmp_file         = os.path.join(self.working_dir, name + ".tmp.png")
-                self.output_file = os.path.join(self.working_dir, name + ".png")
+                tmp_file         = os.path.join(self.working_dir, path, name + ".tmp.png")
+                self.output_file = os.path.join(self.working_dir, path, name + ".png")
                 self.__optimize_GIF(self.input_file, tmp_file, self.output_file)
 
         elif format == "PNG":
-            self.output_file = os.path.join(self.working_dir, filename)
+            self.output_file = os.path.join(self.working_dir, path, filename)
             self.__optimize_PNG(self.input_file, self.output_file)
 
         elif format == "JPEG":
-            self.output_file = os.path.join(self.working_dir, filename)
+            self.output_file = os.path.join(self.working_dir, path, filename)
             self.__optimize_JPEG(self.input_file, self.output_file, self.copy_metadata)
 
         # Animated GIF
         elif len(format) >= 6 and format[0:6] == "GIFGIF":
-            self.output_file = os.path.join(self.working_dir, filename)
+            self.output_file = os.path.join(self.working_dir, path, filename)
             self.__optimize_animated_GIF(self.input_file, self.output_file)
         
         # Clean up things.

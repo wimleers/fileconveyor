@@ -38,6 +38,24 @@ class Processor(object):
         """get the different parts of the file's path"""
         (path, filename) = os.path.split(path)
         (name, extension) = os.path.splitext(filename)
+
+        # Return the original relative path instead of the absolute path,
+        # which may be inside the working directory because the file has been
+        # processed by one processor already.
+        if path.startswith(self.working_dir):
+            path = path[len(self.working_dir):]
+
+        # Ensure no absolute path is returned, which would make os.path.join()
+        # fail.
+        path = path.lstrip(os.sep)
+
+        # The file will most likely end up in the working directory, in its
+        # relative path. It doesn't hurt to have empty directory trees, so
+        # create this already here to simplify the processors themselves.
+        working_dir_plus_path = os.path.join(self.working_dir, path)
+        if not os.path.exists(working_dir_plus_path):
+            mkpath(working_dir_plus_path)
+
         return (path, filename, name, extension)
 
 

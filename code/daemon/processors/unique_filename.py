@@ -28,7 +28,7 @@ class Mtime(Processor):
             return self.input_file
 
         mtime = os.stat(self.input_file)[stat.ST_MTIME]
-        self.output_file = os.path.join(self.working_dir, name + "_" + str(mtime) + extension)
+        self.output_file = os.path.join(self.working_dir, path, name + "_" + str(mtime) + extension)
 
         shutil.copyfile(self.input_file, self.output_file)
 
@@ -51,7 +51,7 @@ class MD5(Processor):
             return self.input_file
 
         md5 = self.md5(self.input_file)
-        self.output_file = os.path.join(self.working_dir, name + "_" + md5 + extension)
+        self.output_file = os.path.join(self.working_dir, path, name + "_" + md5 + extension)
 
         shutil.copyfile(self.input_file, self.output_file)
 

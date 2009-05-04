@@ -33,7 +33,7 @@ class Base(Processor):
         for i in range(0, len(self.search)):
             new_filename = new_filename.replace(self.search[i], self.replace[i])
 
-        self.output_file = os.path.join(self.working_dir, new_filename)
+        self.output_file = os.path.join(self.working_dir, path, new_filename)
         shutil.copyfile(self.input_file, self.output_file)
 
         return self.output_file
