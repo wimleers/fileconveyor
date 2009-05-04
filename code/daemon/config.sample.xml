@@ -31,9 +31,10 @@
       </filter>
       <processorChain>
         <processor name="image_optimizer.KeepFilename" />
+        <processor name="yui_compressor.YUICompressor" />
         <processor name="unique_filename.Mtime" />
       </processorChain>
-      <destination server="edgecast" />
+      <destination server="simplecdn" />
     </rule>
 
     <rule for="drupal" label="Videos">
@@ -44,10 +45,10 @@
         <size conditionType="minimum">1000000</size>
       </filter>
       <processorChain>
-        <processor name="transcode_to_flash.py" />
+        <processor name="transcode_video.Flash" />
         <processor name="unique_filename.MD5" />
       </processorChain>
-      <destination server="simplecdn">
+      <destination server="edgecast">
         <path>/videos</path>
       </destination>
     </rule>
