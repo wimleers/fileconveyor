@@ -23,7 +23,8 @@ from transporters.transporter import *
 
 
 LOG_FILE = './daemon.log'
-PERSISTENT_DATA_FILE = './persistent_data.db'
+PERSISTENT_DATA_DB = './persistent_data.db'
+SYNCED_FILES_DB= './synced_files_db'
 WORKING_DIR = '/tmp/test'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 20
@@ -143,9 +144,9 @@ class Arbitrator(threading.Thread):
         # still have to be filtered, processed or transported, say, 1 million
         # files, this would result in hundreds of megabytes of memory usage.
         # Persistent data.
-        self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_FILE)
+        self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_DB)
         self.logger.info("Initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
-        self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_FILE)
+        self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_DB)
         num_files_in_pipeline = len(self.files_in_pipeline)
         self.logger.info("Initialized 'files_in_pipeline' persistent list, contains %d items." % (num_files_in_pipeline))
         # Move files from pipeline to pipeline queue. This is what prevents
@@ -253,6 +254,13 @@ class Arbitrator(threading.Thread):
             (input_file, event) = self.filter_queue.get()
             self.lock.release()
 
+            # The file may have already been deleted, e.g. when the file was
+            # moved from the pipeline list into the pipeline queue after the
+            # application was interrupted.
+            if not os.path.exists(input_file):
+                self.logger.info("Filtering: dropped '%s' because it no longer exists." % (input_file))
+                continue
+
             # Find all rules that apply to the detected file event.
             match_found = False
             for rule in self.rules:
@@ -282,7 +290,7 @@ class Arbitrator(threading.Thread):
                         elif not rule["destination"] is None:
                             output_file = input_file
                             self.transport_queue[server].put((input_file, event, rule, output_file))
-                            self.logger.info("Filtering: ueued transporter to server '%s' for file '%s' ('%s' rule)." % (server, input_file, rule["label"]))
+                            self.logger.info("Filtering: queued transporter to server '%s' for file '%s' ('%s' rule)." % (server, input_file, rule["label"]))
                         else:
                             raise Exception("Either a processor chain or a destination must be defined.")
                     self.lock.release()
@@ -358,7 +366,6 @@ class Arbitrator(threading.Thread):
                     src = output_file
                     relative_paths = [WORKING_DIR, self.config.sources[rule["source"]]]
                     dst = self.__calculate_transporter_dst(src, parent_path, relative_paths)
-                    print "transporting", src, dst
                     transporter.sync_file(src, dst, action, curried_callback)
                     self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d)." % (output_file, server, id + 1, len(self.transporters[server])))
                 else:
@@ -379,7 +386,7 @@ class Arbitrator(threading.Thread):
             self.lock.acquire()
             self.files_in_pipeline.remove((input_file, event))
             self.lock.release()
-            print "Removed from index:", (input_file, event)
+            print "Completed its path through the pipeline: ", (input_file, event)
 
 
     def __get_transporter(self, server):
@@ -447,14 +454,16 @@ class Arbitrator(threading.Thread):
 
     def fsmonitor_callback(self, monitored_path, event_path, event):
         print "FSMONITOR CALLBACK FIRED:\n\tmonitored_path='%s'\n\tevent_path='%s'\n\tevent=%d" % (monitored_path, event_path, event)
-        # Ignore directories.
-        if not stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
-            input_file = event_path
+        # The file may have already been deleted!
+        if os.path.exists(event_path):
+            # Ignore directories.
+            if not stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
+                input_file = event_path
 
-            # Add to discover queue.
-            self.lock.acquire()
-            self.discover_queue.put((input_file, event))
-            self.lock.release()
+                # Add to discover queue.
+                self.lock.acquire()
+                self.discover_queue.put((input_file, event))
+                self.lock.release()
 
 
     def processor_chain_callback(self, input_file, output_file, event, rule):
