@@ -61,7 +61,7 @@ class Transporter(threading.Thread):
                 self.ready = False
 
                 self.lock.acquire()
-                (src, dst, action, callback) = self.queue.get_nowait()
+                (src, dst, action, callback) = self.queue.get()
                 self.lock.release()
 
                 try:
