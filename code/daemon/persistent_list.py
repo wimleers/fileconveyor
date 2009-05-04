@@ -26,24 +26,27 @@ class PersistentList(object):
         self.__prepare_db(dbfile)
 
         # Initialize the memory list: load its contents from the database.
-        self.memory_list = []
-        self.dbcur.execute("SELECT item FROM %s" % (self.table))
+        self.memory_list = {}
+        self.dbcur.execute("SELECT id, item FROM %s ORDER BY id ASC" % (self.table))
         resultList = self.dbcur.fetchall()
-        for row in resultList:
-            item = row[0]
-            self.memory_list.append(item)
+        for id, item in resultList:
+            self.memory_list[item] = id
 
 
     def __prepare_db(self, dbfile):
         sqlite3.register_converter("pickle", cPickle.loads)
         self.dbcon = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.dbcur = self.dbcon.cursor()
-        self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(item pickle)" % (self.table))
+        self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle)" % (self.table))
         self.dbcon.commit()
 
 
     def __contains__(self, item):
-        return item in self.memory_list
+        return item in self.memory_list.keys()
+
+
+    def __iter__(self):
+        return self.memory_list.__iter__()
 
 
     def __len__(self):
@@ -54,22 +57,15 @@ class PersistentList(object):
         # Insert the item into the database.
         self.dbcur.execute("INSERT INTO %s (item) VALUES(?)" % (self.table), (cPickle.dumps(item), ))
         self.dbcon.commit()
+        id = self.dbcur.lastrowid
         # Insert the item into the in-memory list.
-        self.memory_list.append(item)
+        self.memory_list[item] = id
 
 
-    def index(self, item):
-        return self.memory_list.index(item)
-
-
-    def __getitem__(self, index):
-        return self.memory_list[index]
-
-
-    def __delitem__(self, index):
+    def remove(self, item):
         # Delete from the database.
-        item = self.memory_list[index]
-        self.dbcur.execute("DELETE FROM %s WHERE item = ?" % (self.table), (cPickle.dumps(item), ))
+        id = self.memory_list[item]
+        self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
         self.dbcon.commit()        
         # Delete from the in-memory list.
-        del self.memory_list[index]
+        del self.memory_list[item]

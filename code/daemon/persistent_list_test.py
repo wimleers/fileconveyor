@@ -47,26 +47,24 @@ class TestConditions(unittest.TestCase):
         pl = PersistentList(self.table, self.db)
 
         # Get the items from the persistent list.
-        for i in range(0, len(pl)):
-            item = pl[i]
-            received_items.append(item)
-        self.assertEqual(items, received_items, "The original list and the list that was retrieved from the persistent list are equal")
-
-        # Verify that the index() function is working.
         for item in pl:
-            self.assertEqual(items.index(item), pl.index(item))
+            received_items.append(item)
+        # The order doesn't matter.
+        items.sort()
+        received_items.sort()
+        self.assertEqual(items, received_items, "The original list and the list that was retrieved from the persistent list are equal")
 
         # A second persistent list that uses the same table should get the
         # same data.
         pl2 = PersistentList(self.table, self.db)
-        for i in range(0, len(pl2)):
-            self.assertEqual(pl[i], pl2[i])
+        for item in pl2:
+            self.assertEqual(True, item in pl)
         del pl2
 
         # Remove items from the persistent list.
-        for i in range(len(pl) - 1, -1, -1):
+        for item in items:
             len_before = len(pl)
-            del pl[i]
+            pl.remove(item)
             len_after = len(pl)
             self.assertEqual(len_before - 1, len_after, "removing")
         self.assertEqual(0, len(pl), "The persistent list is empty.")
