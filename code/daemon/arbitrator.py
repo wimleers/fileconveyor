@@ -7,6 +7,7 @@ import threading
 import time
 import signal
 import sys
+from UserList import UserList
 
 
 sys.path.append(os.path.abspath('dependencies'))
@@ -24,6 +25,7 @@ from transporters.transporter import *
 LOG_FILE = './daemon.log'
 PERSISTENT_DATA_FILE = './persistent_data.db'
 WORKING_DIR = '/tmp/test'
+MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 20
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
 
@@ -33,6 +35,20 @@ def curry(_curried_func, *args, **kwargs):
     def _curried(*moreargs, **morekwargs):
         return _curried_func(*(args+moreargs), **dict(kwargs, **morekwargs))
     return _curried
+
+
+class PeekingQueue(UserList):
+    def peek(self):
+        return self[0]
+
+    def put(self, item):
+        self.append(item)
+
+    def get(self):
+        return self.pop(0)
+
+    def qsize(self):
+        return len(self)
 
 
 class Arbitrator(threading.Thread):
@@ -126,41 +142,24 @@ class Arbitrator(threading.Thread):
         # memory in its entirety. In the case of a huge backlag of files that
         # still have to be filtered, processed or transported, say, 1 million
         # files, this would result in hundreds of megabytes of memory usage.
-        # Persistent queues.
-        self.filter_queue    = PersistentQueue("filter_queue", PERSISTENT_DATA_FILE)
-        self.logger.info("Initialized 'filter' persistent queue, contains %d items." % (self.filter_queue.qsize()))
-        self.process_queue   = PersistentQueue("process_queue", PERSISTENT_DATA_FILE)
-        self.logger.info("Initialized 'process' persistent queue, contains %d items." % (self.process_queue.qsize()))
+        # Persistent data.
+        self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_FILE)
+        self.logger.info("Initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
+        self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_FILE)
+        self.logger.info("Initialized 'files_in_pipeline' persistent list, contains %d items." % (len(self.files_in_pipeline)))
+        # Move files from pipeline to pipeline queue. This is what prevents
+        # files from being dropped from the pipeline!
+        #for i in range(0, len(self.files_in_pipeline)):
+        #    item = self.files_in_pipeline[]
+        # Queues.
+        self.discover_queue  = Queue.Queue()
+        self.filter_queue    = Queue.Queue()
+        self.process_queue   = Queue.Queue()
         self.transport_queue = {}
         for server in self.config.servers.keys():
-            self.transport_queue[server] = PersistentQueue("transport_queue_%s" % (server), PERSISTENT_DATA_FILE)
-            self.logger.info("Initialized 'transport' persistent queue for the '%s' server, contains %d items." % (server, self.transport_queue[server].qsize()))
-        self.db_queue        = PersistentQueue("process_queue", PERSISTENT_DATA_FILE)
-        self.logger.info("Initialized 'db' persistent queue, contains %d items." % (self.db_queue.qsize()))
-        # Thread-crossing queues.
-        self.filter_thread_queue    = Queue.Queue()
-        self.process_thread_queue   = Queue.Queue()
-        self.transport_thread_queue = {}
-        for server in self.config.servers.keys():
-            self.transport_thread_queue[server] = Queue.Queue()
-        self.db_thread_queue        = Queue.Queue()
-        self.logger.info("Initialized thread-crossing queues.")
-        # Persistent lists.
-        self.filtering_list    =  PersistentList("filtering_list", PERSISTENT_DATA_FILE)
-        self.processing_list   =  PersistentList("processing_list", PERSISTENT_DATA_FILE)
-        self.transporting_list =  PersistentList("transporting_list", PERSISTENT_DATA_FILE)
-        self.logger.info("Initialized 'filtering' persistent list, contains %d items." % (len(self.filtering_list)))
-        self.logger.info("Initialized 'transporting' persistent list, contains %d items." % (len(self.processing_list)))
-        self.logger.info("Initialized 'processing' persistent list, contains %d items." % (len(self.transporting_list)))
-
-        # Delete unused 'transport' persistent queues.
-        pdm = PersistentDataManager(PERSISTENT_DATA_FILE)
-        tables = pdm.list('transport_queue_%')
-        for table in tables:
-            server = table.split('transport_queue_')[1]
-            if not server in self.config.servers.keys():
-                pdm.delete(table)
-                self.logger.info("Deleted the 'transport' persistent queue for the '%s' server, as it is no longer in use." % (server))
+            self.transport_queue[server] = PeekingQueue()
+        self.db_queue        = Queue.Queue()
+        self.logger.info("Initialized queues.")
 
         # Monitor all source paths.
         for (name, path) in self.config.sources.items():
@@ -181,7 +180,8 @@ class Arbitrator(threading.Thread):
 
         while not self.die:
             #self.logger.info("%d threads are running" % (threading.activeCount()))
-            self.__sync_queues()
+            self.__process_discover_queue()
+            self.__process_pipeline_queue()
             self.__process_filter_queue()
             self.__process_process_queue()
             self.__process_transport_queues()
@@ -206,144 +206,105 @@ class Arbitrator(threading.Thread):
                 transporter.join()
             self.logger.info("Stopped transporters for the '%s' server." % (server))
 
+        # Log information about the persistent data.
+        self.logger.info("'pipeline' persistent queue contains %d items." % (self.pipeline_queue.qsize()))
+        self.logger.info("'files_in_pipeline' persistent list contains %d items." % (len(self.files_in_pipeline)))
 
-    def __sync_queues(self):
-        """move data from the thread-crossing (memory) queues to their
-        corresponding persistent queues and remove the data from the
-        persistent lists"""
 
-        # 'filter' queue
+    def __process_discover_queue(self):
         self.lock.acquire()
-        while self.filter_thread_queue.qsize() > 0:
-            (monitored_path, event_path, event) = self.filter_thread_queue.get()
-            self.filter_queue.put((monitored_path, event_path, event))
-            self.logger.info("Syncing: added ('%s', '%s', %d) to the 'filter' persistent queue." % (monitored_path, event_path, event))
+        while self.discover_queue.qsize() > 0:
+            (input_file, event) = self.discover_queue.get()
+            self.pipeline_queue.put((input_file, event))
+            self.logger.info("Syncing: added ('%s', %d) to the pipeline queue." % (input_file, event))
         self.lock.release()
 
-        # 'process' queue
-        self.lock.acquire()
-        while self.process_thread_queue.qsize() > 0:
-            (input_file, rule) = self.process_thread_queue.get()
-            self.process_queue.put((input_file, rule))
-            self.logger.info("Syncing: added '%s' and its processor chain to the 'process' persistent queue." % (input_file))
-        self.lock.release()
 
-        # 'transport' queues
-        self.lock.acquire()
-        for server in self.config.servers.keys():
-            while self.transport_thread_queue[server].qsize() > 0:
-                (input_file, output_file, action, rule) = self.transport_thread_queue[server].get()
+    def __process_pipeline_queue(self):
+        # As soon as there's room in the pipeline, move the file from the
+        # pipeline queue into the pipeline.
+        while self.pipeline_queue.qsize() > 0 and len(self.files_in_pipeline) < MAX_FILES_IN_PIPELINE:
+            self.lock.acquire()
 
-                # Remove the file from the "processing" list. This is only
-                # necessary if the file was previously being processed. It's
-                # possible that the file didn't need processing, in which
-                # case it doesn't have to be removed from any list.
-                try:
-                    index = self.processing_list.index((input_file, rule))
-                    del self.processing_list[index]
-                except ValueError:
-                    pass
+            # Peek the first item from the pipeline queue and store it in the
+            # persistent 'files_in_pipeline' list so the data can never get
+            # lost.
+            self.files_in_pipeline.append(self.pipeline_queue.peek())
 
-                # Add the file to the "transport" persistent queue for the
-                # appropriate server.
-                self.transport_queue[server].put((input_file, output_file, action, rule))                
+            # Pipeline queue -> filter queue.
+            (input_file, event) = self.pipeline_queue.get()
+            self.filter_queue.put((input_file, event))
 
-                self.logger.info("Syncing: added '%s' (original file: '%s') and its server '%s' to the 'transport' persistent queue." % (output_file, input_file, server))
-        self.lock.release()
-
-        # 'db' queue
-        self.lock.acquire()
-        while self.db_thread_queue.qsize() > 0:
-            (src, dst, url, action, input_file, rule) = self.db_thread_queue.get()
+            self.lock.release()
+            self.logger.info("Pipelining: moved ('%s', %d) from the pipeline queue into the pipeline (into the filter queue)." % (input_file, event))
             
-            # Remove the file from the "transporting" list. This is only
-            # necessary if the file was previously being processed. It's
-            # possible that the file didn't need processing, in which case it
-            # doesn't have to be removed from any list.
-            try:
-                index = self.transporting_list.index((input_file, rule))
-                del self.transporting_list[index]
-            except ValueError:
-                pass
-
-            # Add the file to the "db" persistent queue.
-            self.db_queue.put((src, dst, url, action, input_file, rule))
-
-            self.logger.info("Syncing: added the synced file '%s' (url: '%s') to the 'db' persistent queue." % (src, rule))
-        self.lock.release()
 
 
     def __process_filter_queue(self):
         # Process items in the 'filter' queue.
         while self.filter_queue.qsize() > 0:
-            # Get the first item from the queue and stored in the persistent
-            # 'filtering' list so the data can never get lost.
             self.lock.acquire()
-            (monitored_path, event_path, event) = self.filter_queue.get()
-            self.filtering_list.append((monitored_path, event_path, event))
+            (input_file, event) = self.filter_queue.get()
             self.lock.release()
 
             # Find all rules that apply to the detected file event.
             match_found = False
             for rule in self.rules:
                 # Try to find a rule that matches the file.
-                if rule["filter"].matches(event_path):
+                if rule["filter"].matches(input_file):
                     match_found = True
-                    input_file = event_path
                     server     = rule["destination"]["server"]
                     self.logger.info("Filtering: '%s' matches the '%s' rule for the '%s' source!" % (input_file, rule["label"], rule["source"]))
                     # If the file was deleted, also delete the file on all
                     # servers.
                     self.lock.acquire()
                     if event == FSMonitor.DELETED:
-                        src = input_file
-                        dst = self.__calculate_transporter_dst(src)
-                        self.transport_queue[server].put((src, dst, Transporter.DELETE, rule))
-                        self.logger.info("Filtering: queued transporter to server '%s' for file '%s' to delete it ('%s' rule)." % (server, input_file, rule["label"]))
+                        if not rule["destination"] is None:
+                            # TODO: set output_file equal to transported_file
+                            # (which should be looked up in the DB)???
+                            output_file = input_file
+                            self.transport_queue[server].put((input_file, event, rule, output_file))
+                            self.logger.info("Filtering: queued transporter to server '%s' for file '%s' to delete it ('%s' rule)." % (server, input_file, rule["label"]))
                     else:
                         # If a processor chain is configured, queue the file to
                         # be processed. Otherwise, immediately queue the file
                         # to be transported 
                         if not rule["processorChain"] is None:
-                            self.process_queue.put((input_file, rule))
+                            self.process_queue.put((input_file, event, rule))
                             processor_chain_string = "->".join(rule["processorChain"])
                             self.logger.info("Filtering: queued processor chain '%s' for file '%s' ('%s' rule)." % (processor_chain_string, input_file, rule["label"]))
-                        else:
-                            src = input_file
-                            dst = self.__calculate_transporter_dst(src)
-                            self.transport_queue[server].put((src, dst, Transporter.ADD_MODIFY, rule))
+                        elif not rule["destination"] is None:
+                            output_file = input_file
+                            self.transport_queue[server].put((input_file, event, rule, output_file))
                             self.logger.info("Filtering: ueued transporter to server '%s' for file '%s' ('%s' rule)." % (server, input_file, rule["label"]))
+                        else:
+                            raise Exception("Either a processor chain or a destination must be defined.")
                     self.lock.release()
 
             # Log the lack of matches.
             if not match_found:
-                self.logger.info("Filtering: '%s' matches no rules. Discarding this file." % (event_path))
-
-            # Remove the file from the "filtering" list.
-            self.lock.acquire()
-            index = self.filtering_list.index((monitored_path, event_path, event))
-            del self.filtering_list[index]
-            self.lock.release()
+                self.logger.info("Filtering: '%s' matches no rules. Discarding this file." % (input_file))
 
 
     def __process_process_queue(self):
         while self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
-            # Get the first item from the queue and stored in the persistent
-            # 'processing' list so the data can never get lost.
             self.lock.acquire()
-            (input_file, rule) = self.process_queue.get()
-            self.processing_list.append((input_file, rule))
+            (input_file, event, rule) = self.process_queue.get()
             self.lock.release()
 
-            # Create a curried callback so we can pass the rule metadata to
-            # the processor chain callback without passing it to the processor
-            # chain (which cannot handle sending additional metadata to its
+            # Create a curried callback so we can pass additional data to the
+            # processor chain callback without passing it to the processor
+            # chain itself (which cannot handle sending additional data to its
             # callback function).
-            curried_callback = curry(self.processor_chain_callback, rule=rule)
+            curried_callback = curry(self.processor_chain_callback,
+                                     event=event,
+                                     rule=rule
+                                     )
 
             # Start the processor chain.
             processor_chain = self.processor_chain_factory.make_chain_for(input_file, rule["processorChain"], curried_callback)
             processor_chain.start()
+            self.processorchains_running += 1
 
             # Log.
             processor_chain_string = "->".join(rule["processorChain"])
@@ -351,17 +312,19 @@ class Arbitrator(threading.Thread):
 
 
     def __process_transport_queues(self):
-        # Don't run more than the allowed number of simultaneous transporters.
-        if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
-            return
-
         # Process each server's transport queue.
         for server in self.config.servers.keys():
             while self.transport_queue[server].qsize() > 0:
                 # Peek at the first item from the queue
                 self.lock.acquire()
-                (input_file, output_file, action, rule) = self.transport_queue[server].peek()
+                (input_file, event, rule, output_file) = self.transport_queue[server].peek()
                 self.lock.release()
+
+                # Derive the action from the event.
+                if event == FSMonitor.DELETED:
+                    action = Transporter.DELETE
+                else:
+                    action = Transporter.ADD_MODIFY
 
                 # Get the additional settings from the rule.
                 parent_path = ""
@@ -370,21 +333,19 @@ class Arbitrator(threading.Thread):
 
                 (id, transporter) = self.__get_transporter(server)
                 if not transporter is None:
-                    # Get the first item from the queue and stored in the persistent
-                    # 'transporting' list so the data can never get lost.
                     self.lock.acquire()
-                    (input_file, output_file, action, rule) = self.transport_queue[server].get()
-                    self.transporting_list.append((input_file, output_file, action, rule))
+                    (input_file, event, rule, output_file) = self.transport_queue[server].get()
                     self.lock.release()
 
-                    # Create a curried callback so we can pass the rule
-                    # metadata to the transporter callback without passing it
-                    # to the transporter (which cannot handle sending
-                    # additional metadata to its callback function).
+                    # Create a curried callback so we can pass additional data
+                    # to the transporter callback without passing it to the
+                    # transporter itself (which cannot handle sending
+                    # additional data to its callback function).
                     curried_callback = curry(self.transporter_callback,
-                                            input_file=input_file,
-                                            rule=rule
-                                            )
+                                             event=event,
+                                             input_file=input_file,
+                                             rule=rule
+                                             )
 
                     # Calculate src and dst for the file, then queue it to be
                     # transported.
@@ -396,15 +357,21 @@ class Arbitrator(threading.Thread):
                     self.logger.info("Transporting: no more transporters are available for server '%s'." % (server))
                     break
 
+
     def __process_db_queue(self):
-        # Process items in the 'db' queue.
+        # Process the db queue.
         while self.db_queue.qsize() > 0:
             self.lock.acquire()
-            (src, dst, url, action, input_file, rule) = self.db_queue.get()
+            (input_file, event, rule, output_file, transported_file, url) = self.db_queue.get()
             self.lock.release()
 
             # TODO
-            print "Finalizing: storing in DB:", (src, dst, url, action, input_file, rule)
+            print "Finalizing: storing in DB:", (input_file, event, rule, output_file, transported_file, url)
+            
+            self.lock.acquire()
+            self.files_in_pipeline.remove((input_file, event))
+            self.lock.release()
+            print "Removed from index:", (input_file, event)
 
 
     def __get_transporter(self, server):
@@ -416,6 +383,9 @@ class Arbitrator(threading.Thread):
 
         # Since we didn't find any ready transporter, check if we can create
         # a new one.
+        # Don't run more than the allowed number of simultaneous transporters.
+        if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
+            return None
         if self.config.servers[server]["maxConnections"] < len(self.transporters[server]):
             id          = len(self.transporters[server]) - 1
             transporter = self.__create_transporter(server)
@@ -466,30 +436,44 @@ class Arbitrator(threading.Thread):
         print "FSMONITOR CALLBACK FIRED:\n\tmonitored_path='%s'\n\tevent_path='%s'\n\tevent=%d" % (monitored_path, event_path, event)
         # Ignore directories.
         if not stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
+            input_file = event_path
+
+            # Add to discover queue.
             self.lock.acquire()
-            self.filter_thread_queue.put((monitored_path, event_path, event))
+            self.discover_queue.put((input_file, event))
             self.lock.release()
 
 
-    def processor_chain_callback(self, input_file, output_file, rule):
+    def processor_chain_callback(self, input_file, output_file, event, rule):
         print "PROCESSOR CHAIN CALLBACK FIRED\n\tinput_file='%s'\n\toutput_file='%s'" % (input_file, output_file)
 
-        # We need to know to which server this file should be transported to
-        # in order to know in which queue to put the file.
-        server = rule["destination"]["server"]
-
-        # Queue the file to the thread-crossing "transport" queue.
+        # Decrease number of running processor chains.
         self.lock.acquire()
-        self.transport_thread_queue[server].put((input_file, output_file, Transporter.ADD_MODIFY, rule))
+        self.processorchains_running -= 1
         self.lock.release()
 
+        # If a destination is defined, then add it to the transport queue.
+        # Otherwise, do nothing.
+        if not rule["destination"] is None:
+            # We need to know to which server this file should be transported to
+            # in order to know in which queue to put the file.
+            server = rule["destination"]["server"]
 
-    def transporter_callback(self, src, dst, url, action, input_file, rule):
-        print "TRANSPORTER CALLBACK FIRED:\n\tsrc='%s'\n\tdst='%s'\n\turl='%s'\n\taction=%d\n\t(curried): input_file='%s'" % (src, dst, url, action, input_file)
+            # Add to transport queue.
+            self.lock.acquire()
+            self.transport_queue[server].put((input_file, event, rule, output_file))
+            self.lock.release()
 
-        # Queue the file to the thread-crossing "db" queue.
+
+    def transporter_callback(self, src, dst, url, action, input_file, event, rule):
+        print "TRANSPORTER CALLBACK FIRED:\n\tsrc='%s'\n\tdst='%s'\n\turl='%s'\n\taction=%d\n\t(curried): event=%d\n\t(curried): input_file='%s'" % (src, dst, url, action, event, input_file)
+
+        output_file      = src
+        transported_file = dst
+
+        # Add to db queue.
         self.lock.acquire()
-        self.db_thread_queue.put((src, dst, url, action, input_file, rule))
+        self.db_queue.put((input_file, event, rule, output_file, transported_file, url))
         self.lock.release()
 
 
