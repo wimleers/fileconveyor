@@ -187,6 +187,9 @@ class FTPStorage(Storage):
                 return False
         except ftplib.error_temp, e:
             return False
+        except ftplib.error_perm, e:
+            # error_perm: 550 Can't find file
+            return False
         except ftplib.all_errors, e:
             raise FTPStorageException('Error when testing existence of %s' % name)            
 
