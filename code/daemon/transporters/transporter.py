@@ -69,16 +69,14 @@ class Transporter(threading.Thread):
                     if action == Transporter.ADD_MODIFY:
                         # Sync the file.
                         f = File(open(src, "rb"))
-                        if self.storage.exists(dst):
-                            self.storage.delete(dst)
+                        self.storage.delete(dst)
                         self.storage.save(dst, f)
                         f.close()
                         # Calculate the URL.
                         url = self.storage.url(dst)
                         url = self.alter_url(url)
                     else:
-                        if self.storage.exists(dst):
-                            self.storage.delete(dst)
+                        self.storage.delete(dst)
                         url = None
 
                     # Call the callback function. Use the callback function
