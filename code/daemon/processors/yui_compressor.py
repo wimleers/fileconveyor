@@ -6,6 +6,7 @@ __license__ = "GPL"
 
 from processor import *
 import subprocess
+import os
 import os.path
 
 
@@ -28,7 +29,13 @@ class YUICompressor(Processor):
         if not Processor.validate(self):
             return self.input_file
 
-        self.output_file = os.path.join(self.working_dir, path, filename)        
+        self.output_file = os.path.join(self.working_dir, path, filename)
+
+        # Remove the output file if it already exists, otherwise YUI
+        # Compressor will fail.
+        if os.path.exists(self.output_file):
+            os.remove(self.output_file)
+        # Run YUI Compressor on the file.
         p = subprocess.Popen("java -jar %s %s -o %s" % (self.yuicompressor_path, self.input_file, self.output_file),
                              shell=True,
                              stdout=subprocess.PIPE,
