@@ -186,8 +186,8 @@ class Arbitrator(threading.Thread):
         # Start the FS monitor.
         self.fsmonitor.start()
 
+        self.logger.info("Fully up and running now.")
         while not self.die:
-            #self.logger.info("%d threads are running" % (threading.activeCount()))
             self.__process_discover_queue()
             self.__process_pipeline_queue()
             self.__process_filter_queue()
@@ -195,11 +195,10 @@ class Arbitrator(threading.Thread):
             self.__process_transport_queues()
             self.__process_db_queue()
 
-            # Syncing the queues 10 times per second is more than sufficient,
-            # because files are modified, processed and transported much
-            # slower than that.
+            # Processing the queues 10 times per second is more than
+            # sufficient, because files are modified, processed and
+            # transported much slower than that.
             time.sleep(0.1)
-
         self.logger.info("Stopping.")
 
         # Stop the FSMonitor and wait for its thread to end.
@@ -260,8 +259,12 @@ class Arbitrator(threading.Thread):
 
             # The file may have already been deleted, e.g. when the file was
             # moved from the pipeline list into the pipeline queue after the
-            # application was interrupted.
+            # application was interrupted. When that's the case, drop the
+            # file from the pipeline.
             if not os.path.exists(input_file):
+                self.lock.acquire()
+                self.files_in_pipeline.remove((input_file, event))
+                self.lock.release()
                 self.logger.info("Filtering: dropped '%s' because it no longer exists." % (input_file))
                 continue
 
@@ -301,7 +304,11 @@ class Arbitrator(threading.Thread):
 
             # Log the lack of matches.
             if not match_found:
-                self.logger.info("Filtering: '%s' matches no rules. Discarding this file." % (input_file))
+                self.lock.acquire()
+                self.files_in_pipeline.remove((input_file, event))
+                self.lock.release()
+                self.logger.info("Filtering: dropped '%s' because it matches no rules." % (input_file))
+
 
 
     def __process_process_queue(self):
