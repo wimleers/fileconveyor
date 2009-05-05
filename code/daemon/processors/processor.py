@@ -63,7 +63,11 @@ class Processor(object):
         return (path, filename, name, extension)
 
 
-    def validate(self, valid_extensions=()):
+    def validate(self):
+        # Get some variables "as if it were magic", i.e., from subclasses of
+        # this class.
+        valid_extensions = getattr(self.__class__, "valid_extensions", [])
+
         (path, filename, name, extension) = self.get_path_parts(self.input_file)
 
         # Does the input file exist?

@@ -34,7 +34,7 @@ class Base(Processor):
         (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
         # Return the input file if the file cannot be processed.
-        if not Processor.validate(self, self.__class__.valid_extensions):
+        if not Processor.validate(self):
             return self.input_file
 
         format = self.__identify_format(self.input_file)
