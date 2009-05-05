@@ -109,19 +109,22 @@ class Arbitrator(threading.Thread):
         self.transporters = {}
         for server in self.config.servers.keys():
             self.transporters[server] = []
-            self.logger.info("Created transporter pool for the '%s' server." % (server))
-            self.__create_transporter(server)
+            self.logger.info("Setup: created transporter pool for the '%s' server." % (server))
 
-        # Create objects associated with each rule.
+        # Collecting all necessary metadata for each rule.
         self.rules = []
-        self.logger.info("Creating objects associated with each rule.")
         for (name, path) in self.config.sources.items():
             if self.config.rules.has_key(name):
                 root_path = self.config.sources[name]
                 for rule in self.config.rules[name]:
+                    # Prepend the source's path (effectively the "root path")
+                    # for a rule to each of the paths in the "paths" condition
+                    # in the filter.
                     prepend_root_path = lambda path: os.path.join(root_path, path)
                     paths = map(prepend_root_path, rule["filterConditions"]["paths"].split(":"))
                     rule["filterConditions"]["paths"] = ":".join(paths)
+
+                    # 
                     self.rules.append({
                         "source"         : name,
                         "label"          : rule["label"],
@@ -129,26 +132,31 @@ class Arbitrator(threading.Thread):
                         "processorChain" : rule["processorChain"],
                         "destination"    : rule["destination"],
                     })
-                    self.logger.info("Created objects for rule '%s' for source '%s'." % (rule["label"], name))
+                    self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], name))
 
         # Initialize the FSMonitor.
         fsmonitor_class = get_fsmonitor()
-        self.logger.info("Using the %s FSMonitor class." % (fsmonitor_class))
+        self.logger.info("Setup: using the %s FSMonitor class." % (fsmonitor_class))
         self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True)
-        self.logger.info("Initialized FSMonitor.")
+        self.logger.info("Setup: initialized FSMonitor.")
 
-        # Initialize the persistent queues, thread-crossing queues and
-        # persistent lists..
-        # TRICKY: we don't use Python's shelve module because it's loaded into
-        # memory in its entirety. In the case of a huge backlag of files that
-        # still have to be filtered, processed or transported, say, 1 million
-        # files, this would result in hundreds of megabytes of memory usage.
-        # Persistent data.
+        # Initialize the the persistent 'pipeline' queue, the persistent
+        # 'files in pipeline' list and the 'discover', 'filter', 'process',
+        # 'transport' and 'db' queues.
         self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_DB)
-        self.logger.info("Initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
+        self.logger.info("Setup: initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
         self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_DB)
         num_files_in_pipeline = len(self.files_in_pipeline)
-        self.logger.info("Initialized 'files_in_pipeline' persistent list, contains %d items." % (num_files_in_pipeline))
+        self.logger.info("Setup: initialized 'files_in_pipeline' persistent list, contains %d items." % (num_files_in_pipeline))
+        self.discover_queue  = Queue.Queue()
+        self.filter_queue    = Queue.Queue()
+        self.process_queue   = Queue.Queue()
+        self.transport_queue = {}
+        for server in self.config.servers.keys():
+            self.transport_queue[server] = PeekingQueue()
+        self.db_queue        = Queue.Queue()
+        self.logger.info("Setup: initialized queues.")
+
         # Move files from pipeline to pipeline queue. This is what prevents
         # files from being dropped from the pipeline!
         pipelined_items = []
@@ -157,20 +165,11 @@ class Arbitrator(threading.Thread):
             self.pipeline_queue.put(item)
         for item in pipelined_items:
             self.files_in_pipeline.remove(item)
-        self.logger.info("Moved %d items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue" % (num_files_in_pipeline))
-        # Queues.
-        self.discover_queue  = Queue.Queue()
-        self.filter_queue    = Queue.Queue()
-        self.process_queue   = Queue.Queue()
-        self.transport_queue = {}
-        for server in self.config.servers.keys():
-            self.transport_queue[server] = PeekingQueue()
-        self.db_queue        = Queue.Queue()
-        self.logger.info("Initialized queues.")
+        self.logger.info("Setup: moved %d items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue" % (num_files_in_pipeline))
 
         # Monitor all source paths.
         for (name, path) in self.config.sources.items():
-            self.logger.info("Monitoring '%s' (%s)." % (path, name))
+            self.logger.info("Setup: monitoring '%s' (%s)." % (path, name))
             self.fsmonitor.add_dir(path, FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
 
 
@@ -208,10 +207,11 @@ class Arbitrator(threading.Thread):
 
         # Stop the transporters and wait for their threads to end.
         for server in self.transporters.keys():
-            for transporter in self.transporters[server]:
-                transporter.stop()
-                transporter.join()
-            self.logger.info("Stopped transporters for the '%s' server." % (server))
+            if len(self.transporters[server]):
+                for transporter in self.transporters[server]:
+                    transporter.stop()
+                    transporter.join()
+                self.logger.info("Stopped transporters for the '%s' server." % (server))
 
         # Log information about the persistent data.
         self.logger.info("'pipeline' persistent queue contains %d items." % (self.pipeline_queue.qsize()))
@@ -369,7 +369,7 @@ class Arbitrator(threading.Thread):
                     transporter.sync_file(src, dst, action, curried_callback)
                     self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d)." % (output_file, server, id + 1, len(self.transporters[server])))
                 else:
-                    self.logger.info("Transporting: no more transporters are available for server '%s'." % (server))
+                    self.logger.debug("Transporting: no more transporters are available for server '%s'." % (server))
                     break
 
 
@@ -400,13 +400,13 @@ class Arbitrator(threading.Thread):
         # a new one.
         # Don't run more than the allowed number of simultaneous transporters.
         if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
-            return None
-        if self.config.servers[server]["maxConnections"] < len(self.transporters[server]):
+            return (None, None)
+        if len(self.transporters[server]) < self.config.servers[server]["maxConnections"]:
             id          = len(self.transporters[server]) - 1
             transporter = self.__create_transporter(server)
             return (id, transporter)
         else:
-            return None
+            return (None, None)
 
 
     def __create_transporter(self, server):
