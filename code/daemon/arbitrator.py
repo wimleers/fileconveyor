@@ -29,6 +29,7 @@ WORKING_DIR = '/tmp/test'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 20
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
+CONSOLE_OUTPUT = True
 
 
 # Copied from django.utils.functional
@@ -222,8 +223,11 @@ class Arbitrator(threading.Thread):
     def __process_discover_queue(self):
         self.lock.acquire()
         while self.discover_queue.qsize() > 0:
+
+            # Discover queue -> pipeline queue.
             (input_file, event) = self.discover_queue.get()
             self.pipeline_queue.put((input_file, event))
+
             self.logger.info("Syncing: added ('%s', %d) to the pipeline queue." % (input_file, event))
         self.lock.release()
 
@@ -235,8 +239,8 @@ class Arbitrator(threading.Thread):
             self.lock.acquire()
 
             # Peek the first item from the pipeline queue and store it in the
-            # persistent 'files_in_pipeline' list so the data can never get
-            # lost.
+            # persistent 'files_in_pipeline' list. By peeking instead of
+            # getting, ththe data can never get lost.
             self.files_in_pipeline.append(self.pipeline_queue.peek())
 
             # Pipeline queue -> filter queue.
@@ -245,12 +249,11 @@ class Arbitrator(threading.Thread):
 
             self.lock.release()
             self.logger.info("Pipelining: moved ('%s', %d) from the pipeline queue into the pipeline (into the filter queue)." % (input_file, event))
-            
 
 
     def __process_filter_queue(self):
-        # Process items in the 'filter' queue.
         while self.filter_queue.qsize() > 0:
+            # Filter queue -> process/transport queue.
             self.lock.acquire()
             (input_file, event) = self.filter_queue.get()
             self.lock.release()
@@ -303,6 +306,7 @@ class Arbitrator(threading.Thread):
 
     def __process_process_queue(self):
         while self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
+            # Process queue -> ProcessorChain -> processor_chain_callback -> transport/db queue.
             self.lock.acquire()
             (input_file, event, rule) = self.process_queue.get()
             self.lock.release()
@@ -327,10 +331,11 @@ class Arbitrator(threading.Thread):
 
 
     def __process_transport_queues(self):
-        # Process each server's transport queue.
         for server in self.config.servers.keys():
             while self.transport_queue[server].qsize() > 0:
-                # Peek at the first item from the queue
+                # Peek at the first item from the queue. We cannot get the
+                # item from the queue, because there may be no transporter
+                # available, in which case the file should remain queued.
                 self.lock.acquire()
                 (input_file, event, rule, output_file) = self.transport_queue[server].peek()
                 self.lock.release()
@@ -342,12 +347,14 @@ class Arbitrator(threading.Thread):
                     action = Transporter.ADD_MODIFY
 
                 # Get the additional settings from the rule.
-                parent_path = ""
+                dst_parent_path = ""
                 if rule["destination"]["settings"].has_key("path"):
-                    parent_path = rule["destination"]["settings"]["path"]
+                    dst_parent_path = rule["destination"]["settings"]["path"]
 
                 (id, transporter) = self.__get_transporter(server)
                 if not transporter is None:
+                    # A transporter is available!
+                    # Transport queue -> Transporter -> transporter_callback -> db queue.
                     self.lock.acquire()
                     (input_file, event, rule, output_file) = self.transport_queue[server].get()
                     self.lock.release()
@@ -362,12 +369,23 @@ class Arbitrator(threading.Thread):
                                              rule=rule
                                              )
 
-                    # Calculate src and dst for the file, then queue it to be
-                    # transported.
+                    # Calculate src and dst for the file.
+                    # - The src is the output file of the processor.
+                    # - The dst is the output file, but its source parent path
+                    #   (the working directory or its source root path) must
+                    #   be stripped and the destination parent path must be
+                    #   prepended.
+                    #   e.g.:
+                    #     - src                         -> dst
+                    #     - /htdocs/mysite/dir/the_file -> dir/the_file
+                    #     - /tmp/dir/the_file           -> dir/the_file
                     src = output_file
                     relative_paths = [WORKING_DIR, self.config.sources[rule["source"]]]
-                    dst = self.__calculate_transporter_dst(src, parent_path, relative_paths)
+                    dst = self.__calculate_transporter_dst(output_file, dst_parent_path, relative_paths)
+
+                    # Start the transport.
                     transporter.sync_file(src, dst, action, curried_callback)
+
                     self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d)." % (output_file, server, id + 1, len(self.transporters[server])))
                 else:
                     self.logger.debug("Transporting: no more transporters are available for server '%s'." % (server))
@@ -375,8 +393,8 @@ class Arbitrator(threading.Thread):
 
 
     def __process_db_queue(self):
-        # Process the db queue.
         while self.db_queue.qsize() > 0:
+            # DB queue -> database.
             self.lock.acquire()
             (input_file, event, rule, output_file, transported_file, url) = self.db_queue.get()
             self.lock.release()
@@ -391,17 +409,21 @@ class Arbitrator(threading.Thread):
 
 
     def __get_transporter(self, server):
+        """get a transporter; if one is ready for new work, use that one,
+        otherwise try to start a new transporter"""
+
         # Try to find a running transporter that is ready for new work.
         for id in range(0, len(self.transporters[server])):
             transporter = self.transporters[server][id]
             if transporter.is_ready():
                 return (id, transporter)
 
-        # Since we didn't find any ready transporter, check if we can create
-        # a new one.
         # Don't run more than the allowed number of simultaneous transporters.
         if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
             return (None, None)
+
+        # Don't run more transporters for each server than its "maxConnections"
+        # setting allows.
         if len(self.transporters[server]) < self.config.servers[server]["maxConnections"]:
             transporter = self.__create_transporter(server)
             id          = len(self.transporters[server]) - 1
@@ -411,6 +433,8 @@ class Arbitrator(threading.Thread):
 
 
     def __create_transporter(self, server):
+        """create a transporter for the given server"""
+
         transporter_name = self.config.servers[server]["transporter"]
         settings = self.config.servers[server]["settings"]
 
@@ -454,7 +478,14 @@ class Arbitrator(threading.Thread):
 
 
     def fsmonitor_callback(self, monitored_path, event_path, event):
-        print "FSMONITOR CALLBACK FIRED:\n\tmonitored_path='%s'\n\tevent_path='%s'\n\tevent=%d" % (monitored_path, event_path, event)
+        # Map FSMonitor's variable names to ours.
+        input_file = event_path
+
+        if CONSOLE_OUTPUT:
+            print """FSMONITOR CALLBACK FIRED:
+                    input_file='%s'
+                    event=%d""" % (input_file, event)
+
         # The file may have already been deleted!
         if os.path.exists(event_path):
             # Ignore directories.
@@ -468,7 +499,12 @@ class Arbitrator(threading.Thread):
 
 
     def processor_chain_callback(self, input_file, output_file, event, rule):
-        print "PROCESSOR CHAIN CALLBACK FIRED\n\tinput_file='%s'\n\toutput_file='%s'" % (input_file, output_file)
+        if CONSOLE_OUTPUT:
+            print """PROCESSOR CHAIN CALLBACK FIRED:
+                    input_file='%s'
+                    (curried): event=%d
+                    (curried): rule='%s'
+                    output_file='%s'""" % (input_file, event, rule["label"], output_file)
 
         # Decrease number of running processor chains.
         self.lock.acquire()
@@ -488,11 +524,19 @@ class Arbitrator(threading.Thread):
             self.lock.release()
 
 
-    def transporter_callback(self, src, dst, url, action, input_file, event, rule):
-        print "TRANSPORTER CALLBACK FIRED:\n\tsrc='%s'\n\tdst='%s'\n\turl='%s'\n\taction=%d\n\t(curried): event=%d\n\t(curried): input_file='%s'" % (src, dst, url, action, event, input_file)
-
+    def transporter_callback(self, src, dst, url, action, event, input_file, rule):
+        # Map Transporter's variable names to ours.
         output_file      = src
         transported_file = dst
+
+        if CONSOLE_OUTPUT:
+            print """TRANSPORTER CALLBACK FIRED:
+                    (curried): input_file='%s'
+                    (curried): event=%d
+                    (curried): rule='%s'
+                    output_file='%s'
+                    transported_file='%s'
+                    url='%s'""" % (input_file, event, rule["label"], output_file, transported_file, url)
 
         # Add to db queue.
         self.lock.acquire()
