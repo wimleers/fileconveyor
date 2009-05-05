@@ -100,7 +100,7 @@ class Arbitrator(threading.Thread):
                 self.config.servers[name]["settings"]["symlinkWithin"] = symlinkWithin
 
 
-    def setup(self):
+    def __setup(self):
         self.processor_chain_factory = ProcessorChainFactory("Arbitrator", WORKING_DIR)
 
         # Create transporter (cfr. worker thread) pools for each server.
@@ -114,17 +114,18 @@ class Arbitrator(threading.Thread):
         # Collecting all necessary metadata for each rule.
         self.rules = []
         for (name, path) in self.config.sources.items():
+            # Create a function to prepend the source's path to another path.
+            source_path = path
+            prepend_source_path = lambda path: os.path.join(source_path, path)
             if self.config.rules.has_key(name):
-                root_path = self.config.sources[name]
                 for rule in self.config.rules[name]:
                     # Prepend the source's path (effectively the "root path")
                     # for a rule to each of the paths in the "paths" condition
                     # in the filter.
-                    prepend_root_path = lambda path: os.path.join(root_path, path)
-                    paths = map(prepend_root_path, rule["filterConditions"]["paths"].split(":"))
+                    paths = map(prepend_source_path, rule["filterConditions"]["paths"].split(":"))
                     rule["filterConditions"]["paths"] = ":".join(paths)
 
-                    # 
+                    # Store all the rule metadata.
                     self.rules.append({
                         "source"         : name,
                         "label"          : rule["label"],
@@ -179,7 +180,7 @@ class Arbitrator(threading.Thread):
 
         # Do all setup within the run() method to ensure all thread-bound
         # objects are created in the right thread.
-        self.setup()
+        self.__setup()
 
         # Start the FS monitor.
         self.fsmonitor.start()
