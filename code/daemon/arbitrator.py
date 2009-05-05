@@ -402,8 +402,8 @@ class Arbitrator(threading.Thread):
         if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
             return (None, None)
         if len(self.transporters[server]) < self.config.servers[server]["maxConnections"]:
-            id          = len(self.transporters[server]) - 1
             transporter = self.__create_transporter(server)
+            id          = len(self.transporters[server]) - 1
             return (id, transporter)
         else:
             return (None, None)
