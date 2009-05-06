@@ -203,8 +203,9 @@ class Arbitrator(threading.Thread):
         # objects are created in the right thread.
         self.__setup()
 
-        # Start the FS monitor.
         self.fsmonitor.start()
+
+        self.clean_up_working_dir()
 
         self.logger.info("Fully up and running now.")
         while not self.die:
@@ -249,13 +250,7 @@ class Arbitrator(threading.Thread):
         num_synced_files = self.dbcur.fetchone()[0]
         self.logger.info("synced files DB contains metadata for %d synced files." % (num_synced_files))
 
-        # Clean up working directory.
-        for root, dirs, files in os.walk(WORKING_DIR, topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-        self.logger.info("Cleaned up the working directory '%s'" % (WORKING_DIR))
+        self.clean_up_working_dir()
 
 
     def __process_discover_queue(self):
@@ -699,6 +694,15 @@ class Arbitrator(threading.Thread):
         self.lock.acquire()
         self.die = True
         self.lock.release()
+
+
+    def clean_up_working_dir(self):
+        for root, dirs, files in os.walk(WORKING_DIR, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        self.logger.info("Cleaned up the working directory '%s'" % (WORKING_DIR))
 
 
 if __name__ == '__main__':
