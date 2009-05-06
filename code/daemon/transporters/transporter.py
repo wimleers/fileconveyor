@@ -43,7 +43,6 @@ class Transporter(threading.Thread):
 
         self.settings = settings
         self.storage = False
-        self.ready = False
         self.lock = threading.Lock()
         self.queue = Queue.Queue()
         self.callback = callback
@@ -55,11 +54,8 @@ class Transporter(threading.Thread):
         while not self.die:
             # Sleep a little bit if there's no work.
             if self.queue.qsize() == 0:
-                self.ready = True
                 time.sleep(0.5)
             else:
-                self.ready = False
-
                 self.lock.acquire()
                 (src, dst, action, callback) = self.queue.get()
                 self.lock.release()
@@ -128,8 +124,11 @@ class Transporter(threading.Thread):
         self.lock.release()
 
 
-    def is_ready(self):
-        return self.ready
+    def qsize(self):
+        self.lock.acquire()
+        qsize = self.queue.qsize()
+        self.lock.release()
+        return qsize
 
 
 # Make EVENTS' members directly accessible through the class dictionary.

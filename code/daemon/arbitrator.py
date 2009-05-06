@@ -6,6 +6,7 @@ import stat
 import threading
 import time
 import sys
+import sqlite3
 from UserList import UserList
 
 
@@ -24,11 +25,12 @@ from daemon_thread_runner import *
 
 LOG_FILE = './daemon.log'
 PERSISTENT_DATA_DB = './persistent_data.db'
-SYNCED_FILES_DB= './synced_files_db'
+SYNCED_FILES_DB = './synced_files.db'
 WORKING_DIR = '/tmp/test'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 20
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
+MAX_TRANSPORTER_QUEUE_SIZE = 1
 CONSOLE_OUTPUT = True
 
 
@@ -39,9 +41,14 @@ def curry(_curried_func, *args, **kwargs):
     return _curried
 
 
-class PeekingQueue(UserList):
+class AdvancedQueue(UserList):
+    """queue that supports peeking and jumping"""
+
     def peek(self):
         return self[0]
+
+    def jump(self, item):
+        self.insert(0, item)
 
     def put(self, item):
         self.append(item)
@@ -55,6 +62,9 @@ class PeekingQueue(UserList):
 
 class Arbitrator(threading.Thread):
     """docstring for arbitrator"""
+
+
+    DELETE_OLD_FILE = 0xFFFFFFFF
 
 
     def __init__(self, configfile="config.xml"):
@@ -136,12 +146,6 @@ class Arbitrator(threading.Thread):
                     })
                     self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], name))
 
-        # Initialize the FSMonitor.
-        fsmonitor_class = get_fsmonitor()
-        self.logger.info("Setup: using the %s FSMonitor class." % (fsmonitor_class))
-        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True)
-        self.logger.info("Setup: initialized FSMonitor.")
-
         # Initialize the the persistent 'pipeline' queue, the persistent
         # 'files in pipeline' list and the 'discover', 'filter', 'process',
         # 'transport' and 'db' queues.
@@ -155,7 +159,7 @@ class Arbitrator(threading.Thread):
         self.process_queue   = Queue.Queue()
         self.transport_queue = {}
         for server in self.config.servers.keys():
-            self.transport_queue[server] = PeekingQueue()
+            self.transport_queue[server] = AdvancedQueue()
         self.db_queue        = Queue.Queue()
         self.logger.info("Setup: initialized queues.")
 
@@ -168,6 +172,22 @@ class Arbitrator(threading.Thread):
         for item in pipelined_items:
             self.files_in_pipeline.remove(item)
         self.logger.info("Setup: moved %d items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue" % (num_files_in_pipeline))
+
+        # Create connection to synced files DB.
+        self.dbcon = sqlite3.connect(SYNCED_FILES_DB)
+        self.dbcur = self.dbcon.cursor()
+        self.dbcur.execute("CREATE TABLE IF NOT EXISTS synced_files(input_file text, transported_file_basename text, url text)")
+        self.dbcon.commit()
+        self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
+        num_synced_files = self.dbcur.fetchone()[0]
+        self.logger.info("Setup: connected to the synced files DB. Contains metadata for %d previously synced files." % (num_synced_files))
+
+
+        # Initialize the FSMonitor.
+        fsmonitor_class = get_fsmonitor()
+        self.logger.info("Setup: using the %s FSMonitor class." % (fsmonitor_class))
+        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True)
+        self.logger.info("Setup: initialized FSMonitor.")
 
         # Monitor all source paths.
         for (name, path) in self.config.sources.items():
@@ -218,6 +238,11 @@ class Arbitrator(threading.Thread):
         self.logger.info("'pipeline' persistent queue contains %d items." % (self.pipeline_queue.qsize()))
         self.logger.info("'files_in_pipeline' persistent list contains %d items." % (len(self.files_in_pipeline)))
 
+        # Log information about the synced files DB.
+        self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
+        num_synced_files = self.dbcur.fetchone()[0]
+        self.logger.info("synced files DB contains metadata for %d synced files." % (num_synced_files))
+
 
     def __process_discover_queue(self):
         self.lock.acquire()
@@ -261,7 +286,8 @@ class Arbitrator(threading.Thread):
             # moved from the pipeline list into the pipeline queue after the
             # application was interrupted. When that's the case, drop the
             # file from the pipeline.
-            if not os.path.exists(input_file):
+            touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
+            if touched and not os.path.exists(input_file):
                 self.lock.acquire()
                 self.files_in_pipeline.remove((input_file, event))
                 self.lock.release()
@@ -281,10 +307,18 @@ class Arbitrator(threading.Thread):
                     self.lock.acquire()
                     if event == FSMonitor.DELETED:
                         if not rule["destination"] is None:
-                            # TODO: set output_file equal to transported_file
-                            # (which should be looked up in the DB)???
-                            output_file = input_file
-                            self.transport_queue[server].put((input_file, event, rule, output_file))
+                            # Look up the transported file's base name. This
+                            # might be different from the input file's base
+                            # name due to processing.
+                            self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
+                            transport_file_basename = self.dbcur.fetchone()[0]
+                            # The output file that should be transported
+                            # doesn't exist anymore, because it was deleted.
+                            # So we create a filename that is the same as the
+                            # original, except with the different base name.
+                            fake_output_file = os.path.join(os.path.dirname(input_file), transport_file_basename)
+                            # Queue the transport (deletion).
+                            self.transport_queue[server].put((input_file, event, rule, fake_output_file))
                             self.logger.info("Filtering: queued transporter to server '%s' for file '%s' to delete it ('%s' rule)." % (server, input_file, rule["label"]))
                     else:
                         # If a processor chain is configured, queue the file to
@@ -310,7 +344,6 @@ class Arbitrator(threading.Thread):
                 self.logger.info("Filtering: dropped '%s' because it matches no rules." % (input_file))
 
 
-
     def __process_process_queue(self):
         while self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
             # Process queue -> ProcessorChain -> processor_chain_callback -> transport/db queue.
@@ -328,7 +361,10 @@ class Arbitrator(threading.Thread):
                                      )
 
             # Start the processor chain.
-            processor_chain = self.processor_chain_factory.make_chain_for(input_file, rule["processorChain"], curried_callback)
+            processor_chain = self.processor_chain_factory.make_chain_for(input_file,
+                                                                          rule["processorChain"],
+                                                                          curried_callback
+                                                                          )
             processor_chain.start()
             self.processorchains_running += 1
 
@@ -350,15 +386,25 @@ class Arbitrator(threading.Thread):
                 # Derive the action from the event.
                 if event == FSMonitor.DELETED:
                     action = Transporter.DELETE
-                else:
+                elif event == FSMonitor.CREATED or event == FSMonitor.MODIFIED:
                     action = Transporter.ADD_MODIFY
+                elif event == Arbitrator.DELETE_OLD_FILE:
+                    # TRICKY: if the event is neither of DELETED, CREATED, nor
+                    # MODIFIED, which everywhere else in the arbitrator it
+                    # should be, then it must be the special case of a file
+                    # that has been modified and already transported, but the
+                    # old file must still be deleted. Hence we map this event
+                    # to the Transporter's DELETE action.
+                    action = Transporter.DELETE
+                else:
+                    raise Exception("Non-existing event set.")
 
                 # Get the additional settings from the rule.
                 dst_parent_path = ""
                 if rule["destination"]["settings"].has_key("path"):
                     dst_parent_path = rule["destination"]["settings"]["path"]
 
-                (id, transporter) = self.__get_transporter(server)
+                (id, place_in_queue, transporter) = self.__get_transporter(server)
                 if not transporter is None:
                     # A transporter is available!
                     # Transport queue -> Transporter -> transporter_callback -> db queue.
@@ -393,7 +439,7 @@ class Arbitrator(threading.Thread):
                     # Start the transport.
                     transporter.sync_file(src, dst, action, curried_callback)
 
-                    self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d)." % (output_file, server, id + 1, len(self.transporters[server])))
+                    self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d), place %d in the queue." % (output_file, server, id + 1, len(self.transporters[server]), place_in_queue))
                 else:
                     self.logger.debug("Transporting: no more transporters are available for server '%s'." % (server))
                     break
@@ -406,13 +452,81 @@ class Arbitrator(threading.Thread):
             (input_file, event, rule, output_file, transported_file, url) = self.db_queue.get()
             self.lock.release()
 
-            # TODO
-            print "Finalizing: storing in DB:", (input_file, os.path.basename(output_file), url)
-            
-            self.lock.acquire()
-            self.files_in_pipeline.remove((input_file, event))
-            self.lock.release()
-            print "Completed its path through the pipeline: ", (input_file, event)
+            # Delete the output file, but only if it's different from the
+            # input file.
+            touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
+            if touched and not input_file == output_file:
+                os.remove(output_file)
+
+            # Commit the result to the database.
+            remove_from_pipeline = True
+            transported_file_basename = os.path.basename(output_file)
+            if event == FSMonitor.CREATED:
+                self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?)", (input_file, transported_file_basename, url))
+                self.dbcon.commit()
+            elif event == FSMonitor.MODIFIED:
+                self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=?", (input_file, ))
+                if self.dbcur.fetchone()[0] > 0:
+                    # TODO
+                    remove_from_pipeline = False
+
+                    # Look up the transported file's base name. This
+                    # might be different from the input file's base
+                    # name due to processing.
+                    self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
+                    old_transport_file_basename = self.dbcur.fetchone()[0]
+
+                    # Update the transported_file_basename and url fields for
+                    # the input_file that has been transported.
+                    self.dbcur.execute("UPDATE synced_files SET transported_file_basename=?, url=? WHERE input_file=?", (transported_file_basename, url, input_file))
+                    self.dbcon.commit()
+
+                    # We only end up in the DB queue if a destination was
+                    # configured, so we don't have to check that anymore.
+
+                    # The output file that should be transported only exists
+                    # on the server. So we create a filename that is the same
+                    # as the old transported file.
+                    fake_output_file = os.path.join(os.path.dirname(input_file), old_transport_file_basename)
+                    # Change the event to Arbitrator.DELETE_OLD_FILE, which
+                    # __process_transport_queues() will recognize and perform
+                    # a deletion for. After the transporter callback gets
+                    # called, this pseudo-event will end up in
+                    # __process_db_queue() (this method) once again and will
+                    # change the event back the original, FSMonitor.MODIFIED,
+                    # so we can remove it from the 'files_in_pipeline'
+                    # persistent list.
+                    pseudo_event = Arbitrator.DELETE_OLD_FILE
+                    # Queue the transport (deletion), but jump the queue!.
+                    server = rule["destination"]["server"]
+                    self.transport_queue[server].jump((input_file, pseudo_event, rule, fake_output_file))
+                    self.logger.info("DB queue: jumped the transport queue for server '%s' for file '%s' to delete its old transported file '%s' ('%s' rule)." % (server, input_file, old_transport_file_basename, rule["label"]))
+                else:
+                    self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?)", (input_file, transported_file_basename, url))
+                    self.dbcon.commit()
+            elif event == FSMonitor.DELETED:
+                self.dbcur.execute("DELETE FROM synced_files WHERE input_file=?", (input_file, ))
+                self.dbcon.commit()
+            elif event == Arbitrator.DELETE_OLD_FILE:
+                # TODO: explain this
+                event = FSMonitor.MODIFIED
+            else:
+                raise Exception("Non-existing event set.")
+
+            self.logger.info("DB queue: updated the 'synced files' DB for file '%s' its new URL '%s'." % (input_file, url))
+
+            # If a file was modified that had already been synced before and
+            # now has a different basename for the transported file than
+            # before, we first have to delete the old transported file before
+            # all work is done. remove_from_pipeline is set to False for this
+            # case.
+            if remove_from_pipeline:
+                # The file went all the way through the pipeline, so now it's safe
+                # to remove it from the persistent 'files_in_pipeline' list.
+                self.lock.acquire()
+                self.files_in_pipeline.remove((input_file, event))
+                self.lock.release()
+                print "Completed its path through the pipeline: ", (input_file, event)
 
 
     def __get_transporter(self, server):
@@ -422,21 +536,29 @@ class Arbitrator(threading.Thread):
         # Try to find a running transporter that is ready for new work.
         for id in range(0, len(self.transporters[server])):
             transporter = self.transporters[server][id]
-            if transporter.is_ready():
-                return (id, transporter)
+            # Don't put more than MAX_TRANSPORTER_QUEUE_SIZE files in each
+            # transporter's queue.
+            if transporter.qsize() < MAX_TRANSPORTER_QUEUE_SIZE:
+                place_in_queue = transporter.qsize() + 1
+                return (id, place_in_queue, transporter)
 
         # Don't run more than the allowed number of simultaneous transporters.
         if not self.transporters_running < MAX_SIMULTANEOUS_TRANSPORTERS:
-            return (None, None)
+            return (None, None, None)
 
         # Don't run more transporters for each server than its "maxConnections"
         # setting allows.
-        if len(self.transporters[server]) < self.config.servers[server]["maxConnections"]:
-            transporter = self.__create_transporter(server)
-            id          = len(self.transporters[server]) - 1
-            return (id, transporter)
+        num_connections = len(self.transporters[server])
+        max_connections = self.config.servers[server]["maxConnections"]
+        if max_connections == 0 or num_connections < max_connections:
+            transporter    = self.__create_transporter(server)
+            id             = len(self.transporters[server]) - 1
+            # Since this transporter was just created, it's obvious that we're
+            # first in line.
+            place_in_queue = 1
+            return (id, 1, transporter)
         else:
-            return (None, None)
+            return (None, None, None)
 
 
     def __create_transporter(self, server):
@@ -494,15 +616,22 @@ class Arbitrator(threading.Thread):
                     event=%d""" % (input_file, event)
 
         # The file may have already been deleted!
-        if os.path.exists(event_path):
-            # Ignore directories.
-            if not stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
-                input_file = event_path
+        deleted = event == FSMonitor.DELETED
+        touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
+        if deleted or (touched and os.path.exists(event_path)):
+            # Ignore directories (we cannot test deleted files to see if they
+            # are directories, because they obviously don't exist anymore).
+            if touched:
+                if stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
+                    return
 
-                # Add to discover queue.
-                self.lock.acquire()
-                self.discover_queue.put((input_file, event))
-                self.lock.release()
+            # Map FSMonitor's variable names to ours.
+            input_file = event_path
+
+            # Add to discover queue.
+            self.lock.acquire()
+            self.discover_queue.put((input_file, event))
+            self.lock.release()
 
 
     def processor_chain_callback(self, input_file, output_file, event, rule):
