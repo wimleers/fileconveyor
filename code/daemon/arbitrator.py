@@ -226,6 +226,12 @@ class Arbitrator(threading.Thread):
         self.fsmonitor.join()
         self.logger.info("Stopped FSMonitor.")
 
+        # Sync the discover queue one more time: now that the FSMonitor has
+        # been stopped, no more new discoveries will be made and we can safely
+        # sync the last batch of discovered files.
+        self.__process_discover_queue()
+        self.logger.info("Final sync of discover queue to pipeline queue made.")
+
         # Stop the transporters and wait for their threads to end.
         for server in self.transporters.keys():
             if len(self.transporters[server]):
