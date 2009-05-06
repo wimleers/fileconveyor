@@ -30,11 +30,13 @@ class SymlinkOrCopyStorage(FileSystemStorage):
         full_path_src = os.path.abspath(content.name)
 
         symlinked = False
-        for path in self.symlinkWithin:
-            if full_path_src.startswith(path):
-                os.symlink(full_path_src, full_path_dst)
-                symlinked = True
-                break
+        # Only symlink if the current platform supports it.
+        if getattr(os, "symlink", False):
+            for path in self.symlinkWithin:
+                if full_path_src.startswith(path):
+                    os.symlink(full_path_src, full_path_dst)
+                    symlinked = True
+                    break
 
         if not symlinked:
             FileSystemStorage._save(self, name, content)
