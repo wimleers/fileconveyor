@@ -31,32 +31,30 @@ class Base(Processor):
 
 
     def run(self):
-        (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
-
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
             return self.input_file
 
-        format = self.__identify_format(self.input_file)
+        # Get the parts of the input file.
+        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
+
+        format = self.identify_format(self.input_file)
 
         if format == "GIF":
             if self.filename_mutable == FILENAME_MUTABLE:
-                tmp_file         = os.path.join(self.working_dir, path, name + ".tmp.png")
-                self.output_file = os.path.join(self.working_dir, path, name + ".png")
-                self.__optimize_GIF(self.input_file, tmp_file, self.output_file)
+                tmp_file = os.path.join(self.working_dir, path, name + ".tmp.png")
+                self.set_output_file_basename(name + ".png")
+                self.optimize_GIF(self.input_file, tmp_file, self.output_file)
 
         elif format == "PNG":
-            self.output_file = os.path.join(self.working_dir, path, filename)
-            self.__optimize_PNG(self.input_file, self.output_file)
+            self.optimize_PNG(self.input_file, self.output_file)
 
         elif format == "JPEG":
-            self.output_file = os.path.join(self.working_dir, path, filename)
-            self.__optimize_JPEG(self.input_file, self.output_file, self.copy_metadata)
+            self.optimize_JPEG(self.input_file, self.output_file, self.copy_metadata)
 
         # Animated GIF
         elif len(format) >= 6 and format[0:6] == "GIFGIF":
-            self.output_file = os.path.join(self.working_dir, path, filename)
-            self.__optimize_animated_GIF(self.input_file, self.output_file)
+            self.optimize_animated_GIF(self.input_file, self.output_file)
         
         # Clean up things.
         self.devnull.close()
@@ -64,58 +62,36 @@ class Base(Processor):
         return self.output_file
 
 
-    def __identify_format(self, filename):
-        p = subprocess.Popen("identify -format %%m \"%s\"" % (filename),
-                             shell=True,
-                             stdout=subprocess.PIPE
-                             )
-        return p.communicate()[0].rstrip()
+    def identify_format(self, filename):
+        (stdout, stderr) = self.run_command("identify -format %%m \"%s\"" % (filename))
+        return stdout
 
 
-    def __optimize_GIF(self, input_file, tmp_file, output_file):
+    def optimize_GIF(self, input_file, tmp_file, output_file):
         # Convert to temporary PNG.
-        subprocess.call("convert %s %s" % (input_file, tmp_file),
-                        shell=True,
-                        stdout=subprocess.PIPE
-                        )
+        self.run_command("convert %s %s" % (input_file, tmp_file))
         # Optimize temporary PNG.
-        subprocess.call("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (tmp_file, output_file),
-                        shell=True,
-                        stdout=subprocess.PIPE
-                        )
+        self.run_command("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (tmp_file, output_file))
         # Remove temporary PNG.
         os.remove(tmp_file)
 
 
-
-    def __optimize_PNG(self, input_file, output_file):
-        subprocess.call("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (input_file, output_file),
-                        shell=True,
-                        stdout=subprocess.PIPE
-                        )
+    def optimize_PNG(self, input_file, output_file):
+        self.run_command("pngcrush -rem alla -reduce \"%s\" \"%s\"" % (input_file, output_file))
 
 
-    def __optimize_JPEG(self, input_file, output_file, copy_metadata):
+    def optimize_JPEG(self, input_file, output_file, copy_metadata):
         filesize = os.stat(input_file)[stat.ST_SIZE]
         # If the file is 10 KB or larger, JPEG's progressive mode
         # typically results in a higher compression ratio.
         if filesize < 10 * 1024:
-            subprocess.call("jpegtran -copy %s -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file),
-                            shell=True,
-                            stdout=subprocess.PIPE
-                            )
+            self.run_command("jpegtran -copy %s -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file))
         else:
-            subprocess.call("jpegtran -copy %s -progressive -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file),
-                            shell=True,
-                            stdout=subprocess.PIPE
-                            )
+            self.run_command("jpegtran -copy %s -progressive -optimize \"%s\" > \"%s\"" % (copy_metadata, input_file, output_file))
 
 
-    def __optimize_animated_GIF(self, input_file, output_file):
-        subprocess.call("gifsicle -O2 \"%s\" > \"%s\"" % (input_file, output_file),
-                        shell=True,
-                        stdout=subprocess.PIPE
-                        )
+    def optimize_animated_GIF(self, input_file, output_file):
+        self.run_command("gifsicle -O2 \"%s\" > \"%s\"" % (input_file, output_file))
 
 
 class Max(Base):

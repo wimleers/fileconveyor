@@ -5,8 +5,6 @@ __license__ = "GPL"
 
 
 from processor import *
-import subprocess
-import os.path
 import stat
 import shutil
 import hashlib
@@ -21,15 +19,18 @@ class Mtime(Processor):
 
 
     def run(self):
-        (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
-
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
             return self.input_file
 
-        mtime = os.stat(self.input_file)[stat.ST_MTIME]
-        self.output_file = os.path.join(self.working_dir, path, name + "_" + str(mtime) + extension)
+        # Get the parts of the input file.
+        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
+        # Set the output file base name.
+        mtime = os.stat(self.input_file)[stat.ST_MTIME]
+        self.set_output_file_basename(name + "_" + str(mtime) + extension)
+
+        # Copy the input file to the output file.
         shutil.copyfile(self.input_file, self.output_file)
 
         return self.output_file
@@ -39,20 +40,19 @@ class MD5(Processor):
     """gives the file a unique filename based on its MD5 hash"""
 
 
-    def __init__(self, input_file, working_dir="/tmp"):
-        Processor.__init__(self, input_file, working_dir)
-
-
     def run(self):
-        (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
-
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
             return self.input_file
 
-        md5 = self.md5(self.input_file)
-        self.output_file = os.path.join(self.working_dir, path, name + "_" + md5 + extension)
+        # Get the parts of the input file.
+        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
+        # Calculate the output file path.
+        md5 = self.md5(self.input_file)
+        self.set_output_file_basename(name + "_" + md5 + extension)
+
+        # Copy the input file to the output file.
         shutil.copyfile(self.input_file, self.output_file)
 
         return self.output_file
@@ -64,8 +64,7 @@ class MD5(Processor):
         try:
             f = open(filename, "rb")
         except IOError:
-            print "Unable to open the file in readmode:", filename
-            raise FileIOError
+            raise FileIOError("Unable to open the file in readmode: %s" % (filename))
 
         line = f.readline()
         while line:

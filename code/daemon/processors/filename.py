@@ -22,30 +22,25 @@ class Base(Processor):
 
 
     def run(self):
-        (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
-
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self) or len(self.search) != len(self.replace):
             return self.input_file
 
-        # Update the filename.
-        new_filename = filename
+        # Get the parts of the input file.
+        (path, basename, name, extension) = self.get_path_parts(self.input_file)
+
+        # Update the file's base name.
+        new_filename = basename
         for i in range(0, len(self.search)):
             new_filename = new_filename.replace(self.search[i], self.replace[i])
 
-        self.output_file = os.path.join(self.working_dir, path, new_filename)
+        # Set the output file base name.
+        self.set_output_file_basename(new_filename)
+
+        # Copy the file.
         shutil.copyfile(self.input_file, self.output_file)
 
         return self.output_file
-
-
-        def __init__(self, input_file, working_dir="/tmp"):
-            Base.__init__(self,
-                          input_file,
-                          working_dir,
-                          copy_metadata=COPY_METADATA_ALL,    # Do keep metadata
-                          filename_mutable=FILENAME_IMMUTABLE # Do keep filenames
-                          )
 
 
 class SpacesToUnderscores(Base):

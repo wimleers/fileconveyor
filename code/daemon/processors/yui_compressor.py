@@ -5,7 +5,6 @@ __license__ = "GPL"
 
 
 from processor import *
-import subprocess
 import os
 import os.path
 
@@ -17,34 +16,28 @@ class YUICompressor(Processor):
     valid_extensions = (".css", ".js")
 
 
-    def __init__(self, input_file, working_dir="/tmp", search=[], replace=[]):
+    def __init__(self, input_file, working_dir="/tmp"):
         Processor.__init__(self, input_file, working_dir)
-        self.yuicompressor_path = os.path.join(self.processors_path, "yuicompressor.jar")
 
 
     def run(self):
-        (path, filename, name, extension) = Processor.get_path_parts(self, self.input_file)
-
         # Return the input file if the file cannot be processed.
         if not Processor.validate(self):
             return self.input_file
 
-        self.output_file = os.path.join(self.working_dir, path, filename)
+        # We don't rename the file, so we can use the default output file.
 
         # Remove the output file if it already exists, otherwise YUI
         # Compressor will fail.
         if os.path.exists(self.output_file):
             os.remove(self.output_file)
+
         # Run YUI Compressor on the file.
-        p = subprocess.Popen("java -jar %s %s -o %s" % (self.yuicompressor_path, self.input_file, self.output_file),
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             )
+        yuicompressor_path = os.path.join(self.processors_path, "yuicompressor.jar")
+        (stdout, stderr) = self.run_command("java -jar %s %s -o %s" % (yuicompressor_path, self.input_file, self.output_file))
 
         # Raise an exception if an error occurred.
-        error = p.communicate()[1].rstrip()
-        if not error == "":
+        if not stderr == "":
             raise Exception(error)
 
         return self.output_file

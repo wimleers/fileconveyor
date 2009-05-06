@@ -16,6 +16,7 @@ import os.path
 import logging
 import copy
 from distutils.dir_util import mkpath
+import subprocess
 
 
 class Processor(object):
@@ -24,10 +25,20 @@ class Processor(object):
 
     def __init__(self, input_file, working_dir="/tmp"):
         self.input_file  = input_file
-        self.output_file = None
         self.working_dir = working_dir
-        if not os.path.exists(self.working_dir):
-            mkpath(self.working_dir)
+
+        # Get the parts of the input file.
+        (path, basename, name, extension) = self.get_path_parts(self.input_file)
+
+        # The file will end up in the working directory, in its relative path.
+        # It doesn't hurt to have empty directory trees, so create this
+        # already here to simplify the processors themselves.
+        output_file_path = os.path.join(self.working_dir, path)
+        if not os.path.exists(output_file_path):
+            mkpath(output_file_path)
+
+        # Set the default output file: the input file's base name.
+        self.set_output_file_basename(basename)
 
         # Calculate the path to the processors in the Processor class so
         # subclasses don't have to.
@@ -40,8 +51,9 @@ class Processor(object):
 
     def get_path_parts(self, path):
         """get the different parts of the file's path"""
-        (path, filename) = os.path.split(path)
-        (name, extension) = os.path.splitext(filename)
+
+        (path, basename) = os.path.split(path)
+        (name, extension) = os.path.splitext(basename)
 
         # Return the original relative path instead of the absolute path,
         # which may be inside the working directory because the file has been
@@ -53,22 +65,17 @@ class Processor(object):
         # fail.
         path = path.lstrip(os.sep)
 
-        # The file will most likely end up in the working directory, in its
-        # relative path. It doesn't hurt to have empty directory trees, so
-        # create this already here to simplify the processors themselves.
-        working_dir_plus_path = os.path.join(self.working_dir, path)
-        if not os.path.exists(working_dir_plus_path):
-            mkpath(working_dir_plus_path)
-
-        return (path, filename, name, extension)
+        return (path, basename, name, extension)
 
 
     def validate(self):
+        """validate the input file and its extensions"""
+
         # Get some variables "as if it were magic", i.e., from subclasses of
         # this class.
         valid_extensions = getattr(self.__class__, "valid_extensions", [])
 
-        (path, filename, name, extension) = self.get_path_parts(self.input_file)
+        (path, basename, name, extension) = self.get_path_parts(self.input_file)
 
         # Does the input file exist?
         if not os.path.exists(self.input_file):
@@ -79,6 +86,24 @@ class Processor(object):
             return False
 
         return True
+
+
+    def run_command(self, command):
+        """run a command and get (stdout, stderr) back"""
+
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        (stdout, stderr) = (stdout.rstrip(), stderr.rstrip())
+        return (stdout, stderr)
+
+
+    def set_output_file_basename(self, output_file_basename):
+        """set the output file's basename (changing the path is not allowed)"""
+
+        # Get the parts of the input file.
+        (path, basename, name, extension) = self.get_path_parts(self.input_file)
+
+        self.output_file = os.path.join(self.working_dir, path, output_file_basename)
 
 
 class ProcessorChain(threading.Thread):
