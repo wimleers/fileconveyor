@@ -71,11 +71,11 @@ class Config(object):
             settings = {}
             name           = server.get("name")
             transporter    = server.get("transporter")
-            maxConnections = server.get("maxConnections")
+            maxConnections = server.get("maxConnections", 0)
             for setting in server.getchildren():
                 settings[setting.tag] = setting.text
             self.servers[name] = {
-                "maxConnections" : maxConnections,
+                "maxConnections" : int(maxConnections),
                 "transporter"    : transporter,
                 "settings"       : settings,
             }
