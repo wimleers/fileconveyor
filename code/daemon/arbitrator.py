@@ -243,6 +243,14 @@ class Arbitrator(threading.Thread):
         num_synced_files = self.dbcur.fetchone()[0]
         self.logger.info("synced files DB contains metadata for %d synced files." % (num_synced_files))
 
+        # Clean up working directory.
+        for root, dirs, files in os.walk(WORKING_DIR, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        self.logger.info("Cleaned up the working directory '%s'" % (WORKING_DIR))
+
 
     def __process_discover_queue(self):
         self.lock.acquire()
