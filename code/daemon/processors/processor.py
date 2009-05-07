@@ -110,15 +110,19 @@ class ProcessorChain(threading.Thread):
     """chains the given file processors (runs them in sequence)"""
 
 
-    def __init__(self, processors, input_file, callback, parent_logger, working_dir="/tmp"):
+    def __init__(self, processors, input_file, callback, error_callback, parent_logger, working_dir="/tmp"):
         if not callable(callback):
-            raise InvalidCallbackError
-        self.processors    = processors
-        self.input_file    = input_file
-        self.output_file   = None
-        self.callback      = callback
-        self.working_dir   = working_dir
-        self.logger        = logging.getLogger(".".join([parent_logger, "ProcessorChain"]))
+            raise InvalidCallbackError("callback function is not callable")
+        if not callable(error_callback):
+            raise InvalidCallbackError("error_callback function is not callable")
+
+        self.processors     = processors
+        self.input_file     = input_file
+        self.output_file    = None
+        self.callback       = callback
+        self.error_callback = error_callback
+        self.working_dir    = working_dir
+        self.logger         = logging.getLogger(".".join([parent_logger, "ProcessorChain"]))
         threading.Thread.__init__(self)
 
 
@@ -139,8 +143,13 @@ class ProcessorChain(threading.Thread):
             old_output_file = self.output_file
             processor = processor_class(self.output_file, self.working_dir)
             self.logger.info("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
-            self.output_file = processor.run()
-            self.logger.info("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.output_file, self.output_file))
+            try:
+                self.output_file = processor.run()
+            except Exception, e:
+                self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
+                self.error_callback(self.input_file)
+                return
+            self.logger.info("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
 
             # Delete the old output file if applicable. But never ever remove
             # the input file!
@@ -160,8 +169,8 @@ class ProcessorChainFactory(object):
         self.working_dir   = working_dir
 
 
-    def make_chain_for(self, input_file, processors, callback):
-        return ProcessorChain(copy.copy(processors), input_file, callback, self.parent_logger, self.working_dir)
+    def make_chain_for(self, input_file, processors, callback, error_callback):
+        return ProcessorChain(copy.copy(processors), input_file, callback, error_callback, self.parent_logger, self.working_dir)
 
 
 if __name__ == '__main__':
