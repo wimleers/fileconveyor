@@ -60,6 +60,12 @@ class AdvancedQueue(UserList):
         return len(self)
 
 
+# Define exceptions.
+class ArbitratorError(Exception): pass
+class ConfigError(ArbitratorError): pass
+class ServerConnectionTestError(ArbitratorError): pass
+
+
 class Arbitrator(threading.Thread):
     """docstring for arbitrator"""
 
@@ -97,7 +103,7 @@ class Arbitrator(threading.Thread):
         self.logger.info("Loaded config file.")
         if self.config_errors > 0:
             self.logger.error("Cannot continue, please fix the errors in the config file first.")
-            return
+            raise ConfigError("Consult the log file for details.")
 
         # TRICKY: set the "symlinkWithin" setting for "none" transporters
         # First calculate the value for the "symlinkWithin" setting.
@@ -109,6 +115,20 @@ class Arbitrator(threading.Thread):
         for name in self.config.servers.keys():
             if self.config.servers[name]["transporter"] == "none":
                 self.config.servers[name]["settings"]["symlinkWithin"] = symlinkWithin
+
+        # Verify that each of the servers works.
+        successful_server_connections = 0
+        for server in self.config.servers.keys():
+            transporter = self.__create_transporter(server)
+            if transporter:
+                successful_server_connections += 1
+            del transporter
+        failed_server_connections = len(self.config.servers) - successful_server_connections
+        if failed_server_connections > 0:
+            self.logger.error("Server connection tests: could not connect with %d servers." % (failed_server_connections))
+            raise ServerConnectionTestError("Consult the log file for details.")
+        else:
+            self.logger.info("Server connection tests succesful!")
 
 
     def __setup(self):
@@ -147,13 +167,16 @@ class Arbitrator(threading.Thread):
                     self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], name))
 
         # Initialize the the persistent 'pipeline' queue, the persistent
-        # 'files in pipeline' list and the 'discover', 'filter', 'process',
-        # 'transport' and 'db' queues.
+        # 'files in pipeline' and 'failed files' lists and the 'discover',
+        # 'filter', 'process', 'transport', 'db' and 'retry' queues.
         self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_DB)
         self.logger.info("Setup: initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
         self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_DB)
         num_files_in_pipeline = len(self.files_in_pipeline)
         self.logger.info("Setup: initialized 'files_in_pipeline' persistent list, contains %d items." % (num_files_in_pipeline))
+        self.failed_files = PersistentList("failed_files_list", PERSISTENT_DATA_DB)
+        num_failed_files = len(self.failed_files)
+        self.logger.info("Setup: initialized 'failed_files' persistent list, contains %d items." % (num_failed_files))
         self.discover_queue  = Queue.Queue()
         self.filter_queue    = Queue.Queue()
         self.process_queue   = Queue.Queue()
@@ -161,10 +184,11 @@ class Arbitrator(threading.Thread):
         for server in self.config.servers.keys():
             self.transport_queue[server] = AdvancedQueue()
         self.db_queue        = Queue.Queue()
-        self.logger.info("Setup: initialized queues.")
+        self.retry_queue     = Queue.Queue()
 
-        # Move files from pipeline to pipeline queue. This is what prevents
-        # files from being dropped from the pipeline!
+        # Move files from the 'files_in_pipeline' persistent list to the 
+        # pipeline queue. This is what prevents files from being dropped from
+        # the pipeline!
         pipelined_items = []
         for item in self.files_in_pipeline:
             pipelined_items.append(item)
@@ -172,6 +196,17 @@ class Arbitrator(threading.Thread):
         for item in pipelined_items:
             self.files_in_pipeline.remove(item)
         self.logger.info("Setup: moved %d items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue" % (num_files_in_pipeline))
+
+        # Move files from the 'failed_files' persistent list to the
+        # pipeline queue. This is what ensures that even problematic files
+        # are not forgotten!
+        failed_items = []
+        for item in self.failed_files:
+            failed_items.append(item)
+            self.pipeline_queue.put(item)
+        for item in failed_items:
+            self.failed_files.remove(item)
+        self.logger.info("Setup: moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue" % (num_failed_files))
 
         # Create connection to synced files DB.
         self.dbcon = sqlite3.connect(SYNCED_FILES_DB)
@@ -181,7 +216,6 @@ class Arbitrator(threading.Thread):
         self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
         num_synced_files = self.dbcur.fetchone()[0]
         self.logger.info("Setup: connected to the synced files DB. Contains metadata for %d previously synced files." % (num_synced_files))
-
 
         # Initialize the FSMonitor.
         fsmonitor_class = get_fsmonitor()
@@ -215,6 +249,7 @@ class Arbitrator(threading.Thread):
             self.__process_process_queue()
             self.__process_transport_queues()
             self.__process_db_queue()
+            self.__process_retry_queue()
 
             # Processing the queues 10 times per second is more than
             # sufficient, because files are modified, processed and
@@ -244,6 +279,7 @@ class Arbitrator(threading.Thread):
         # Log information about the persistent data.
         self.logger.info("'pipeline' persistent queue contains %d items." % (self.pipeline_queue.qsize()))
         self.logger.info("'files_in_pipeline' persistent list contains %d items." % (len(self.files_in_pipeline)))
+        self.logger.info("'failed_files' persistent list contains %d items." % (len(self.failed_files)))
 
         # Log information about the synced files DB.
         self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
@@ -360,19 +396,23 @@ class Arbitrator(threading.Thread):
             (input_file, event, rule) = self.process_queue.get()
             self.lock.release()
 
-            # Create a curried callback so we can pass additional data to the
+            # Create curried callbacks so we can pass additional data to the
             # processor chain callback without passing it to the processor
             # chain itself (which cannot handle sending additional data to its
-            # callback function).
+            # callback functions).
             curried_callback = curry(self.processor_chain_callback,
                                      event=event,
                                      rule=rule
                                      )
+            curried_error_callback = curry(self.processor_chain_error_callback,
+                                           event=event
+                                           )
 
             # Start the processor chain.
             processor_chain = self.processor_chain_factory.make_chain_for(input_file,
                                                                           rule["processorChain"],
-                                                                          curried_callback
+                                                                          curried_callback,
+                                                                          curried_error_callback
                                                                           )
             processor_chain.start()
             self.processorchains_running += 1
@@ -421,15 +461,20 @@ class Arbitrator(threading.Thread):
                     (input_file, event, rule, output_file) = self.transport_queue[server].get()
                     self.lock.release()
 
-                    # Create a curried callback so we can pass additional data
+                    # Create curried callbacks so we can pass additional data
                     # to the transporter callback without passing it to the
                     # transporter itself (which cannot handle sending
-                    # additional data to its callback function).
+                    # additional data to its callback functions).
                     curried_callback = curry(self.transporter_callback,
-                                             event=event,
                                              input_file=input_file,
+                                             event=event,
                                              rule=rule
                                              )
+                    curried_error_callback = curry(self.transporter_error_callback,
+                                                   input_file=input_file,
+                                                   event=event
+                                                   )
+
 
                     # Calculate src and dst for the file.
                     # - The src is the output file of the processor.
@@ -446,7 +491,7 @@ class Arbitrator(threading.Thread):
                     dst = self.__calculate_transporter_dst(output_file, dst_parent_path, relative_paths)
 
                     # Start the transport.
-                    transporter.sync_file(src, dst, action, curried_callback)
+                    transporter.sync_file(src, dst, action, curried_callback, curried_error_callback)
 
                     self.logger.info("Transporting: queued '%s' to transfer to server '%s' with transporter #%d (of %d), place %d in the queue." % (output_file, server, id + 1, len(self.transporters[server]), place_in_queue))
                 else:
@@ -538,6 +583,18 @@ class Arbitrator(threading.Thread):
                 print "Completed its path through the pipeline: ", (input_file, event)
 
 
+    def __process_retry_queue(self):
+        while self.retry_queue.qsize() > 0:
+            # Retry queue -> failed files list.
+            # And remove from files in pipeline.
+            self.lock.acquire()
+            (input_file, event) = self.retry_queue.get()
+            self.failed_files.append((input_file, event))
+            self.files_in_pipeline.remove((input_file, event))
+            self.lock.release()
+            self.logger.info("Retry queue: moved the file '%s' to the 'failed_files' persistent list. Another attempt to process it will be performed after a restart of the daemon." % (input_file))
+
+
     def __get_transporter(self, server):
         """get a transporter; if one is ready for new work, use that one,
         otherwise try to start a new transporter"""
@@ -562,12 +619,17 @@ class Arbitrator(threading.Thread):
         if max_connections == 0 or num_connections < max_connections:
             transporter    = self.__create_transporter(server)
             id             = len(self.transporters[server]) - 1
-            # Since this transporter was just created, it's obvious that we're
-            # first in line.
-            place_in_queue = 1
-            return (id, 1, transporter)
-        else:
-            return (None, None, None)
+            # If a transporter was succesfully created, add it to the pool.
+            if transporter:
+                self.transporters[server].append(transporter)
+                transporter.start()
+                self.transporters_running += 1
+                # Since this transporter was just created, it's obvious that we're
+                # first in line.
+                place_in_queue = 1
+                return (id, 1, transporter)
+
+        return (None, None, None)
 
 
     def __create_transporter(self, server):
@@ -585,13 +647,14 @@ class Arbitrator(threading.Thread):
         module = __import__(transporter_modulename, globals(), locals(), [transporter_classname])
         transporter_class = getattr(module, transporter_classname)
 
-        # Create an instance of the transporter and add it to the pool.
-        transporter = transporter_class(settings, self.transporter_callback)
-        transporter.start()
-        self.transporters[server].append(transporter)
-
-        self.transporters_running += 1
-        self.logger.info("Created '%s' transporter for the '%s' server." % (transporter_name, server))
+        # Attempt to create an instance of the transporter.
+        try:
+            transporter = transporter_class(settings, self.transporter_callback, self.transporter_error_callback)
+        except ConnectionError, e:
+            self.logger.error("Could not start transporter '%s'. Error: '%s'." % (transporter_name, e))
+            return False
+        else:
+            self.logger.info("Created '%s' transporter for the '%s' server." % (transporter_name, server))
 
         return transporter
 
@@ -669,7 +732,19 @@ class Arbitrator(threading.Thread):
             self.lock.release()
 
 
-    def transporter_callback(self, src, dst, url, action, event, input_file, rule):
+    def processor_chain_error_callback(self, input_file, event):
+        if CONSOLE_OUTPUT:
+            print """PROCESSOR CHAIN ERROR CALLBACK FIRED:
+                    input_file='%s'
+                    (curried): event=%d""" % (input_file, event)
+
+        # Add to retry queue.
+        self.lock.acquire()
+        self.retry_queue.put((input_file, event))
+        self.lock.release()
+
+
+    def transporter_callback(self, src, dst, url, action, input_file, event, rule):
         # Map Transporter's variable names to ours.
         output_file      = src
         transported_file = dst
@@ -689,6 +764,15 @@ class Arbitrator(threading.Thread):
         self.lock.release()
 
 
+    def transporter_error_callback(self, src, dst, action, input_file, event):
+        if CONSOLE_OUTPUT:
+            print """TRANSPORTER ERROR CALLBACK FIRED:
+                    (curried): input_file='%s'
+                    (curried): event=%d""" % (input_file, event)
+
+        self.__requeue_failed_file(input_file, event, "Requeued the file '%s' because it failed during transportation.")
+
+
     def stop(self):
         self.logger.info("Signaling to stop.")
         self.lock.acquire()
@@ -705,7 +789,12 @@ class Arbitrator(threading.Thread):
         self.logger.info("Cleaned up the working directory '%s'" % (WORKING_DIR))
 
 
+
 if __name__ == '__main__':
-    arbitrator = Arbitrator("config.sample.xml")
-    t = DaemonThreadRunner(arbitrator, "daemon")
-    t.start()
+    try:
+        arbitrator = Arbitrator("config.sample.xml")
+    except ArbitratorError, e:
+        print e.__class__, e
+    else:
+        t = DaemonThreadRunner(arbitrator, "daemon")
+        t.start()
