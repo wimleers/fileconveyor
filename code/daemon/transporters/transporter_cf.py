@@ -1,10 +1,3 @@
-if __name__ == "__main__":
-    import sys
-    import os
-    import os.path
-    sys.path.append(os.path.abspath('../dependencies'))
-
-
 from transporter import *
 from transporter_s3 import TransporterS3
 
@@ -15,12 +8,13 @@ TRANSPORTER_CLASS = "TransporterCF"
 class TransporterCF(TransporterS3):
 
 
+    name              = 'CF'
     valid_settings    = ImmutableSet(["access_key_id", "secret_access_key", "bucket_name", "distro_domain_name", "bucket_prefix"])
     required_settings = ImmutableSet(["access_key_id", "secret_access_key", "bucket_name", "distro_domain_name"])
 
 
-    def __init__(self, settings, callback):
-        TransporterS3.__init__(self, settings, callback)
+    def __init__(self, settings, callback, error_callback, parent_logger=None):
+        return TransporterS3.__init__(self, settings, callback, error_callback, parent_logger)
 
 
     def alter_url(self, url):
@@ -60,28 +54,3 @@ def create_distribution(access_key_id, secret_access_key, origin, comment="", cn
         print "."
         time.sleep(5)
     print "\nThe distribution has been deployed!"
-
-
-if __name__ == "__main__":
-    import time
-    import sys
-    import os
-    sys.path.append(os.path.abspath('../dependencies'))
-
-    def callbackfunc(src, dst, url, action):
-        print "CALLBACK FIRED:\n\tsrc='%s'\n\tdst='%s'\n\turl='%s'\n\taction=%d" % (src, dst, url, action)
-
-    settings = {
-        "access_key_id"      : "your access key id",
-        "secret_access_key"  : "your secret access key",
-        "bucket_name"        : "your bucket name",
-        "distro_domain_name" : "your-distro-domain-name.cloudfront.net",
-    }
-    cf = TransporterCF(settings, callbackfunc)
-    cf.start()
-    cf.sync_file("transporter.py")
-    cf.sync_file("drupal-5-6.png")
-    cf.sync_file("subdir/bmi-chart.png")
-    cf.sync_file("subdir/bmi-chart.png", "subdir/bmi-chart.png", Transporter.DELETE)
-    time.sleep(5)
-    cf.stop()
