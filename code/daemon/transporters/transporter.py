@@ -38,7 +38,7 @@ class Transporter(threading.Thread):
     }
 
 
-    def __init__(self, settings, callback, error_callback, parent_logger=None):
+    def __init__(self, settings, callback, error_callback, parent_logger):
         if not callable(callback):
             raise InvalidCallbackError("callback function is not callable")
         if not callable(error_callback):
@@ -50,12 +50,8 @@ class Transporter(threading.Thread):
         self.queue          = Queue.Queue()
         self.callback       = callback
         self.error_callback = error_callback
-        self.logger         = lambda message: None
+        self.logger         = logging.getLogger(".".join([parent_logger, "Transporter"]))
         self.die            = False
-
-        # Use the logger if a parent lgoger is set.
-        if not parent_logger is None:
-            self.logger = logging.getLogger(".".join([parent_logger, "Transporter"]))
 
         # Validate settings.
         self.validate_settings()
