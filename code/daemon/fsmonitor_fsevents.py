@@ -60,9 +60,12 @@ class FSMonitorFSEvents(FSMonitor):
 
     def __add_dir(self, path, event_mask):
         """override of FSMonitor.__add_dir()"""
-        # Perform an initial scan of the directory structure. If this has
-        # already been done, then it will return immediately.
-        self.pathscanner.initial_scan(path)
+        if self.trigger_events_for_initial_scan and self.persistent:
+            FSMonitor.generate_missed_events(self, path, event_mask)
+        else:
+            # Perform an initial scan of the directory structure. If this has
+            # already been done, then it will return immediately.
+            self.pathscanner.initial_scan(path)
 
         # Use the FSEvents API to monitor a directory.
         streamRef = FSEventStreamCreate(kCFAllocatorDefault,

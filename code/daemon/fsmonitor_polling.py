@@ -34,7 +34,10 @@ class FSMonitorPolling(FSMonitor):
         # Perform an initial scan of the directory structure. If this has
         # already been done, then it will return immediately.
         if self.persistent:
-            self.pathscanner.initial_scan(path)
+            if self.trigger_events_for_initial_scan:
+                self.pathscanner.initial_scan(path)
+            else:
+                FSMonitor.generate_missed_events(self, path, event_mask)
 
         self.monitored_paths[path] = MonitoredPath(path, event_mask, None)
         self.monitored_paths[path].monitoring = True

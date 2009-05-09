@@ -54,7 +54,10 @@ class FSMonitorInotify(FSMonitor):
         # Perform an initial scan of the directory structure. If this has
         # already been done, then it will return immediately.
         if self.persistent:
-            self.pathscanner.initial_scan(path)
+            if self.trigger_events_for_initial_scan:
+                self.pathscanner.initial_scan(path)
+            else:
+                FSMonitor.generate_missed_events(self, path, event_mask)
 
         event_mask_inotify = self.__fsmonitor_event_to_inotify_event(event_mask)
 

@@ -72,18 +72,19 @@ class FSMonitor(threading.Thread):
     }
 
 
-    def __init__(self, callback, persistent=False, dbfile="fsmonitor.db"):
-        self.persistent = persistent
-        self.monitored_paths = {}
-        self.dbfile = dbfile
-        self.dbcon = None
-        self.dbcur = None
-        self.pathscanner = None
-        self.callback = callback
-        self.lock = threading.Lock()
-        self.add_queue = Queue.Queue()
-        self.remove_queue = Queue.Queue()
-        self.die = False
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, dbfile="fsmonitor.db"):
+        self.persistent                      = persistent
+        self.trigger_events_for_initial_scan = trigger_events_for_initial_scan
+        self.monitored_paths                 = {}
+        self.dbfile                          = dbfile
+        self.dbcon                           = None
+        self.dbcur                           = None
+        self.pathscanner                     = None
+        self.callback                        = callback
+        self.lock                            = threading.Lock()
+        self.add_queue                       = Queue.Queue()
+        self.remove_queue                    = Queue.Queue()
+        self.die                             = False
         threading.Thread.__init__(self)
 
 
@@ -114,10 +115,10 @@ class FSMonitor(threading.Thread):
         raise NotImplemented
 
 
-    def generate_missed_events(self, path):
+    def generate_missed_events(self, path, event_mask=None):
         """generate the missed events for a persistent DB"""
         for event_path, result in self.pathscanner.scan_tree(path):
-            self.trigger_events_for_pathscanner_result(path, event_path, result)
+            self.trigger_events_for_pathscanner_result(path, event_path, result, event_mask)
 
 
     def stop(self):
@@ -151,9 +152,10 @@ class FSMonitor(threading.Thread):
             self.pathscanner = PathScanner(self.dbcon, "pathscanner")
 
 
-    def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result):
+    def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, event_mask=None):
         """trigger events for pathscanner result"""
-        event_mask = self.monitored_paths[monitored_path].event_mask
+        if event_mask is None:
+            event_mask = self.monitored_paths[monitored_path].event_mask
         if event_mask & FSMonitor.CREATED:
             for filename in result["created"]:
                 self.trigger_event(monitored_path, os.path.join(event_path, filename), self.CREATED)
