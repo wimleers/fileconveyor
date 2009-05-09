@@ -15,7 +15,6 @@ import os
 import os.path
 import logging
 import copy
-from distutils.dir_util import mkpath
 import subprocess
 
 
@@ -35,7 +34,7 @@ class Processor(object):
         # already here to simplify the processors themselves.
         output_file_path = os.path.join(self.working_dir, path)
         if not os.path.exists(output_file_path):
-            mkpath(output_file_path)
+            os.makedirs(output_file_path)
 
         # Set the default output file: the input file's base name.
         self.set_output_file_basename(basename)
@@ -142,14 +141,14 @@ class ProcessorChain(threading.Thread):
             # Run the processor.
             old_output_file = self.output_file
             processor = processor_class(self.output_file, self.working_dir)
-            self.logger.info("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
+            self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
             try:
                 self.output_file = processor.run()
             except Exception, e:
                 self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
                 self.error_callback(self.input_file)
                 return
-            self.logger.info("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
+            self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
 
             # Delete the old output file if applicable. But never ever remove
             # the input file!
