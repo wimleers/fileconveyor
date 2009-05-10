@@ -19,9 +19,10 @@ class TestConditions(unittest.TestCase):
         """Filter should fail when no settings are provided"""
         self.assertRaises(MissingConditionError, self.filter.set_conditions, {})
 
-    def testMissingConditions(self):
+    def testMinimumConditions(self):
         """Filter should fail when some settings are missing"""
-        self.assertRaises(MissingConditionError, self.filter.set_conditions, {"extensions" : "gif:png"})
+        self.assertTrue(self.filter.set_conditions, {"paths" : "foo/bar:baz"})
+        self.assertTrue(self.filter.set_conditions, {"extensions" : "gif:png"})
 
     def testInvalidConditions(self):
         """Filter should fail when there is an invalid setting"""
@@ -89,6 +90,32 @@ class TestMatching(unittest.TestCase):
         """Ensure matching works properly even when no conditions are set"""
         filter = Filter()
         self.assertFalse(filter.matches('whatever'))
+
+    def testPathsMatches(self):
+        """Ensure paths matching works properly"""
+        conditions = {
+            "paths" : "foo/bar:baz"
+        }
+        filter = Filter(conditions)
+        # Invalid paths.
+        self.assertFalse(filter.matches('/a/b/c/d.gif'))
+        self.assertFalse(filter.matches('/a/foo/bar.gif'))
+        # Valid paths.
+        self.assertTrue(filter.matches('/a/b/c/d/e/foo/bar/g.gif'))
+        self.assertTrue(filter.matches('/a/baz/c.png'))
+
+    def testExtensionsMatches(self):
+        """Ensure extensions matching works properly"""
+        conditions = {
+            "extensions" : "gif:png",
+        }
+        filter = Filter(conditions)
+        # Invalid extensions.
+        self.assertFalse(filter.matches('/a/foo/bar/b.mov'))
+        self.assertFalse(filter.matches('/a/baz/c/d/e/f.txt'))
+        # Valid extensions.
+        self.assertTrue(filter.matches('/a/b/c/d/e/foo/bar/g.gif'))
+        self.assertTrue(filter.matches('/a/baz/c.png'))
 
     def testSimpleMatches(self):
         """Ensure paths/extensions matching works properly"""

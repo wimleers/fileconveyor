@@ -31,7 +31,6 @@ class Filter(object):
     """filter filepaths based on path, file extensions, ignored directories, file pattern and file size"""
 
     valid_conditions = ImmutableSet(["paths", "extensions", "ignoredDirs", "pattern", "size"])
-    required_conditions = ImmutableSet(["paths", "extensions"])
     required_sizeconditions = ImmutableSet(["conditionType", "treshold"])
     # Prevent forbidden characters in filepaths!
     # - Mac OS X: :
@@ -64,8 +63,8 @@ class Filter(object):
         present_conditions = Set(conditions.keys())
 
         # Ensure all required conditions are set.
-        if len(self.__class__.required_conditions.difference(present_conditions)):
-            raise MissingConditionError
+        if not (conditions.has_key("paths") or conditions.has_key("extensions")):
+            raise MissingConditionError("You must at least set a paths or extensions condition.")
 
         # Ensure only valid conditions are set.
         if len(present_conditions.difference(self.__class__.valid_conditions)):
@@ -91,12 +90,14 @@ class Filter(object):
         """Validate a given set of conditions"""
 
         # The paths condition must contain paths separated by colons.
-        if not self.__class__.patterns["paths"].match(conditions["paths"]):
-            raise InvalidPathsConditionError
+        if conditions.has_key("paths"):
+            if not self.__class__.patterns["paths"].match(conditions["paths"]):
+                raise InvalidPathsConditionError
 
         # The extensions condition must contain extensions separated by colons.
-        if not self.__class__.patterns["extensions"].match(conditions["extensions"]):
-            raise InvalidExtensionsConditionError
+        if conditions.has_key("extensions"):
+            if not self.__class__.patterns["extensions"].match(conditions["extensions"]):
+                raise InvalidExtensionsConditionError
 
         # The ignoredDirs condition must contain dirnames separated by colons.
         if conditions.has_key("ignoredDirs"):
@@ -143,18 +144,19 @@ class Filter(object):
         (root, ext) = os.path.splitext(filepath)
 
         # Step 1: apply the paths condition.
-        append_slash = lambda path: path + "/"
-        paths = map(append_slash, self.conditions["paths"].split(":"))
-        path_found = False
-        for path in paths:
-            if root.find(path) > -1:
-                path_found = True
-                break
-        if not path_found:
-            match = False
+        if match and self.conditions.has_key("paths"):
+            append_slash = lambda path: path + "/"
+            paths = map(append_slash, self.conditions["paths"].split(":"))
+            path_found = False
+            for path in paths:
+                if root.find(path) > -1:
+                    path_found = True
+                    break
+            if not path_found:
+                match = False
         
         # Step 2: apply the extensions condition.
-        if match:
+        if match and self.conditions.has_key("extensions"):
             ext = ext.lstrip(".")
             if not ext in self.conditions["extensions"].split(":"):
                 match = False
