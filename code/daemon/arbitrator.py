@@ -126,17 +126,18 @@ class Arbitrator(threading.Thread):
         processors_not_found = 0
         for source in self.config.rules.keys():
             for rule in self.config.rules[source]:
-                for processor in rule["processorChain"]:
-                    (modulename, classname) = processor.split(".")
-                    try:
-                        module = __import__(modulename, globals(), locals(), [classname])
-                        processor_class = getattr(module, classname)
-                    except ImportError:
-                        self.logger.error("The Processor module '%s' could not be found." % (modulename))
-                        processors_not_found += 1
-                    except AttributeError:
-                        self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
-                        processors_not_found += 1
+                if not rule["processorChain"] is None:
+                    for processor in rule["processorChain"]:
+                        (modulename, classname) = processor.split(".")
+                        try:
+                            module = __import__(modulename, globals(), locals(), [classname])
+                            processor_class = getattr(module, classname)
+                        except ImportError:
+                            self.logger.error("The Processor module '%s' could not be found." % (modulename))
+                            processors_not_found += 1
+                        except AttributeError:
+                            self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+                            processors_not_found += 1
         if processors_not_found > 0:
             raise ProcessorAvailabilityTestError("Consult the log file for details")
 
@@ -193,17 +194,22 @@ class Arbitrator(threading.Thread):
             prepend_source_path = lambda path: os.path.join(source_path, path)
             if self.config.rules.has_key(name):
                 for rule in self.config.rules[name]:
-                    # Prepend the source's path (effectively the "root path")
-                    # for a rule to each of the paths in the "paths" condition
-                    # in the filter.
-                    paths = map(prepend_source_path, rule["filterConditions"]["paths"].split(":"))
-                    rule["filterConditions"]["paths"] = ":".join(paths)
+                    if rule["filterConditions"] is None:
+                        filter = None
+                    else:
+                        if rule["filterConditions"].has_key("paths"):
+                            # Prepend the source's path (effectively the "root path")
+                            # for a rule to each of the paths in the "paths" condition
+                            # in the filter.
+                            paths = map(prepend_source_path, rule["filterConditions"]["paths"].split(":"))
+                            rule["filterConditions"]["paths"] = ":".join(paths)
+                        filter = Filter(rule["filterConditions"])
 
                     # Store all the rule metadata.
                     self.rules.append({
                         "source"         : name,
                         "label"          : rule["label"],
-                        "filter"         : Filter(rule["filterConditions"]),
+                        "filter"         : filter,
                         "processorChain" : rule["processorChain"],
                         "destination"    : rule["destination"],
                     })
@@ -384,9 +390,13 @@ class Arbitrator(threading.Thread):
 
             # Find all rules that apply to the detected file event.
             match_found = False
+            file_is_deleted = event == FSMonitor.DELETED
             for rule in self.rules:
                 # Try to find a rule that matches the file.
-                if rule["filter"].matches(input_file, file_is_deleted = event == FSMonitor.DELETED):
+                if input_file.startswith(self.config.sources[rule["source"]]) and \
+                   (rule["filter"] is None
+                   or
+                   rule["filter"].matches(input_file, file_is_deleted=file_is_deleted)):
                     match_found = True
                     server     = rule["destination"]["server"]
                     self.logger.info("Filtering: '%s' matches the '%s' rule for the '%s' source!" % (input_file, rule["label"], rule["source"]))
@@ -428,7 +438,7 @@ class Arbitrator(threading.Thread):
                 self.lock.acquire()
                 self.files_in_pipeline.remove((input_file, event))
                 self.lock.release()
-                self.logger.info("Filter queue: dropped '%s' because it matches no rules." % (input_file))
+                self.logger.info("Filter queue: dropped '%s' because it doesn't match any rules." % (input_file))
 
 
     def __process_process_queue(self):
@@ -646,7 +656,7 @@ class Arbitrator(threading.Thread):
             transporter = self.transporters[server][id]
             # Don't put more than MAX_TRANSPORTER_QUEUE_SIZE files in each
             # transporter's queue.
-            if transporter.qsize() < MAX_TRANSPORTER_QUEUE_SIZE:
+            if transporter.qsize() <= MAX_TRANSPORTER_QUEUE_SIZE:
                 place_in_queue = transporter.qsize() + 1
                 return (id, place_in_queue, transporter)
 
