@@ -87,17 +87,19 @@ class Config(object):
             for_source = rule.get("for")
             label      = rule.get("label")
 
-            # 1: filter (required)
+            # 1: filter
+            conditions = None
             filter_node = rule.find("filter")
-            conditions = self.__parse_filter(filter_node, label)
+            if not filter_node is None:
+                conditions = self.__parse_filter(filter_node, label)
 
-            # 2: processorChain (optional)
+            # 2: processorChain
             processor_chain = None
             processor_chain_node = rule.find("processorChain")
             if not processor_chain_node is None:
                 processor_chain = self.__parse_processor_chain(processor_chain_node, label)
 
-            # 3: destination (optional)
+            # 3: destination
             destination = None
             destination_node = rule.find("destination")
             if not destination_node is None:
