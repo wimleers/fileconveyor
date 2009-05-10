@@ -35,7 +35,7 @@ MAX_SIMULTANEOUS_TRANSPORTERS = 10
 MAX_TRANSPORTER_QUEUE_SIZE = 1
 CONSOLE_OUTPUT = False
 CONSOLE_LOGGER_LEVEL = logging.WARNING
-FILE_LOGGER_LEVEL = logging.INFO
+FILE_LOGGER_LEVEL = logging.DEBUG
 
 
 # Copied from django.utils.functional
@@ -386,7 +386,7 @@ class Arbitrator(threading.Thread):
             match_found = False
             for rule in self.rules:
                 # Try to find a rule that matches the file.
-                if rule["filter"].matches(input_file):
+                if rule["filter"].matches(input_file, file_is_deleted = event == FSMonitor.DELETED):
                     match_found = True
                     server     = rule["destination"]["server"]
                     self.logger.info("Filtering: '%s' matches the '%s' rule for the '%s' source!" % (input_file, rule["label"], rule["source"]))
