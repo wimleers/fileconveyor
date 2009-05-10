@@ -182,6 +182,13 @@ class TestMatching(unittest.TestCase):
         statfunc = lambda filepath: fakestatfunc(500L)
         self.assertFalse(filter.matches(filepath, statfunc))
 
+        # Minimium size
+        conditions["size"]["conditionType"] = "minimum"
+        filter.set_conditions(conditions)
+        # File doesn't exist anymore: size check should be skipped.
+        statfunc = lambda filepath: fakestatfunc(0)
+        self.assertTrue(filter.matches(filepath, statfunc, True))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -127,7 +127,7 @@ class Filter(object):
                 raise InvalidSizeConditionError, "The 'size' condition has an invalid 'treshold', only integer values are valid'"
 
 
-    def matches(self, filepath, statfunc = os.stat):
+    def matches(self, filepath, statfunc = os.stat, file_is_deleted = False):
         """Check if the given filepath matches the conditions of this Filter
 
         This function performs the different checks in an order that is
@@ -171,8 +171,11 @@ class Filter(object):
             if not self.pattern.match(filepath):
                 match = False
 
-        # Step 5: apply the size condition.
-        if match and self.conditions.has_key("size"):
+        # Step 5: apply the size condition, except when file_is_deleted is
+        # enabled.
+        # (If a file is deleted, we can no longer check its size and therefor
+        # we allow this to match.)
+        if match and self.conditions.has_key("size") and not file_is_deleted:
             size = statfunc(filepath)[stat.ST_SIZE]
             condition_type = self.conditions["size"]["conditionType"]
             treshold       = self.conditions["size"]["treshold"]
