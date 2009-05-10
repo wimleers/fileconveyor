@@ -11,6 +11,8 @@ from UserList import UserList
 
 
 sys.path.append(os.path.abspath('dependencies'))
+sys.path.append(os.path.abspath('processors'))
+sys.path.append(os.path.abspath('transporters'))
 
 
 from config import *
@@ -65,6 +67,8 @@ class AdvancedQueue(UserList):
 # Define exceptions.
 class ArbitratorError(Exception): pass
 class ConfigError(ArbitratorError): pass
+class ProcessorAvailabilityTestError(ArbitratorError): pass
+class TransporterAvailabilityTestError(ArbitratorError): pass
 class ServerConnectionTestError(ArbitratorError): pass
 
 
@@ -117,6 +121,43 @@ class Arbitrator(threading.Thread):
         for name in self.config.servers.keys():
             if self.config.servers[name]["transporter"] == "none":
                 self.config.servers[name]["settings"]["symlinkWithin"] = symlinkWithin
+
+        # Verify that all referenced processors are available.
+        processors_not_found = 0
+        for source in self.config.rules.keys():
+            for rule in self.config.rules[source]:
+                for processor in rule["processorChain"]:
+                    (modulename, classname) = processor.split(".")
+                    try:
+                        module = __import__(modulename, globals(), locals(), [classname])
+                        processor_class = getattr(module, classname)
+                    except ImportError:
+                        self.logger.error("The Processor module '%s' could not be found." % (modulename))
+                        processors_not_found += 1
+                    except AttributeError:
+                        self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+                        processors_not_found += 1
+        if processors_not_found > 0:
+            raise ProcessorAvailabilityTestError("Consult the log file for details")
+
+        # Verify that all referenced transporters are available.
+        transporters_not_found = 0
+        for server in self.config.servers.keys():
+            transporter_name = self.config.servers[server]["transporter"]
+            modulename = "transporters.transporter_" + transporter_name
+            try:
+                module = __import__(modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
+                classname = module.TRANSPORTER_CLASS
+                module = __import__(modulename, globals(), locals(), [classname])
+                transporter_class = getattr(module, classname)
+            except ImportError:
+                self.logger.error("The Transporter module '%s' could not be found." % (modulename))
+                transporters_not_found += 1
+            except AttributeError:
+                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (modulename, classname))
+                transporters_not_found += 1
+        if transporters_not_found > 0:
+            raise TransporterAvailabilityTestError("Consult the log file for details")
 
         # Verify that each of the servers works.
         successful_server_connections = 0
@@ -581,7 +622,7 @@ class Arbitrator(threading.Thread):
                 self.lock.acquire()
                 self.files_in_pipeline.remove((input_file, event))
                 self.lock.release()
-                self.logger.warning("Synced: '%s' -> '%s'." % (input_file, url))
+                self.logger.warning("Synced: '%s'." % (input_file))
 
 
     def __process_retry_queue(self):
