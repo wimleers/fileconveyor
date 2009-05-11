@@ -1,3 +1,36 @@
+Installation process
+--------------------
+The installation process is as simple as extracting the archive or checking
+out the code from SVN to wherever you want. You may have to perform additional
+setup steps depending on the operating system you're running though.
+Each processor may also require additional setup. See below for the
+installation instructions of the included processors.
+
+
+Linux
+-----
+Linux is fully supported and requires additional setup.
+On Linux, it is necessary to install pyinotify if you're running kernel 2.6.13
+or higher. This will allow you to take advantage of inotify to detect changes
+on the file system as opposed to polling.
+On Debian/Ubuntu, you can run
+  sudo aptitude install python-pyinotify
+to install pyinotify. On other distributions, follow these instructions:
+  http://trac.dbzteam.org/pyinotify/wiki/InstallPyinotify
+
+
+Mac OS X
+---------
+Mac OS X is fully supported and requires no additional setup.
+
+
+Windows
+-------
+Windows is not yet supported.
+The necessary abstractions for Windows are built in, but the daemon has not
+yet been tested in it.
+
+
 Processor: YUI Compressor
 -------------------------
 * instructions:
@@ -14,21 +47,27 @@ processor only works on UNIX, at least for now.
 - imagemagick
   * homepage: http://imagemagick.org
   * instructions:
-    1. download the binary release from http://imagemagick.org/script/binary-releases.php
-    2. copy the executables from the "bin" directory to a directory that is referenced by $PATH
+    - Debian/Ubuntu: already installed
+    - Other:
+      1. download the binary release from http://imagemagick.org/script/binary-releases.php
+      2. copy the executables from the "bin" directory to a directory that is referenced by $PATH
 - pngcrush
   * homepage: http://pmt.sourceforge.net/pngcrush/
   * instructions:
-    1. download the source
-    2. make
-    3. copy the executable into a directory that is referenced by $PATH
+    - Debian/Ubuntu: sudo apt-get install pngcrush
+    - Other:
+      1. download the source
+      2. make
+      3. copy the executable into a directory that is referenced by $PATH
 - jpegtran
   * homepage: http://jpegclub.org/
   * instructions: http://www.phpied.com/installing-jpegtran-mac-unix-linux/
 - gifsicle
   * homepage: http://www.lcdf.org/gifsicle/
   * instructions:
-    1. download the source
-    2. ./configure
-    3. make
-    4. make install
+    - Debian/Ubuntu: sudo apt-get install gifsicle
+    - Other:
+      1. download the source
+      2. ./configure
+      3. make
+      4. make install
