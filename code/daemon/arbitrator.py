@@ -796,6 +796,7 @@ class Arbitrator(threading.Thread):
         # Add to retry queue.
         self.lock.acquire()
         self.retry_queue.put((input_file, event))
+        self.processorchains_running -= 1
         self.lock.release()
 
 
