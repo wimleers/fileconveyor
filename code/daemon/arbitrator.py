@@ -846,10 +846,9 @@ class Arbitrator(threading.Thread):
         self.logger.info("Cleaned up the working directory '%s'." % (WORKING_DIR))
 
 
-
 if __name__ == '__main__':
     try:
-        arbitrator = Arbitrator("config.sample.xml")
+        arbitrator = Arbitrator("config.xml")
     except ArbitratorError, e:
         print e.__class__, e
     else:
