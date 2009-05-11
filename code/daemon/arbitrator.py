@@ -33,6 +33,7 @@ MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
 MAX_TRANSPORTER_QUEUE_SIZE = 1
+QUEUE_PROCESS_BATCH_SIZE = 20
 CONSOLE_OUTPUT = False
 CONSOLE_LOGGER_LEVEL = logging.WARNING
 FILE_LOGGER_LEVEL = logging.DEBUG
@@ -340,6 +341,9 @@ class Arbitrator(threading.Thread):
 
 
     def __process_discover_queue(self):
+        # No QUEUE_PROCESS_BATCH_SIZE limitation here because the data must
+        # be moved to a persistent datastructure ASAP.
+
         self.lock.acquire()
         while self.discover_queue.qsize() > 0:
 
@@ -352,9 +356,11 @@ class Arbitrator(threading.Thread):
 
 
     def __process_pipeline_queue(self):
+        processed = 0
+
         # As soon as there's room in the pipeline, move the file from the
         # pipeline queue into the pipeline.
-        while self.pipeline_queue.qsize() > 0 and len(self.files_in_pipeline) < MAX_FILES_IN_PIPELINE:
+        while processed < QUEUE_PROCESS_BATCH_SIZE and self.pipeline_queue.qsize() > 0 and len(self.files_in_pipeline) < MAX_FILES_IN_PIPELINE:
             self.lock.acquire()
 
             # Peek the first item from the pipeline queue and store it in the
@@ -368,10 +374,13 @@ class Arbitrator(threading.Thread):
 
             self.lock.release()
             self.logger.info("Pipeline queue -> filter queue: '%s'." % (input_file))
+            processed += 1
 
 
     def __process_filter_queue(self):
-        while self.filter_queue.qsize() > 0:
+        processed = 0
+
+        while processed < QUEUE_PROCESS_BATCH_SIZE and self.filter_queue.qsize() > 0:
             # Filter queue -> process/transport queue.
             self.lock.acquire()
             (input_file, event) = self.filter_queue.get()
@@ -441,9 +450,13 @@ class Arbitrator(threading.Thread):
                 self.lock.release()
                 self.logger.info("Filter queue: dropped '%s' because it doesn't match any rules." % (input_file))
 
+            processed += 1
+
 
     def __process_process_queue(self):
-        while self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
+        processed = 0
+
+        while processed< QUEUE_PROCESS_BATCH_SIZE and self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
             # Process queue -> ProcessorChain -> processor_chain_callback -> transport/db queue.
             self.lock.acquire()
             (input_file, event, rule) = self.process_queue.get()
@@ -473,11 +486,14 @@ class Arbitrator(threading.Thread):
             # Log.
             processor_chain_string = "->".join(rule["processorChain"])
             self.logger.debug("Process queue: started the '%s' processor chain for the file '%s'." % (processor_chain_string, input_file))
+            processed += 1
 
 
     def __process_transport_queues(self):
         for server in self.config.servers.keys():
-            while self.transport_queue[server].qsize() > 0:
+            processed = 0
+
+            while processed < QUEUE_PROCESS_BATCH_SIZE and self.transport_queue[server].qsize() > 0:
                 # Peek at the first item from the queue. We cannot get the
                 # item from the queue, because there may be no transporter
                 # available, in which case the file should remain queued.
@@ -551,9 +567,13 @@ class Arbitrator(threading.Thread):
                     self.logger.debug("Transporting: no more transporters are available for server '%s'." % (server))
                     break
 
+                processed += 1
+
 
     def __process_db_queue(self):
-        while self.db_queue.qsize() > 0:
+        processed = 0
+
+        while processed < QUEUE_PROCESS_BATCH_SIZE and self.db_queue.qsize() > 0:
             # DB queue -> database.
             self.lock.acquire()
             (input_file, event, rule, output_file, transported_file, url) = self.db_queue.get()
@@ -635,9 +655,13 @@ class Arbitrator(threading.Thread):
                 self.lock.release()
                 self.logger.warning("Synced: '%s'." % (input_file))
 
+        processed += 1
+
 
     def __process_retry_queue(self):
-        while self.retry_queue.qsize() > 0:
+        processed = 0
+
+        while processed < QUEUE_PROCESS_BATCH_SIZE and self.retry_queue.qsize() > 0:
             # Retry queue -> failed files list.
             # And remove from files in pipeline.
             self.lock.acquire()
@@ -645,7 +669,10 @@ class Arbitrator(threading.Thread):
             self.failed_files.append((input_file, event))
             self.files_in_pipeline.remove((input_file, event))
             self.lock.release()
+
+            # Log.
             self.logger.warning("Retry queue -> 'failed_files' persistent list: '%s'. Retrying later." % (input_file))
+            processed += 1
 
 
     def __get_transporter(self, server):
