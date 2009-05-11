@@ -3,21 +3,20 @@
   <!-- Sources -->
   <sources>
     <source name="drupal" directory="/htdocs/drupal" />
-    <source name="wordpress" directory="/htdocs/wordpress" />
+    <source name="downloads" directory="/Users/wimleers/Downloads" />
   </sources>
 
   <!-- Servers -->
   <servers>
-    <server name="edgecast" transporter="none">
+    <server name="edgecast" transporter="symlink_or_copy">
       <location>/htdocs/drupal/staticfiles</location>
       <url>http://me.edgecast.com/staticfiles</url>
     </server>
-    <server name="simplecdn" transporter="ftp" maxConnections="2">
-      <host>ftp.simplecdn.com</host>
-      <port>21</port>
-      <username>foo</username>
-      <password>bar</password>
-      <url>http://me.simplecdn.com</url>
+    <server name="simplecdn" transporter="ftp" maxConnections="20">
+      <host>localhost</host>
+      <username>daemontest</username>
+      <password>daemontest</password>
+      <url>http://localhost/daemontest/</url>
     </server>
   </servers>
 
@@ -34,7 +33,7 @@
         <processor name="yui_compressor.YUICompressor" />
         <processor name="unique_filename.Mtime" />
       </processorChain>
-      <destination server="simplecdn" />
+      <destination server="edgecast" />
     </rule>
 
     <rule for="drupal" label="Videos">
@@ -45,11 +44,19 @@
         <size conditionType="minimum">1000000</size>
       </filter>
       <processorChain>
-        <processor name="transcode_video.Flash" />
         <processor name="unique_filename.MD5" />
       </processorChain>
-      <destination server="edgecast">
-        <path>/videos</path>
+      <destination server="simplecdn">
+        <path>videos</path>
+      </destination>
+    </rule>
+
+    <rule for="downloads" label="Mirror">
+      <filter>
+        <extensions>mov:avi</extensions>
+      </filter>
+      <destination server="simplecdn">
+        <path>mirror</path>
       </destination>
     </rule>
   </rules>

@@ -69,6 +69,7 @@ class Transporter(threading.Thread):
                 (src, dst, action, callback, error_callback) = self.queue.get()
                 self.lock.release()
 
+                self.logger.debug("Running the transporter '%s' to sync '%s'." % (self.name, src))
                 try:
                     # Sync the file: either add/modify it, or delete it.
                     if action == Transporter.ADD_MODIFY:
@@ -83,6 +84,8 @@ class Transporter(threading.Thread):
                     else:
                         self.storage.delete(dst)
                         url = None
+
+                    self.logger.debug("The transporter '%s' has synced '%s'." % (self.name, src))
 
                     # Call the callback function. Use the callback function
                     # defined for this Transporter (self.callback), unless

@@ -111,15 +111,16 @@ class Arbitrator(threading.Thread):
             self.logger.error("Cannot continue, please fix the errors in the config file first.")
             raise ConfigError("Consult the log file for details.")
 
-        # TRICKY: set the "symlinkWithin" setting for "none" transporters
-        # First calculate the value for the "symlinkWithin" setting.
+        # TRICKY: set the "symlinkWithin" setting for "symlink_or_copy"
+        # transporters First calculate the value for the "symlinkWithin"
+        # setting.
         source_paths = []
         for (name, path) in self.config.sources.items():
             source_paths.append(path)
         symlinkWithin = ":".join(source_paths)
-        # Then set it for every server that uses the "none" transporter.
+        # Then set it for every server that uses this transporter.
         for name in self.config.servers.keys():
-            if self.config.servers[name]["transporter"] == "none":
+            if self.config.servers[name]["transporter"] == "symlink_or_copy":
                 self.config.servers[name]["settings"]["symlinkWithin"] = symlinkWithin
 
         # Verify that all referenced processors are available.

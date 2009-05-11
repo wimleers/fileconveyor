@@ -2,13 +2,13 @@ from transporter import *
 from storages.SymlinkOrCopyStorage import *
 
 
-TRANSPORTER_CLASS = "TransporterNone"
+TRANSPORTER_CLASS = "TransporterSymlinkOrCopy"
 
 
-class TransporterNone(Transporter):
+class TransporterSymlinkOrCopy(Transporter):
 
 
-    name              = 'NONE'
+    name              = 'SYMLINK_OR_COPY'
     valid_settings    = ImmutableSet(["location", "url", "symlinkWithin"])
     required_settings = ImmutableSet(["location", "url", "symlinkWithin"])
 
