@@ -38,7 +38,7 @@ class YUICompressor(Processor):
 
         # Raise an exception if an error occurred.
         if not stderr == "":
-            raise Exception(error)
+            raise Exception(stderr)
 
         return self.output_file
 
