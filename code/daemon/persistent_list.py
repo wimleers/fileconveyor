@@ -64,8 +64,9 @@ class PersistentList(object):
 
     def remove(self, item):
         # Delete from the database.
-        id = self.memory_list[item]
-        self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
-        self.dbcon.commit()        
-        # Delete from the in-memory list.
-        del self.memory_list[item]
+        if self.memory_list.has_key(item):
+            id = self.memory_list[item]
+            self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
+            self.dbcon.commit()        
+            # Delete from the in-memory list.
+            del self.memory_list[item]
