@@ -45,6 +45,9 @@ class Base(Processor):
                 tmp_file = os.path.join(self.working_dir, path, name + ".tmp.png")
                 self.set_output_file_basename(name + ".png")
                 self.optimize_GIF(self.input_file, tmp_file, self.output_file)
+            else:
+                # Don't do any processing at all: return the input file.
+                self.set_output_file_basename(self.input_file)
 
         elif format == "PNG":
             self.optimize_PNG(self.input_file, self.output_file)
@@ -55,6 +58,12 @@ class Base(Processor):
         # Animated GIF
         elif len(format) >= 6 and format[0:6] == "GIFGIF":
             self.optimize_animated_GIF(self.input_file, self.output_file)
+
+        else:
+            # This should never happen, but in case there's a file with an extension
+            # that matches one of the supported file types, but is in fact not such
+            # an image, we return the input file to ensure the chain can continue.
+            self.set_output_file_basename(self.input_file)
         
         # Clean up things.
         self.devnull.close()
