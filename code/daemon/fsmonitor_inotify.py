@@ -27,7 +27,7 @@ class FSMonitorInotify(FSMonitor):
 
     EVENTMAPPING = {
         FSMonitor.CREATED : pyinotify.IN_CREATE,
-        FSMonitor.MODIFIED : pyinotify.IN_MODIFY,
+        FSMonitor.MODIFIED : pyinotify.IN_MODIFY | pyinotify.IN_ATTRIB,
         FSMonitor.DELETED : pyinotify.IN_DELETE,
         FSMonitor.MONITORED_DIR_MOVED : pyinotify.IN_MOVE_SELF,
         FSMonitor.DROPPED_EVENTS : pyinotify.IN_Q_OVERFLOW,
@@ -101,12 +101,13 @@ class FSMonitorInotify(FSMonitor):
         self.wm = WatchManager()
         self.notifier = ThreadedNotifier(self.wm, self.process_event)
 
-        # Start the notifier's thread.
         self.notifier.start()
 
         while not self.die:
             self.__process_queues()
             time.sleep(0.5)
+
+        self.notifier.stop()
 
 
     def stop(self):
@@ -123,12 +124,6 @@ class FSMonitorInotify(FSMonitor):
 
 
     def __process_queues(self):
-        # Die when asked to.
-        self.lock.acquire()
-        if self.die:
-            self.notifier.stop()
-        self.lock.release()
-
         # Process add queue.
         self.lock.acquire()
         if not self.add_queue.empty():
@@ -160,6 +155,9 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DELETED)
 
     def process_IN_MODIFY(self, event):
+        FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
+
+    def process_IN_ATTRIB(self, event):
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_MOVE_SELF(self, event):
