@@ -3169,8 +3169,7 @@ matches()
 \family default
 .
  There are 5 different conditions you can set.
- Only the first 2 are required.
- The latter 2 should be used with care, because they are a lot slower than
+ The last two should be used with care, because they are a lot slower than
  the first three.
  Especially the last one can be very slow, because it requires a call back
  to the kernel, to access the file system.
@@ -3292,12 +3291,9 @@ As is to be expected, this module provides the
 PathScanner
 \family default
  class, which scans paths and stores them in a SQLite 
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-ref
-\end_layout
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SQLite"
 
 \end_inset
 
@@ -3349,6 +3345,14 @@ mtime
 mtime
 \family default
  column.
+\end_layout
+
+\begin_layout Standard
+Changes to the database are committed in batches, because changes in the
+ filesystem typically occur in batches as well.
+ If every change would be committed separately, the concurrency level would
+ rise unnecessarily.
+ By default, every batch of 50 changes are committed.
 \end_layout
 
 \begin_layout Standard
@@ -3495,7 +3499,7 @@ key "FSEvents,FSEvents review"
 \end_layout
 
 \begin_layout Itemize
-Falls back to polling
+Falls back to polling when neither one is present
 \end_layout
 
 \begin_layout Standard
@@ -3568,7 +3572,7 @@ inotify is the most complete in this regard: it supports a boatload of different
 every
 \emph default
  file system event.
- There wouldn't be any space left to store actual data.
+ Over time, there wouldn't be any space left to store actual data.
 \begin_inset Newline newline
 \end_inset
 
@@ -3647,8 +3651,762 @@ PathScanner
  But it's sufficient for now.
 \end_layout
 
+\begin_layout Subsubsection
+persistent_queue.py and persistent_list.py
+\end_layout
+
+\begin_layout Standard
+In order to provide data persistency , I wrote the 
+\family typewriter
+PersistentQueue
+\family default
+ and 
+\family typewriter
+PersistentList
+\family default
+ classes.
+ As their names indicate, these provide you with a persistent queue and
+ a persistent list.
+ They use again an SQLite database for persistent storage.
+ For each instance you create, you must choose the table name and you can
+ optionally choose which database file to write to.
+ This allows you to group persistent datastructures in a logical manner
+ (i.e.
+ related persistent datastructures can be stored in the same database file,
+ thereby also making it portable and easy to backup).
+\end_layout
+
+\begin_layout Standard
+The first question to arise is: 
+\begin_inset Quotes eld
+\end_inset
+
+Why use SQLite in favor of Python's built-in shelve module?
+\begin_inset Quotes erd
+\end_inset
+
+ Well, the answer is simple: aside of the benefit of the ability to have
+ all persistent data in a single file, it must also scale to tens of thousands
+ or even millions of files.
+ Python's shelve module isn't scalable because its data is loaded into memory
+ in its entirety.
+ This could easily result in hundreds of megabytes of memory usage.
+ Such excessive memory usage should be avoided at all costs when the target
+ environment is a (web) server.
+\end_layout
+
+\begin_layout Standard
+Your next question would probably be: 
+\begin_inset Quotes eld
+\end_inset
+
+How can you be sure the SQLite database won't get corrupt?
+\begin_inset Quotes erd
+\end_inset
+
+ The answer is: we can't.
+ But the same applies to Python's shelve module.
+ However, the aforementioned advantages of SQLite give plenty of advantages
+ over Python's shelve module.
+ Plus, SQLite is thoroughly tested, even against corruption 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SQLite testing"
+
+\end_inset
+
+.
+ It's also used for very large datasets and by countless companies.
+ So it's the best bet you can make.
+\end_layout
+
+\begin_layout Standard
+Finally, you'd probably ask 
+\begin_inset Quotes eld
+\end_inset
+
+Why not use MySQL or PostgreSQL or …?
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Again the answer is brief: because SQLite requires no additional setup
+ because it is 
+\emph on
+serverless
+\emph default
+, as opposed to MySQL and PostgreSQL.
+\end_layout
+
+\begin_layout Standard
+Both modules are fully unit-tested and are therefor guaranteed to work flawlessl
+y.
+\end_layout
+
+\begin_layout Subsubsection
+Processors
+\end_layout
+
+\begin_layout Subsubsection*
+processor.py
+\end_layout
+
+\begin_layout Standard
+This module provides several classes 
+\family typewriter
+Processor
+\family default
+, 
+\family typewriter
+ProcessorChain
+\family default
+ and 
+\family typewriter
+ProcessorChainFactory
+\family default
+.
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+Processor
+\family default
+ is a base class for processors, which are designed to be easy to write
+ yourself.
+ Processors receive an input file, do something with it and return the output
+ file.
+ The 
+\family typewriter
+Processor
+\family default
+ class takes a lot of the small annoying tasks on its shoulders, such as
+ checking if the file is actually a file this processor can process, calculating
+ the default output file and a simple abstraction around an otherwise multi-line
+ construction to run a command.
+\begin_inset Newline newline
+\end_inset
+
+An example can found in listing 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:Processors-YUICompressor"
+
+\end_inset
+
+.
+ For details, please consult the daemon's documentation.
+\end_layout
+
+\begin_layout Standard
+Processors are allowed to make any change they want to the file's contents.
+ They are also allowed to change the basename of the input file, but they're
+ not allowed to change its path.
+ This measure was taken to reduce the amount of data that will need to be
+ stored to know which file is stored where exactly.
+ This is enforced 
+\emph on
+by convention
+\emph default
+, because in Python it's impossible to truly enforce anything.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},float,tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+class YUICompressor(Processor):
+\end_layout
+
+\begin_layout Plain Layout
+
+    """compresses .css and .js files with YUI Compressor"""
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    valid_extensions = (".css", ".js")
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def __init__(self, input_file, working_dir="/tmp"):
+\end_layout
+
+\begin_layout Plain Layout
+
+        Processor.__init__(self, input_file, working_dir)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def run(self):
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Return the input file if the file cannot be processed.
+\end_layout
+
+\begin_layout Plain Layout
+
+        if not Processor.validate(self):
+\end_layout
+
+\begin_layout Plain Layout
+
+            return self.input_file
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # We don't rename the file, so we can use the default output file.
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Remove the output file if it already exists, otherwise YUI
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Compressor will fail.
+\end_layout
+
+\begin_layout Plain Layout
+
+        if os.path.exists(self.output_file):
+\end_layout
+
+\begin_layout Plain Layout
+
+            os.remove(self.output_file)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Run YUI Compressor on the file.
+\end_layout
+
+\begin_layout Plain Layout
+
+        yuicompressor_path = os.path.join(self.processors_path, "yuicompressor.jar")
+\end_layout
+
+\begin_layout Plain Layout
+
+        args = (yuicompressor_path, self.input_file, self.output_file)
+\end_layout
+
+\begin_layout Plain Layout
+
+        (stdout, stderr) = self.run_command("java -jar %s %s -o %s" % args)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Raise an exception if an error occurred.
+\end_layout
+
+\begin_layout Plain Layout
+
+        if not stderr == "":
+\end_layout
+
+\begin_layout Plain Layout
+
+            raise ProcessorError(stderr)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        return self.output_file
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+YUICompressor Processor class.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:Processors-YUICompressor"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then there is the 
+\family typewriter
+ProcessorChain
+\family default
+ class, which receives a list of processors and then runs them as a chain:
+ the output file of processor 1 is the input file of processor 2, and so
+ on.
+ 
+\family typewriter
+ProcessorChains
+\family default
+ run in their own threads.
+\end_layout
+
+\begin_layout Standard
+Finally, 
+\family typewriter
+ProcessorChainFactory
+\family default
+: this is simply a factory that generates 
+\family typewriter
+ProcessorChain
+\family default
+ objects, with some parameters already filled out.
+\end_layout
+
+\begin_layout Subsubsection*
+filename.py
+\end_layout
+
+\begin_layout Standard
+This processor module provides two procesor classes: 
+\family typewriter
+SpacesToUnderscores
+\family default
+ and 
+\family typewriter
+SpacesToDashes
+\family default
+.
+ They respectively replace spaces with underscores and spaces with dashes
+ in the base name of the file.
+\end_layout
+
+\begin_layout Standard
+This one is not very useful, but it's a good simple example.
+\end_layout
+
+\begin_layout Subsubsection*
+unique_filename.py
+\end_layout
+
+\begin_layout Standard
+Also in this processor module, two processor classes are provided: 
+\family typewriter
+Mtime
+\family default
+ and 
+\family typewriter
+MD5
+\family default
+.
+ MTime appends the mtime (last modification time) as a UNIX timestamp to
+ the file's base name (preceded by an underscore).
+ MD5 does the same, but instead of the mtime, it appends the MD5 hash of
+ the file to the file's base name.
+\end_layout
+
+\begin_layout Standard
+This processor is useful if you want to ensure that files have unique filenames,
+ so that they can be given far future Expires headers
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+link to the beginning of the text?
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
+image_optimizer.py
+\end_layout
+
+\begin_layout Standard
+This processor module is inspired by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "smush.it"
+
+\end_inset
+
+.
+ It optimizes images losslessly, i.e.
+ it reduces the filesize without touch the quality.
+ The research necessary wasn't performed by me, but by Stoyan Stefanov,
+ a Yahoo! web developer working for the Exceptional Performance team, and
+ was thoroughly laid out in a series of blog posts 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "imageopt-1,imageopt-2,imageopt-3,imageopt-4"
+
+\end_inset
+
+ at the Yahoo! user interface blog.
+\end_layout
+
+\begin_layout Standard
+For GIF files, a conversion to PNG8 is performed using ImageMagick's 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ImageMagick"
+
+\end_inset
+
+ 
+\family typewriter
+convert
+\family default
+.
+ PNG8 offers lossless image quality, as does GIF, but results in a smaller
+ file size.
+ PNG8 is also supported in all browsers, including IE6.
+ It's the alpha channels of truecolor PNG (PNG24 & PNG32) that are not supported
+ in IE6.
+\end_layout
+
+\begin_layout Standard
+PNG files are stored in so-called 
+\begin_inset Quotes eld
+\end_inset
+
+chunks
+\begin_inset Quotes erd
+\end_inset
+
+ and not all of these are required to display the image – in fact, most
+ of them are not used at all.
+ 
+\family typewriter
+pngcrush
+\family default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "pngcrush"
+
+\end_inset
+
+ is used to strip all the unneeded chunks.
+ 
+\family typewriter
+pngcrush
+\family default
+ is also applied to the PNG8 files that are generated by the previous step.
+ I decided not to use the brute force method, which tries over a hundred
+ different methods for optimization, but just the 10 most common ones.
+ The brute force method would result in 30 seconds of processing versus
+ less than a second otherwise.
+\end_layout
+
+\begin_layout Standard
+JPEG files can be optimized in three complementary ways: stripping metadata,
+ optimizing the Huffman tables and making them progressive.
+ There are two variations to store a JPEG file: baseline and progresive.
+ A baseline JPEG file is stored as one top-to-bottom scan, whereas a progressive
+ JPEG file is stored as a series of scans, with each scan gradually improving
+ the quality of the overall image.
+ Stoyan Stefanov's tests 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "imageopt-4"
+
+\end_inset
+
+ have pointed out that you've got a 75% chance that the JPEG file is best
+ saved as baseline when it's smaller than 10 KB.
+ For JPEG files larger than 10 KB, it's 94% likely that progressive JPEG
+ will result in a better compression ratio.
+ That's why the third optimization (making JPEG files progressive) is only
+ applied when the file is larger than 10 KB.
+ All these optimizations are applied using jpegtran 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "jpegtran"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Finally, animated GIF files can be optimized by stripping the pixels from
+ each frame that don't change from the previous to the next frame.
+ I use gifsicle 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gifsicle"
+
+\end_inset
+
+ to achieve that.
+\end_layout
+
+\begin_layout Standard
+One nuance you should know about: stripping metadata may also remove the
+ copyright information, which may have legal consequences.
+ So you better don't strip metadata when you've bought some of the photos
+ you're hosting, which may be the case for e.g.
+ a newspaper web site.
+\end_layout
+
+\begin_layout Standard
+Now that you know how the optimizations are done, here is the overview of
+ all processor classes that this processor module provides:
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+Max
+\family default
+ optimizes image files losslessly (GIF, PNG, JPEG, animated GIF)
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+KeepMetadata
+\family default
+ same as 
+\family typewriter
+Max
+\family default
+, but keeps JPEG metadata
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+KeepFilename
+\family default
+ same as 
+\family typewriter
+Max
+\family default
+, but keeps the original filename (no GIF optimization)
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+KeepMetadataAndFilename
+\family default
+ same as 
+\family typewriter
+Max
+\family default
+, but keeps JPEG metadata and the original filename (no GIF optimization)
+\end_layout
+
+\begin_layout Subsubsection*
+yui_compressor.py
+\end_layout
+
+\begin_layout Subsubsection
+Transporters
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+persistent connections
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+config.py
+\end_layout
+
+\begin_layout Standard
+Config parser with validation
+\end_layout
+
+\begin_layout Subsubsection
+daemon_thread_runner.py
+\end_layout
+
+\begin_layout Standard
+Runs thread as a daemon and supports signals to stop the daemon, like Apache
+\end_layout
+
 \begin_layout Subsection
-Putting it all together
+Putting it all together: arbitrator.py
+\end_layout
+
+\begin_layout Standard
+Before anything is done, it's written to a persistent datastructure so that
+ if the application crashes or gets killed, it still is able to resume
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+processors can only change the basename, not the path
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Possible further optimizations
+\end_layout
+
+\begin_layout Itemize
+Files should be moved from the discover queue to the pipeline queue in a
+ separate thread, to minimize the risk of losing files due to a crashed
+ application before files are moved to the pipeline queue.
+ In fact, the discover queue could be eliminitated altogether thanks to
+ this.
+\end_layout
+
+\begin_layout Itemize
+Files that must be retried should be retried immediately at least once:
+ sometimes, there are random connection errors.
+\end_layout
+
+\begin_layout Itemize
+Track progress of transporters and allow them to be be stopped while still
+ syncing a file.
+\end_layout
+
+\begin_layout Itemize
+Make Processors more error resistent by allowing them to check the environment,
+ so they can ensure 3rd party applications, such as YUI compressor or jpegtran
+ are installed.
+\end_layout
+
+\begin_layout Itemize
+Figure out an automated way of ensuring the correct operating of Processors,
+ since they are most likely the cause of problems thanks to the fact that
+ users can easily write their own Processors.
+\end_layout
+
+\begin_layout Itemize
+Automatically copy the synced files DB every X seconds, to prevent long
+ delays for read-only clients.
+ This will only matter on sites where uploads happen more than once per
+ second or so.
+\end_layout
+
+\begin_layout Itemize
+Reorganize code: make a proper packaged structure.
+\end_layout
+
+\begin_layout Subsection
+Desired future features
+\end_layout
+
+\begin_layout Itemize
+Polling the daemon for its current status (number of files in the queue,
+ files in the pipeline, processors running, transporters running, etc.)
+\end_layout
+
+\begin_layout Itemize
+Support for Munin/Nagios for monitoring (strongly related to the previous
+ feature)
+\end_layout
+
+\begin_layout Itemize
+Multiple destinations for each rule.
+\end_layout
+
+\begin_layout Itemize
+Ability to limit network usage by more than just the number of connections:
+ also by bandwidth
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+bandwidth is not the correct term, find the right term!
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Ability to limit CPU usage by more than just the number of simultaneous
+ processors.
+\end_layout
+
+\begin_layout Itemize
+Store characteristics of the operations, such as TTS (Time-To-Sync), so
+ that you can analyze this data to configure the daemon to better suit your
+ needs.
 \end_layout
 
 \begin_layout Standard
@@ -3717,6 +4475,10 @@ key "Episodes home page"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Itemize
+Django's Storage abstraction
 \end_layout
 
 \end_deeper
@@ -3802,7 +4564,69 @@ key "pysqlite"
 \end_layout
 
 \begin_layout Itemize
+FTP (through the Python ftplib module)
+\end_layout
+
+\begin_layout Itemize
 Amazon S3 (through the Python boto module)
+\end_layout
+
+\begin_layout Itemize
+Amazon CloudFront (through the Python boto module)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Uses the following 3rd party applications
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+ImageMagick 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ImageMagick"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+pngcrush 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "pngcrush"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+jpegtran 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "jpegtran"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+gifsicle 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gifsicle"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+YUI Compressor
 \end_layout
 
 \end_deeper
@@ -5122,6 +5946,56 @@ http://www.sqlite.org/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "SQLite testing"
+
+\end_inset
+
+
+\emph on
+How SQLite is Tested,
+\emph default
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.sqlite.org/testing.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Python shelve"
+
+\end_inset
+
+
+\emph on
+shelve - Python object persistence
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://docs.python.org/library/shelve.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "pysqlite"
 
 \end_inset
@@ -5137,6 +6011,231 @@ status collapsed
 \begin_layout Plain Layout
 
 http://docs.python.org/library/sqlite3.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "smush.it"
+
+\end_inset
+
+
+\emph on
+smush.it
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://smush.it/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "imageopt-1"
+
+\end_inset
+
+
+\emph on
+Image Optimization Part 1: The Importance of Images
+\emph default
+, Stoyan Stefanov, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://yuiblog.com/blog/2008/10/29/imageopt-1/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "imageopt-2"
+
+\end_inset
+
+
+\emph on
+Image Optimization Part 2: Selecting the Right File Format
+\emph default
+, Stoyan Stefanov, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://yuiblog.com/blog/2008/11/04/imageopt-2/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "imageopt-3"
+
+\end_inset
+
+
+\emph on
+Image Optimization, Part 3: Four Steps to File Size Reduction
+\emph default
+, Stoyan Stefanov, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://yuiblog.com/blog/2008/11/14/imageopt-3/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "imageopt-4"
+
+\end_inset
+
+
+\emph on
+Image Optimization, Part 4: Progressive JPEG … Hot or Not?
+\emph default
+, Stoyan Stefanov, 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://yuiblog.com/blog/2008/12/05/imageopt-4/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "ImageMagick"
+
+\end_inset
+
+
+\emph on
+ImageMagick
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://imagemagick.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pngcrush"
+
+\end_inset
+
+
+\emph on
+pngcrush
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://pmt.sourceforge.net/pngcrush/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "jpegtran"
+
+\end_inset
+
+
+\emph on
+jpegtran
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://jpegclub.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "gifsicle"
+
+\end_inset
+
+
+\emph on
+gifsicle
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.lcdf.org/gifsicle/
 \end_layout
 
 \end_inset
