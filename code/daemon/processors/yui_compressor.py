@@ -10,7 +10,7 @@ import os.path
 
 
 class YUICompressor(Processor):
-    """compresses .css and .js files with the YUI Compressor"""
+    """compresses .css and .js files with YUI Compressor"""
 
 
     valid_extensions = (".css", ".js")
@@ -38,7 +38,7 @@ class YUICompressor(Processor):
 
         # Raise an exception if an error occurred.
         if not stderr == "":
-            raise Exception(stderr)
+            raise ProcessorError(stderr)
 
         return self.output_file
 
