@@ -2868,6 +2868,29 @@ name "fig:Episodes-Server-module-report"
 
 \end_layout
 
+\begin_layout Subsubsection
+Desired future features
+\end_layout
+
+\begin_layout Standard
+Due to lack of time, the basic reports are … well … very basic.
+ It'd be nice to have more charts and to be able to filter the data of the
+ charts.
+ In particular, these 3 filters would be very useful:
+\end_layout
+
+\begin_layout Enumerate
+filter by timespan: all time, 1 year, 6 months, 1 month, 1 week, 1 day
+\end_layout
+
+\begin_layout Enumerate
+filter by browser and browser version
+\end_layout
+
+\begin_layout Enumerate
+filter by (parts of) the URL
+\end_layout
+
 \begin_layout Subsection
 Insights
 \end_layout
@@ -3085,6 +3108,10 @@ Unit testing wherever feasible
 Design for reuse wherever possible
 \end_layout
 
+\begin_layout Itemize
+Low resource consumption
+\end_layout
+
 \begin_layout Subsection
 Configuration file design
 \begin_inset CommandInset label
@@ -3106,11 +3133,497 @@ Since the configuration file is the interface and I had a good idea of the
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
+Judge for yourself how easy it is by looking at listing
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:sample-config-file"
+
+\end_inset
+
+.
+ Beneath the config root node, there are 3 child nodes, each for one of
+ the 3 major sections:
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+sources
+\family default
+: indicate each data source, in which new, modified and deleted files will
+ be detected recursively.
+ Each source has a name (that we will reference later in the configuration
+ file) and of course a path.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+servers
+\family default
+: provide the settings for all servers that will be used in this configuration.
+ Each server has a 
+\family typewriter
+name
+\family default
+ and a 
+\family typewriter
+transporter
+\family default
+ that it should use.
+ The child nodes of the 
+\family typewriter
+server
+\family default
+ node are the settings that are passed to that transporter.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+rules
+\family default
+: this is the heart of the configuration file, since this is what determines
+ what goes where.
+ Each rule is associated with a source (via the 
+\family typewriter
+for
+\family default
+ attribute), must have a 
+\family typewriter
+label
+\family default
+ attribute and can consist (but doesn't have to!) of three parts:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+
+\family typewriter
+filter
+\family default
+: can contain 
+\family typewriter
+paths
+\family default
+, 
+\family typewriter
+extensions
+\family default
+, 
+\family typewriter
+ignoredDirs
+\family default
+, 
+\family typewriter
+pattern
+\family default
+ and 
+\family typewriter
+size
+\family default
+ child nodes.
+ The text values of these nodes will be used to filter the files that have
+ been created, modified or deleted within the source to which this rule
+ applies.
+ If it's a match, then the rule will be applied (and therefor the processor
+ chain and destination associated with it).
+ Otherwise, this rule is ignored for that file.
+ See the filter module (section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:daemon:modules:filter.py"
+
+\end_inset
+
+) explanation for details.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+processorChain
+\family default
+: accepts any number of 
+\family typewriter
+processor
+\family default
+ nodes through which you reference (via the 
+\family typewriter
+name
+\family default
+ attribute) the procesor module and the specific processor class within
+ that processor module that you'd like to use.
+ They'll be chained in the order you specify here.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+destination
+\family default
+: specifies a server that should be used, via the 
+\family typewriter
+server
+\family default
+ attribute.
+ One parameter can be set through the 
+\family typewriter
+path
+\family default
+ child node, which sets a parent path inside which the files will be transported.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Reading the above should make less sense than simply reading the configuration
+ file.
+ If that's the case for you too, then I succeeded.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize},float,tabsize=4"
+inline false
 status open
 
 \begin_layout Plain Layout
-explain the config file structure
+
+<?xml version="1.0" encoding="UTF-8"?>
+\end_layout
+
+\begin_layout Plain Layout
+
+<config>
+\end_layout
+
+\begin_layout Plain Layout
+
+  <!-- Sources -->
+\end_layout
+
+\begin_layout Plain Layout
+
+  <sources>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <source name="drupal" directory="/htdocs/drupal" />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <source name="downloads" directory="/Users/wimleers/Downloads" />
+\end_layout
+
+\begin_layout Plain Layout
+
+  </sources>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  <!-- Servers -->
+\end_layout
+
+\begin_layout Plain Layout
+
+  <servers>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <server name="origin pull cdn" transporter="symlink_or_copy">
+\end_layout
+
+\begin_layout Plain Layout
+
+      <location>/htdocs/drupal/staticfiles</location>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <url>http://mydomain.mycdn.com/staticfiles</url>
+\end_layout
+
+\begin_layout Plain Layout
+
+    </server>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <server name="ftp push cdn" transporter="ftp" maxConnections="5">
+\end_layout
+
+\begin_layout Plain Layout
+
+      <host>localhost</host>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <username>daemontest</username>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <password>daemontest</password>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <url>http://localhost/daemontest/</url>
+\end_layout
+
+\begin_layout Plain Layout
+
+    </server>
+\end_layout
+
+\begin_layout Plain Layout
+
+  </servers>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  <!-- Rules -->
+\end_layout
+
+\begin_layout Plain Layout
+
+  <rules>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <rule for="drupal" label="CSS, JS, images and Flash">
+\end_layout
+
+\begin_layout Plain Layout
+
+      <filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <paths>modules:misc</paths>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <ignoredDirs>CVS:.svn</ignoredDirs>
+\end_layout
+
+\begin_layout Plain Layout
+
+      </filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <processorChain>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <processor name="image_optimizer.KeepFilename" />
+\end_layout
+
+\begin_layout Plain Layout
+
+        <processor name="yui_compressor.YUICompressor" />
+\end_layout
+
+\begin_layout Plain Layout
+
+        <processor name="unique_filename.Mtime" />
+\end_layout
+
+\begin_layout Plain Layout
+
+      </processorChain>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <destination server="origin pull cdn" />
+\end_layout
+
+\begin_layout Plain Layout
+
+    </rule>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    <rule for="drupal" label="Videos">
+\end_layout
+
+\begin_layout Plain Layout
+
+      <filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <paths>modules:misc</paths>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <extensions>flv:mov:avi:wmv</extensions>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <ignoredDirs>CVS:.svn</ignoredDirs>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <size conditionType="minimum">1000000</size>
+\end_layout
+
+\begin_layout Plain Layout
+
+      </filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <processorChain>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <processor name="unique_filename.MD5" />
+\end_layout
+
+\begin_layout Plain Layout
+
+      </processorChain>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <destination server="ftp push cdn">
+\end_layout
+
+\begin_layout Plain Layout
+
+        <path>videos</path>
+\end_layout
+
+\begin_layout Plain Layout
+
+      </destination>
+\end_layout
+
+\begin_layout Plain Layout
+
+    </rule>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    <rule for="downloads" label="Mirror">
+\end_layout
+
+\begin_layout Plain Layout
+
+      <filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+        <extensions>mov:avi</extensions>
+\end_layout
+
+\begin_layout Plain Layout
+
+      </filter>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <destination server="ftp push cdn">
+\end_layout
+
+\begin_layout Plain Layout
+
+        <path>mirror</path>
+\end_layout
+
+\begin_layout Plain Layout
+
+      </destination>
+\end_layout
+
+\begin_layout Plain Layout
+
+    </rule>
+\end_layout
+
+\begin_layout Plain Layout
+
+  </rules>
+\end_layout
+
+\begin_layout Plain Layout
+
+</config>
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Sample configuration file.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:sample-config-file"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -3677,19 +4190,46 @@ PersistentList
 \end_layout
 
 \begin_layout Standard
+To prevent excessive file system access due to an overreliance on SQLite,
+ I also added in-memory caching.
+ To ensure low resource consumption, only the first X items in 
+\family typewriter
+PersistentQueue
+\family default
+ are cached in-memory (a minimum and maximum treshold can be configured)
+ , but for 
+\family typewriter
+PersistentList
+\family default
+ there is no such restriction: it's cached in-memory in its entirety.
+ It's not designed for large datasets, but 
+\family typewriter
+PersistentQeueue
+\family default
+ is.
+\end_layout
+
+\begin_layout Standard
 The first question to arise is: 
 \begin_inset Quotes eld
 \end_inset
 
-Why use SQLite in favor of Python's built-in shelve module?
+Why use SQLite in favor of Python's built-in 
+\family typewriter
+shelve
+\family default
+ module?
 \begin_inset Quotes erd
 \end_inset
 
  Well, the answer is simple: aside of the benefit of the ability to have
  all persistent data in a single file, it must also scale to tens of thousands
  or even millions of files.
- Python's shelve module isn't scalable because its data is loaded into memory
- in its entirety.
+ 
+\family typewriter
+shelve
+\family default
+ isn't scalable because its data is loaded into memory in its entirety.
  This could easily result in hundreds of megabytes of memory usage.
  Such excessive memory usage should be avoided at all costs when the target
  environment is a (web) server.
@@ -3705,9 +4245,17 @@ How can you be sure the SQLite database won't get corrupt?
 \end_inset
 
  The answer is: we can't.
- But the same applies to Python's shelve module.
+ But the same applies to Python's 
+\family typewriter
+shelve
+\family default
+ module.
  However, the aforementioned advantages of SQLite give plenty of advantages
- over Python's shelve module.
+ over 
+\family typewriter
+shelve
+\family default
+.
  Plus, SQLite is thoroughly tested, even against corruption 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -3745,10 +4293,24 @@ y.
 
 \begin_layout Subsubsection
 Processors
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:Processors"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection*
 processor.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:processor.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4034,6 +4596,13 @@ ProcessorChain
 
 \begin_layout Subsubsection*
 filename.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:filename.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4056,6 +4625,13 @@ This one is not very useful, but it's a good simple example.
 
 \begin_layout Subsubsection*
 unique_filename.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:unique_filename.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4091,6 +4667,13 @@ link to the beginning of the text?
 
 \begin_layout Subsubsection*
 image_optimizer.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:image_optimizer.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4272,6 +4855,13 @@ Max
 
 \begin_layout Subsubsection*
 yui_compressor.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:yui_compressor.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4328,10 +4918,24 @@ key "JSMIN"
 
 \begin_layout Subsubsection
 Transporters
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemonTransporters"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection*
 transporter.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:transporter.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4900,8 +5504,8 @@ key "django-storages SymlinkOrCopyStorage patch"
 \end_layout
 
 \begin_layout Standard
-The maintainer was very receptive to these patches and replied only 23 minutes
- after I contacted him (via Twitter): 
+The maintainer was very receptive to these patches and replied a mere 23
+ minutes after I contacted him (via Twitter): 
 \end_layout
 
 \begin_layout Quote
@@ -4925,6 +5529,13 @@ update when committed
 
 \begin_layout Subsubsection*
 transporter_ftp.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:transporter_ftp.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4941,6 +5552,13 @@ FTPStorage
 
 \begin_layout Subsubsection*
 transporter_s3.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:transporter_s3.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -4957,6 +5575,13 @@ S3BotoStorage
 
 \begin_layout Subsubsection*
 transporter_cf.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:transporter_cf.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -5002,6 +5627,13 @@ create_distribution()
 
 \begin_layout Subsubsection*
 transporter_symlink_or_copy.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:transporter_symlink_or_copy.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -5019,6 +5651,13 @@ SymlinkOrCopyStorage
 
 \begin_layout Subsubsection
 config.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:config.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -5027,6 +5666,13 @@ Config parser with validation
 
 \begin_layout Subsubsection
 daemon_thread_runner.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:daemon_thread_runner.py"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
