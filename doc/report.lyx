@@ -2168,7 +2168,7 @@ episodes.js
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "float,language=HTML,numbers=left,numberstyle={\scriptsize},tabsize=4"
+lstparams "basicstyle={\scriptsize},float,language=HTML,numbers=left,numberstyle={\scriptsize},tabsize=4"
 inline false
 status open
 
@@ -2468,7 +2468,7 @@ key "Drupal Forms API"
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "float,language=Java,tabsize=2"
+lstparams "basicstyle={\scriptsize},float,language=Java,tabsize=2"
 inline false
 status open
 
@@ -3787,6 +3787,11 @@ Processor
 \begin_inset Newline newline
 \end_inset
 
+Upon completion, a callback will be called.
+ Another callback is called in case of an error.
+\begin_inset Newline newline
+\end_inset
+
 An example can found in listing 
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -3813,7 +3818,7 @@ by convention
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\footnotesize},float,tabsize=4"
+lstparams "basicstyle={\scriptsize},float,tabsize=4"
 inline false
 status open
 
@@ -3976,7 +3981,11 @@ class YUICompressor(Processor):
 \begin_inset Caption
 
 \begin_layout Plain Layout
-YUICompressor Processor class.
+
+\family typewriter
+YUICompressor
+\family default
+ Processor class.
 \begin_inset CommandInset label
 LatexCommand label
 name "lst:Processors-YUICompressor"
@@ -4265,21 +4274,467 @@ Max
 yui_compressor.py
 \end_layout
 
+\begin_layout Standard
+This is the processor module that could be seen in listing 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:Processors-YUICompressor"
+
+\end_inset
+
+.
+ It accepts CSS and JS files and runs the YUI Compressor
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YUI Compressor"
+
+\end_inset
+
+ on them, which are then compressed by stripping out all whitespace and
+ comments.
+ For JavaScript, it relies on Rhino
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Rhino"
+
+\end_inset
+
+ to tokenize the JavaScript source, so it's very safe: it won't strip out
+ whitespace where that could potentially cause problems.
+ Thanks to this, it can also optimize more aggressively: it saves over 20%
+ more than JSMIN
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "JSMIN"
+
+\end_inset
+
+.
+ For CSS (which is supported since version 2.0) it uses a regular-expression
+ based CSS minifier.
+\end_layout
+
 \begin_layout Subsubsection
 Transporters
 \end_layout
 
+\begin_layout Subsubsection*
+transporter.py
+\end_layout
+
 \begin_layout Standard
-\begin_inset Note Note
+Each transporter is a persistent connection to a server via a certain protocol
+ that is running in its own thread.
+ It allows you to queue files to be synced (save or delete) to the server.
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+Transporter
+\family default
+ is a base class for transporters, which are in turn very (very!) thin wrappers
+ around custom Django storage systems 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Django custom storage system"
+
+\end_inset
+
+.
+ If you need support for another storage system, you should write a custom
+ Django storage system first.
+ Transporters' settings are automatically validated in the constructor.
+ Also in the constructor, an attempt is made to set up a connection to their
+ target server.
+ When that fails, an exception (
+\family typewriter
+ConnectionError
+\family default
+) is raised.
+\begin_inset Newline newline
+\end_inset
+
+Upon completion, a callback will be called.
+ Another callback is called in case of an error.
+\begin_inset Newline newline
+\end_inset
+
+An example can found in listing 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:Transporters-TransporterFTP"
+
+\end_inset
+
+.
+ For details, please consult the daemon's documentation.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize},float,tabsize=4"
+inline false
 status open
 
 \begin_layout Plain Layout
-persistent connections
+
+class TransporterFTP(Transporter):
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    name              = 'FTP'
+\end_layout
+
+\begin_layout Plain Layout
+
+    valid_settings    = ImmutableSet(["host", "username", "password", "url",
+ "port", "path"])
+\end_layout
+
+\begin_layout Plain Layout
+
+    required_settings = ImmutableSet(["host", "username", "password", "url"])
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def __init__(self, settings, callback, error_callback, parent_logger=None):
+\end_layout
+
+\begin_layout Plain Layout
+
+        Transporter.__init__(self, settings, callback, error_callback, parent_log
+ger)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Fill out defaults if necessary.
+\end_layout
+
+\begin_layout Plain Layout
+
+        configured_settings = Set(self.settings.keys())
+\end_layout
+
+\begin_layout Plain Layout
+
+        if not "port" in configured_settings:
+\end_layout
+
+\begin_layout Plain Layout
+
+            self.settings["port"] = 21
+\end_layout
+
+\begin_layout Plain Layout
+
+        if not "path" in configured_settings:
+\end_layout
+
+\begin_layout Plain Layout
+
+            self.settings["path"] = ""
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        # Map the settings to the format expected by FTPStorage.
+\end_layout
+
+\begin_layout Plain Layout
+
+        location = "ftp://" + self.settings["username"] + ":"
+\end_layout
+
+\begin_layout Plain Layout
+
+        location += self.settings["password"] + "@" + self.settings["host"]
+\end_layout
+
+\begin_layout Plain Layout
+
+        location += ":" + str(self.settings["port"]) + self.settings["path"]
+\end_layout
+
+\begin_layout Plain Layout
+
+        self.storage = FTPStorage(location, self.settings["url"])
+\end_layout
+
+\begin_layout Plain Layout
+
+        try:
+\end_layout
+
+\begin_layout Plain Layout
+
+            self.storage._start_connection()
+\end_layout
+
+\begin_layout Plain Layout
+
+        except Exception, e:
+\end_layout
+
+\begin_layout Plain Layout
+
+            raise ConnectionError(e)
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\family typewriter
+TransporterFTP
+\family default
+ Transporter class.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:Transporters-TransporterFTP"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now, why the dependency on Django's 
+\family typewriter
+Storage
+\family default
+ class? For three reasons:
+\end_layout
+
+\begin_layout Enumerate
+Since Django is a pretty big open source project with many developers and
+ is powering many web sites, it's fair to assume that the API is stable
+ and solid.
+ Reinventing the wheel is meaningless and will just introduce more bugs.
+\end_layout
+
+\begin_layout Enumerate
+Because the daemon relies on (unmodified!) Django code, it can benefit from
+ bugfixes/features applied to Django's code and custom storage systems written
+ for Django.
+ The opposite is also true: changes made by contributors to the daemon (and
+ initially myself) can be contributed back to Django and its contributed
+ custom storage systems.
+\end_layout
+
+\begin_layout Enumerate
+django-storages 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-storages"
+
+\end_inset
+
+ is a collection of custom storage systems, which includes these classes:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+DatabaseStorage: store files in the database (any database that Django supports
+ (MySQL, PostgreSQL, SQLite and Oracle)
+\end_layout
+
+\begin_layout Itemize
+MogileFSStorage; MogileFS
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "MogileFS"
+
+\end_inset
+
+ is an open source distributed file system
+\end_layout
+
+\begin_layout Itemize
+S3Storage; uses the official Amazon S3 Python module
+\end_layout
+
+\begin_layout Itemize
+S3BotoStorage; uses the boto
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "boto"
+
+\end_inset
+
+ module to access Amazon S3
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon S3"
+
+\end_inset
+
+ and Amazon CloudFront
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon CloudFront"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+FTPStorage; uses the 
+\family typewriter
+ftplib
+\family default
+ Python module
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ftplib"
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+For the last two, transporters are available.
+ The first two are not so widely used and thus not yet implemented, although
+ it'd be very easy to support them, exactly because all that is necessary,
+ is to write two thin wrappers.
+ The third is not very meaningful to use, since the fourth is better (better
+ maintained and better performing).
+\end_layout
+
+\begin_layout Standard
+So I clearly managed to make a big shortcut (for simplicity of the argument,
+ I'm waving away the fact that I had to get this to work outside of Django
+ itself) to achieve my goal: support CDNs that support FTP or origin pulling
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+reference this from the beginning of the text and maybe add it to the terminolog
+y list?
+\end_layout
+
+\end_inset
+
+, as well as the Amazon S3 and CloudFront CDNs.
+\end_layout
+
+\begin_layout Standard
+However, supporting origin pull was trickier than would seem at first.
+ Normally, you just rewrite your URLs and be done with it.
+ However, I wanted to support processing files prior to syncing them to
+ the CDN.
+ And I want to keep following the 
+\begin_inset Quotes eld
+\end_inset
+
+don't touch the original file
+\begin_inset Quotes erd
+\end_inset
+
+ rule.
+ With push, that is no problem, you just process the file, store the output
+ file in a temporary directory, push the file and delete it afterwards.
+ But what about pull?
+\begin_inset Newline newline
+\end_inset
+
+I had to be creative here.
+ Since files must remain available for origin pull (in case the CDN wants/needs
+ to update its copy), all files must be copied to another publicly accessible
+ path in the web site.
+ But what about files that are not modified? Or have just changed filenames
+ (for unique URLs)? Copying these means storing the exact same data twice.
+ The answer is fortunately very simple: symlinks.
+ Although available only on UNIX, it's very much worth it: it reduces redundant
+ data storage significantly.
+ This was then implemented in a new custom storage system: 
+\family typewriter
+SymlinkOrCopyStorage
+\family default
+, which copies modified files and symlinks unmodified ones.
+\end_layout
+
+\begin_layout Subsubsection*
+transporter_ftp.py
+\end_layout
+
+\begin_layout Subsubsection*
+transporter_s3.py
+\end_layout
+
+\begin_layout Subsubsection*
+transporter_cf.py
+\end_layout
+
+\begin_layout Subsubsection*
+transporter_symlink_or_copy.py
 \end_layout
 
 \begin_layout Subsubsection
@@ -4307,17 +4762,37 @@ Before anything is done, it's written to a persistent datastructure so that
  if the application crashes or gets killed, it still is able to resume
 \end_layout
 
-\begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-processors can only change the basename, not the path
+\begin_layout Subsection
+Testing
 \end_layout
 
-\end_inset
+\begin_layout Standard
+I've performed fairly extensive tests in both Mac OS X and Linux.
+ The application behaved identically on both platforms, despite the fact
+ that different file system monitors are being used in the background.
+ The rest of this problemless cross-platform functioning is thanks to Python.
+\end_layout
 
+\begin_layout Standard
+All tests were performed on the local network, i.e.
+ with a FTP server running on the localhost.
+ Very small scale tests have been performed with the Amazon S3 and CloudFront
+ transporters, and since they worked, the results should apply to those
+ as well.
+ It doesn't and shouldn't matter which transporter is being used.
+\end_layout
 
+\begin_layout Standard
+At all times, the memory usage remained below 17 MB on Mac OS X and below
+ 7 MB on Linux.
+ A backlag of more than 10,000 files was no problem.
+ Synchronizing 10 GB of files was no problem.
+ I also tried alot of variations in the configuration and all of them worked
+ (well, sometimes it needed some bugfixing of course).
+ Further testing should happen in real-world environments.
+ Even tests in which I forced processors or transporters to crash were completed
+ succesfully: no files were lost and they would be synced again after restarting
+ the daemon.
 \end_layout
 
 \begin_layout Subsection
@@ -4335,6 +4810,9 @@ Files should be moved from the discover queue to the pipeline queue in a
 \begin_layout Itemize
 Files that must be retried should be retried immediately at least once:
  sometimes, there are random connection errors.
+ After that, they should be retried every X minutes, with a maximum of Y
+ tries.
+ X and Y should be configurable.
 \end_layout
 
 \begin_layout Itemize
@@ -4478,7 +4956,25 @@ key "Episodes home page"
 \end_layout
 
 \begin_layout Itemize
-Django's Storage abstraction
+Django's 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Django"
+
+\end_inset
+
+
+\family typewriter
+ Storage
+\family default
+ class 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Django custom storage system"
+
+\end_inset
+
+ and its dependencies
 \end_layout
 
 \end_deeper
@@ -4564,15 +5060,14 @@ key "pysqlite"
 \end_layout
 
 \begin_layout Itemize
-FTP (through the Python ftplib module)
-\end_layout
+django-storages 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-storages"
 
-\begin_layout Itemize
-Amazon S3 (through the Python boto module)
-\end_layout
+\end_inset
 
-\begin_layout Itemize
-Amazon CloudFront (through the Python boto module)
+
 \end_layout
 
 \end_deeper
@@ -4626,7 +5121,67 @@ key "gifsicle"
 \end_layout
 
 \begin_layout Itemize
-YUI Compressor
+YUI Compressor 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "YUI Compressor"
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Supports the following storage systems
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+FTP (via django-storages, through the Python ftplib 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ftplib"
+
+\end_inset
+
+ module)
+\end_layout
+
+\begin_layout Itemize
+Amazon S3 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon S3"
+
+\end_inset
+
+ (via django-storages, through the Python boto 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "boto"
+
+\end_inset
+
+ module)
+\end_layout
+
+\begin_layout Itemize
+Amazon CloudFront 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon CloudFront"
+
+\end_inset
+
+ (via django-storages, through the Python boto 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "boto"
+
+\end_inset
+
+ module)
 \end_layout
 
 \end_deeper
@@ -6246,6 +6801,56 @@ http://www.lcdf.org/gifsicle/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "YUI Compressor"
+
+\end_inset
+
+
+\emph on
+YUI Compressor
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.julienlecomte.net/blog/2007/08/11/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Rhino"
+
+\end_inset
+
+
+\emph on
+Rhino
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.mozilla.org/rhino/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "JSMIN"
 
 \end_inset
@@ -6261,6 +6866,206 @@ status collapsed
 \begin_layout Plain Layout
 
 http://javascript.crockford.com/jsmin.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Django"
+
+\end_inset
+
+
+\emph on
+Django
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.djangoproject.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Django custom storage system"
+
+\end_inset
+
+
+\emph on
+Writing a custom storage system
+\emph default
+, Django 1.0 documentation, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://docs.djangoproject.com/en/1.0/howto/custom-file-storage/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "django-storages"
+
+\end_inset
+
+
+\emph on
+django-storages
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.welldev.org/django-storages/wiki/Home
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "ftplib"
+
+\end_inset
+
+
+\emph on
+ftplib — FTP protocol client
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://docs.python.org/library/ftplib.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Amazon S3"
+
+\end_inset
+
+
+\emph on
+Amazon S3
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://aws.amazon.com/s3/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Amazon CloudFront"
+
+\end_inset
+
+
+\emph on
+Amazon CloudFront
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://aws.amazon.com/cloudfront/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "boto"
+
+\end_inset
+
+
+\emph on
+boto
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.google.com/p/boto/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "MogileFS"
+
+\end_inset
+
+
+\emph on
+MogileFS
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.danga.com/mogilefs/
 \end_layout
 
 \end_inset
