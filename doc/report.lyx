@@ -4336,6 +4336,7 @@ transporter.py
 
 \begin_layout Standard
 Each transporter is a persistent connection to a server via a certain protocol
+ (FTP, SCP, SSH, or custom protocols such as Amazon S3, any protocol really)
  that is running in its own thread.
  It allows you to queue files to be synced (save or delete) to the server.
 \begin_inset Newline newline
@@ -4364,15 +4365,28 @@ key "Django custom storage system"
 ConnectionError
 \family default
 ) is raised.
+ Files can be queued for synchronization through the 
+\family typewriter
+sync_file(src, dst, action, callback, error_callback)
+\family default
+ method.
 \begin_inset Newline newline
 \end_inset
 
-Upon completion, a callback will be called.
- Another callback is called in case of an error.
+Upon completion, the 
+\family typewriter
+callback
+\family default
+ function will be called.
+ The 
+\family typewriter
+error_callback
+\family default
+ function is called in case of an error.
 \begin_inset Newline newline
 \end_inset
 
-An example can found in listing 
+A sample transporter can found in listing 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "lst:Transporters-TransporterFTP"
@@ -4558,8 +4572,8 @@ Since Django is a pretty big open source project with many developers and
 
 \begin_layout Enumerate
 Because the daemon relies on (unmodified!) Django code, it can benefit from
- bugfixes/features applied to Django's code and custom storage systems written
- for Django.
+ bugfixes/features applied to Django's code and can use custom storage systems
+ written for Django.
  The opposite is also true: changes made by contributors to the daemon (and
  initially myself) can be contributed back to Django and its contributed
  custom storage systems.
@@ -4578,12 +4592,20 @@ key "django-storages"
 
 \begin_deeper
 \begin_layout Itemize
-DatabaseStorage: store files in the database (any database that Django supports
- (MySQL, PostgreSQL, SQLite and Oracle)
+
+\family typewriter
+DatabaseStorage
+\family default
+: store files in the database (any database that Django supports (MySQL,
+ PostgreSQL, SQLite and Oracle)
 \end_layout
 
 \begin_layout Itemize
-MogileFSStorage; MogileFS
+
+\family typewriter
+MogileFSStorage
+\family default
+; MogileFS
 \begin_inset space ~
 \end_inset
 
@@ -4598,11 +4620,19 @@ key "MogileFS"
 \end_layout
 
 \begin_layout Itemize
-S3Storage; uses the official Amazon S3 Python module
+
+\family typewriter
+S3Storage
+\family default
+; uses the official Amazon S3 Python module
 \end_layout
 
 \begin_layout Itemize
-S3BotoStorage; uses the boto
+
+\family typewriter
+S3BotoStorage
+\family default
+; uses the boto
 \begin_inset space ~
 \end_inset
 
@@ -4639,7 +4669,11 @@ key "Amazon CloudFront"
 \end_layout
 
 \begin_layout Itemize
-FTPStorage; uses the 
+
+\family typewriter
+FTPStorage
+\family default
+; uses the 
 \family typewriter
 ftplib
 \family default
@@ -4721,20 +4755,266 @@ SymlinkOrCopyStorage
 , which copies modified files and symlinks unmodified ones.
 \end_layout
 
+\begin_layout Standard
+In total, I've contributed three patches to django-storages:
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+FTPStorage
+\family default
+: saving large files + more robust 
+\family typewriter
+exists()
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-storages FTPStorage patch"
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+It enables the saving of large files by no longer reading all the chunks
+ of the file in a single string, instead it uses 
+\family typewriter
+ftplib.storbinary()
+\family default
+ directly with a file pointer, which then handles the writing in chunks
+ automatically.
+\end_layout
+
+\begin_layout Enumerate
+It makes 
+\family typewriter
+exists()
+\family default
+ more reliable: it's been tested with 3 different FTP servers and so far
+ it works without problems with the following FTP servers, whereas it didnt'
+ work with any of them before:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+PureFTPd
+\end_layout
+
+\begin_layout Enumerate
+Xlight FTP Server 3.2 (used by SimpleCDN)
+\end_layout
+
+\begin_layout Enumerate
+Pure-FTPd (used by Rambla)
+\end_layout
+
+\begin_layout Standard
+This greatly improves the number of use cases where you can use the 
+\family typewriter
+FTPStorage
+\family default
+ custom storage system.
+ 
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Enumerate
+
+\family typewriter
+S3BotoStorage
+\family default
+: set 
+\family typewriter
+Content-Type
+\family default
+ header, ACL fixed, use HTTP and disable query auth by default 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-storages S3BotoStorage patch"
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+The 
+\family typewriter
+Content-Type
+\family default
+ header is set automatically via guessing based on the extension, this is
+ done through mimetypes.guesstype.
+ Right now, no Content-Type is set, and therefor the default binary mimetype
+ is set: application/octet- stream.
+ This causes browsers to download files instead of displaying them.
+\end_layout
+
+\begin_layout Enumerate
+The ACL now actually gets applied properly to the bucket and to each file
+ that is saved to the bucket.
+\end_layout
+
+\begin_layout Enumerate
+Currently, URLs are generated with query-based authentication (meaning you'll
+ get ridiculously long URLs) and HTTPS is used instead of HTTP, thereby
+ preventing browsers from caching files.
+ I've disabled query authentication and HTTPS, as this is the most common
+ use case for serving files.
+ This probably should be configurable, but that can be done in a revised
+ patch or a follow-up patch.
+\end_layout
+
+\begin_layout Enumerate
+It allows you to set custom headers through the constructor (which I really
+ needed for my daemon).
+\end_layout
+
+\begin_layout Standard
+This greatly improves the usability of the 
+\family typewriter
+S3BotoStorage
+\family default
+ custom storage system in its most common use case: as a CDN for publicly
+ accessible files.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+
+\family typewriter
+SymlinkOrCopyStorage
+\family default
+: new custom storage system 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-storages SymlinkOrCopyStorage patch"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The maintainer was very receptive to these patches and replied only 23 minutes
+ after I contacted him (via Twitter): 
+\end_layout
+
+\begin_layout Quote
+davidbgk@wimleers Impressive patches, I'll merge your work asap.
+ Thanks for contributing! Interesing bachelor thesis :)
+\end_layout
+
+\begin_layout Standard
+The patches have been committed on 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+update when committed
+\end_layout
+
+\end_inset
+
+ and thus the first contributions back are a fact!
+\end_layout
+
 \begin_layout Subsubsection*
 transporter_ftp.py
+\end_layout
+
+\begin_layout Standard
+Provides the 
+\family typewriter
+TransporterFTP
+\family default
+ class, which is a thin wrapper around 
+\family typewriter
+FTPStorage
+\family default
+, with the aforementioned patch applied.
 \end_layout
 
 \begin_layout Subsubsection*
 transporter_s3.py
 \end_layout
 
+\begin_layout Standard
+Provides the 
+\family typewriter
+TransporterS3
+\family default
+ class, which is a thin wrapper around 
+\family typewriter
+S3BotoStorage
+\family default
+, with the aforementioned patch applied.
+\end_layout
+
 \begin_layout Subsubsection*
 transporter_cf.py
 \end_layout
 
+\begin_layout Standard
+Provides the 
+\family typewriter
+TransporterCF
+\family default
+ class, which is not a thin wrapper around 
+\family typewriter
+S3BotoStorage
+\family default
+, but around 
+\family typewriter
+TransporterS3
+\family default
+.
+ In fact, it just implementes the 
+\family typewriter
+alter_url()
+\family default
+ method to alter the Amazon S3 URL to an Amazon CloudFront URL 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+S3 <-> CF relationship explanation somewhere?
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+It also provides the 
+\family typewriter
+create_distribution()
+\family default
+ function to create a distribution for a given origin domain (a domain for
+ a specific Amazon S3 bucket).
+ Please consult the daemon's documentation for details.
+\end_layout
+
 \begin_layout Subsubsection*
 transporter_symlink_or_copy.py
+\end_layout
+
+\begin_layout Standard
+Provides the 
+\family typewriter
+TransporterSymlinkOrCopy
+\family default
+ class, which is a thin wrapper around 
+\family typewriter
+SymlinkOrCopyStorage
+\family default
+, which is a new custom storage system I contributed to django-storages,
+ as mentioned before.
 \end_layout
 
 \begin_layout Subsubsection
@@ -6934,13 +7214,92 @@ key "django-storages"
 \emph on
 django-storages
 \emph default
-, 
+, David Larlet et al., 
 \begin_inset Flex URL
 status collapsed
 
 \begin_layout Plain Layout
 
 http://code.welldev.org/django-storages/wiki/Home
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "django-storages FTPStorage patch"
+
+\end_inset
+
+
+\emph on
+FTPStorage: saving large files + more robust exists()
+\emph default
+, Wim Leers, 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.welldev.org/django-storages/issue/4/ftpstorage-saving-large-files-+-mo
+re-robust
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "django-storages S3BotoStorage patch"
+
+\end_inset
+
+
+\emph on
+S3BotoStorage: set Content-Type header, ACL fixed, use HTTP and disable
+ query auth by default
+\emph default
+, Wim Leers, 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.welldev.org/django-storages/issue/5/s3botostorage-set-content-type-hea
+der-acl-fixed-use-http-and-disable-query-auth-by
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "django-storages SymlinkOrCopyStorage patch"
+
+\end_inset
+
+
+\emph on
+SymlinkOrCopyStorage: new custom storage system
+\emph default
+, Wim Leers, 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://code.welldev.org/django-storages/issue/6/symlinkorcopystorage-new-custom-st
+orage
 \end_layout
 
 \end_inset
