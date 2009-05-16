@@ -8,11 +8,11 @@
 
   <!-- Servers -->
   <servers>
-    <server name="edgecast" transporter="symlink_or_copy">
+    <server name="origin pull cdn" transporter="symlink_or_copy">
       <location>/htdocs/drupal/staticfiles</location>
-      <url>http://me.edgecast.com/staticfiles</url>
+      <url>http://mydomain.cdn.com/staticfiles</url>
     </server>
-    <server name="simplecdn" transporter="ftp" maxConnections="20">
+    <server name="ftp push cdn" transporter="ftp" maxConnections="5">
       <host>localhost</host>
       <username>daemontest</username>
       <password>daemontest</password>
@@ -33,7 +33,7 @@
         <processor name="yui_compressor.YUICompressor" />
         <processor name="unique_filename.Mtime" />
       </processorChain>
-      <destination server="edgecast" />
+      <destination server="origin pull cdn" />
     </rule>
 
     <rule for="drupal" label="Videos">
@@ -46,7 +46,7 @@
       <processorChain>
         <processor name="unique_filename.MD5" />
       </processorChain>
-      <destination server="simplecdn">
+      <destination server="ftp push cdn">
         <path>videos</path>
       </destination>
     </rule>
@@ -55,7 +55,7 @@
       <filter>
         <extensions>mov:avi</extensions>
       </filter>
-      <destination server="simplecdn">
+      <destination server="ftp push cdn">
         <path>mirror</path>
       </destination>
     </rule>
