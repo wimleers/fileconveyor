@@ -3498,8 +3498,14 @@ A couple of these goals need more explaining.
 \end_layout
 
 \begin_layout Standard
-Detecting and sycncing files instantly is a must to ensure CDN usage is
- as high as possible.
+The transparency goal should speak for itself, but you may not yet have
+ realized its impact: this is what will avoid high CDN provider switching
+ costs, that is, it helps to avoid vendor lock-in.
+\end_layout
+
+\begin_layout Standard
+Detecting and syncing files instantly is a must to ensure CDN usage is as
+ high as possible.
  If new files would only be detected every 10 minutes, then visitors, who
  might have uploaded images as part of the content they've created, will
  be downloading the image from the web server (or maybe static file server),
@@ -3529,6 +3535,26 @@ ally placed static file servers in Japan and France to cover the rest of
  This also allows for event-driven server allocation.
  For example if a big event is being hosted in Paris, you could temporarily
  hire another server in Paris to ensure low latency and high throughput.
+\end_layout
+
+\begin_layout Subsubsection*
+Other use cases
+\end_layout
+
+\begin_layout Itemize
+Back-up tool
+\end_layout
+
+\begin_layout Itemize
+Transcoding server
+\end_layout
+
+\begin_layout Itemize
+Key component in creating your own CDN
+\end_layout
+
+\begin_layout Itemize
+Key component in a file synchronization tool for consumers
 \end_layout
 
 \begin_layout Subsection
