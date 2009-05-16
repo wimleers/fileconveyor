@@ -54,9 +54,10 @@
       </destinations>
     </rule>
 
-    <rule for="downloads" label="Mirror">
+    <rule for="downloads" label="Mirror 720P videos">
       <filter>
-        <extensions>mov:avi</extensions>
+        <extensions>mov:avi:mkv</extensions>
+        <pattern>.*/([a-zA-Z\-_ ])+720([a-zA-Z\-_ ])*\.[a-zA-Z]{3}$</pattern>
       </filter>
       <destinations>
         <destination server="origin pull cdn" path="mirror" />
