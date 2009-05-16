@@ -4314,7 +4314,7 @@ name "sub:daemon:modules:processor.py"
 \end_layout
 
 \begin_layout Standard
-This module provides several classes 
+This module provides several classes: 
 \family typewriter
 Processor
 \family default
@@ -4580,6 +4580,11 @@ ProcessorChain
 ProcessorChains
 \family default
  run in their own threads.
+ 
+\family typewriter
+ProcessorChain
+\family default
+ also supports logging and accepts a parent logger.
 \end_layout
 
 \begin_layout Standard
@@ -4987,6 +4992,14 @@ callback
 error_callback
 \family default
  function is called in case of an error.
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+Transporter
+\family default
+ also supports logging and accepts a parent logger.
 \begin_inset Newline newline
 \end_inset
 
@@ -5661,7 +5674,48 @@ name "sub:daemon:modules:config.py"
 \end_layout
 
 \begin_layout Standard
-Config parser with validation
+This module contains just one class: 
+\family typewriter
+Config
+\family default
+.
+ 
+\family typewriter
+Config
+\family default
+ can load a configuration file (parse the XML) and validate it.
+ Validation doesn't happen through an XML schema, but through 
+\begin_inset Quotes eld
+\end_inset
+
+manual
+\begin_inset Quotes erd
+\end_inset
+
+ validation.
+ The 
+\family typewriter
+filter
+\family default
+ node is validated through the 
+\family typewriter
+Filter
+\family default
+ class to ensure it is error free.
+ All references (to sources and servers) are also validated.
+ Its validation routines are pretty thorough, but by no means perfect.
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+Config
+\family default
+ also supports logging and accepts a parent logger.
+\end_layout
+
+\begin_layout Standard
+This module should be unit tested, but isn't – yet.
 \end_layout
 
 \begin_layout Subsubsection
@@ -5676,20 +5730,645 @@ name "sub:daemon:modules:daemon_thread_runner.py"
 \end_layout
 
 \begin_layout Standard
-Runs thread as a daemon and supports signals to stop the daemon, like Apache
+I needed to be able to run the application as a daemon.
+ Great, but then how do you stop it? Through signals.
+ That's also how for example the Apache HTTP server does it 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Apache signals"
+
+\end_inset
+
+.
+ To send a signal, you need to know the process' pid (process id).
+ So the pid must be stored in a file somewhere.
+\end_layout
+
+\begin_layout Standard
+This module contains the 
+\family typewriter
+DaemonThreadRunner
+\family default
+ class, which accepts an object and the name of the file that should contain
+ the pid.
+ The object should be a subclass of Python's 
+\family typewriter
+threading.Thread
+\family default
+ class.
+ As soon as you 
+\family typewriter
+start()
+\family default
+ the 
+\family typewriter
+DaemonThreadRunner
+\family default
+ object, the pid will be written to the specified pid file name, the object
+ will be marked as a daemon thread and started.
+ While it's running, the pid is written to the pid file every 60 seconds.
+\end_layout
+
+\begin_layout Standard
+When an interrupt is caught (
+\family typewriter
+SIGINT
+\family default
+ for interruption, 
+\family typewriter
+SIGTSTP
+\family default
+ for suspension and 
+\family typewriter
+SIGTERM
+\family default
+ for termination), the thread (of the object that was passed) is stopped
+ and 
+\family typewriter
+DaemonThreadRunner
+\family default
+ waits for the thread to join and then deletes the file.
+\end_layout
+
+\begin_layout Standard
+This module is not unit tested, because it makes very little sense to do
+ so (there's not much code).
+ Having used it hundreds of times, it didn't fail once, so it's reliable
+ enough.
 \end_layout
 
 \begin_layout Subsection
 Putting it all together: arbitrator.py
 \end_layout
 
+\begin_layout Subsubsection
+The Big Picture
+\end_layout
+
 \begin_layout Standard
-Before anything is done, it's written to a persistent datastructure so that
- if the application crashes or gets killed, it still is able to resume
+The arbitrator is what links together all Python modules I've described
+ in the previous section.
+ Here's a hierarchical overview, so you get a better understanding of The
+ Big Picture:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename schemas/the big picture.png
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+The Big Picture
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:daemonThe-Big-Picture"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Clearly, 
+\family typewriter
+Arbitrator
+\family default
+ is what links everything together: it controls the 5 components: 
+\family typewriter
+Config
+\family default
+, 
+\family typewriter
+FSMonitor
+\family default
+, 
+\family typewriter
+Filter
+\family default
+, 
+\family typewriter
+Processor
+\family default
+ and 
+\family typewriter
+Transporter
+\family default
+.
+ There are three subclasses of 
+\family typewriter
+FSMonitor
+\family default
+ to take advantage of the platform's built-in file system monitor.
+ 
+\family typewriter
+Processor
+\family default
+ must be subclassed for every processor.
+ 
+\family typewriter
+Transporter
+\family default
+ must be subclassed for each protocol.
+\end_layout
+
+\begin_layout Standard
+Now that you have an insight in the Big Picture, let's see how exactly 
+\family typewriter
+Arbitrator
+\family default
+ controls all components, and what happens before the 
+\family typewriter
+main
+\family default
+ function.
+\end_layout
+
+\begin_layout Subsubsection
+The flow
+\end_layout
+
+\begin_layout Standard
+First, an 
+\family typewriter
+Arbitrator
+\family default
+ object is created and its constructor does the following:
+\end_layout
+
+\begin_layout Itemize
+create a logger
+\end_layout
+
+\begin_layout Itemize
+parse the configuration file
+\end_layout
+
+\begin_layout Itemize
+verify the existence of all processors and transporters that are referenced
+ from the configuration file
+\end_layout
+
+\begin_layout Itemize
+connect to each server (as defined in the configuration file) to ensure
+ it's working
+\end_layout
+
+\begin_layout Standard
+Then, the 
+\family typewriter
+Arbitrator
+\family default
+ object is passed to a 
+\family typewriter
+DaemonThreadRunner
+\family default
+ object, which then runs the arbitrator in such a way that it can be stopped
+ through signals.
+ The arbitrator is then started.
+ The following happens:
+\end_layout
+
+\begin_layout Enumerate
+setup
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+create transporter pools (cfr.
+ worker thread pools) for each server.
+ These pools remain empty because they're filled
+\end_layout
+
+\begin_layout Enumerate
+collect all metadata for each rule
+\end_layout
+
+\begin_layout Enumerate
+initialize all datastructures for the pipeline (queues, persistent queues
+ and persistent lists)
+\end_layout
+
+\begin_layout Enumerate
+move files from the 'files in pipeline' persistent list to the 'pipeline'
+ persistent queue
+\end_layout
+
+\begin_layout Enumerate
+move files from the 'failed files' persistent list to the 'pipeline' persistent
+ queue
+\end_layout
+
+\begin_layout Enumerate
+create a database connection to the 'synced files' database
+\end_layout
+
+\begin_layout Enumerate
+initialize the file system monitor (
+\family typewriter
+FSMonitor
+\family default
+)
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+run
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+start the file system monitor
+\end_layout
+
+\begin_layout Enumerate
+start the processing loop and keep it running until the thread is being
+ stopped
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+process the 
+\emph on
+discover
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+pipeline
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+filter
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+process
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+transport
+\emph default
+ queues (1 per server)
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+db
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+process the 
+\emph on
+retry
+\emph default
+ queue
+\end_layout
+
+\begin_layout Enumerate
+sleep 0.1 second
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+stop the file system monitor
+\end_layout
+
+\begin_layout Enumerate
+process the discover queue once more to sync the final batch of files to
+ the persistent pipeline queue
+\end_layout
+
+\begin_layout Enumerate
+stop all transporters
+\end_layout
+
+\begin_layout Enumerate
+log some statistics
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+That's 
+\emph on
+roughly
+\emph default
+ the logic of the daemon.
+ It should already make sense to you, but you're probably wondering what
+ all the queues are for.
+ And how they're being filled and emptied.
+ So now it's time to learn about the daemon's 
+\emph on
+pipeline
+\emph default
+.
+\end_layout
+
+\begin_layout Subsubsection
+Pipeline design pattern
+\end_layout
+
+\begin_layout Standard
+This design pattern, which is also sometimes called 
+\begin_inset Quotes eld
+\end_inset
+
+Filters and Pipes
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "pipes-and-filters-1,pipes-and-filters-2,pipes-and-filters-3,pipes-and-filters-4"
+
+\end_inset
+
+, is slightly underdocumented, but it's still a very useful design pattern.
+ Its premise is to deliver an architecture to divide a large processing
+ task into smaller, sequential steps (
+\begin_inset Quotes eld
+\end_inset
+
+Filters
+\begin_inset Quotes erd
+\end_inset
+
+) that can be performed independently – and therefor in parallel – which
+ are finally connected via Pipes.
+ The output of one step is the input of the next.
+\end_layout
+
+\begin_layout Standard
+For all that follows in this subsection, you may want to look at figure
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:daemon:flowchart-pipeline"
+
+\end_inset
+
+ while reading.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/schemas/daemon final flowchart.png
+	width 115text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Flowchart of the daemon's pipeline.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:daemon:flowchart-pipeline"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In my case, files are discovered and are then put into the pipeline queue.
+ When they actually move into the pipeline (at which point they're added
+ to the 'files in pipeline' persistent list), they start by going into the
+ filter queue, after being filtered they go into the process queue (possibly
+ more than once), after being processed to the transport queue, after being
+ transported to the db queue, after being stored in the database, they're
+ removed from the 'files in pipeline' persistent list and we're done for
+ this file.
+ Repeat for every discovered file.
+ This is the 
+\emph on
+core logic
+\emph default
+ of the daemon.
+\end_layout
+
+\begin_layout Standard
+So many queues are used because there are so many stages in the pipeline.
+ There's a queue for each stage in the pipeline, plus some additional ones
+ because the persistent datastructures use the pysqlite module, which only
+ allows you to access the database from the same thread as the connection
+ was created in.
+ Because I (have to) work with callbacks, the calling thread may be different
+ from the creating thread, and therefor there are several queues that exist
+ solely for exchanging data between threads.
+\begin_inset Newline newline
+\end_inset
+
+There is one persistent queue and two persistent lists.
+ The persistent queue is the pipeline queue, which contains all files that
+ are queued to be sent through the pipeline.
+ The first persistent list is 'files in pipeline'.
+ It is used to ensure files still get processed if the daemon was killed
+ (or crashed) while they were in the pipeline.
+ The second persistent list is 'failed files' and contains all files for
+ which either a processor in the processor chain or a transporter failed.
+\begin_inset Newline newline
+\end_inset
+
+When the daemon is restarted, the contents of the 'files in pipeline' and
+ 'failed files' lists are pushed into the pipeline queue, after which they
+ are erased.
+\end_layout
+
+\begin_layout Standard
+Queues are either filled through the 
+\family typewriter
+Arbitrator
+\family default
+ (because it moves data from one queue to the next) or through callbacks
+ (in case data gets processed in a separate thread):
+\end_layout
+
+\begin_layout Itemize
+The 
+\emph on
+discover
+\emph default
+ queue is filled through 
+\family typewriter
+FSMonitor
+\family default
+'s callback (which gets called for every discovered file).
+ 
+\end_layout
+
+\begin_layout Itemize
+The 
+\emph on
+transport
+\emph default
+ queue is filled through a 
+\family typewriter
+ProcessorChain
+\family default
+'s callback or directly from the 
+\begin_inset Quotes eld
+\end_inset
+
+process 
+\emph on
+filter
+\emph default
+ queue
+\begin_inset Quotes erd
+\end_inset
+
+ method (if the rule has no processor chain associated with it).
+\end_layout
+
+\begin_layout Itemize
+The 
+\emph on
+db
+\emph default
+ queue is filled through a 
+\family typewriter
+Transporter
+\family default
+'s callback.
+\end_layout
+
+\begin_layout Standard
+Each of the 
+\begin_inset Quotes eld
+\end_inset
+
+process 
+\emph on
+X
+\emph default
+ queue
+\begin_inset Quotes erd
+\end_inset
+
+ methods acquires 
+\family typewriter
+Arbitrator
+\family default
+'s lock before accessing any of the queues.
+ 
+\emph on
+Before
+\emph default
+ a file is removed from the pipeline queue, it is added to the 'files in
+ pipeline' persistent list (this is possible thanks to 
+\family typewriter
+PersistentQueue
+\family default
+'s 
+\family typewriter
+peek()
+\family default
+ method), and then it is removed from the pipeline queue.
+ This implies that at no time after the file has been added to the pipeline
+ queue, it can be lost.
+ The worst case scenario is that the daemon crashes between adding the file
+ to the 'files in pipeline' persistent list and removing it from the pipeline
+ queue.
+ Then it'll end up twice in the queue.
+ But the second sync will just overwrite the first one, so all that is lost,
+ is CPU time.
+\end_layout
+
+\begin_layout Standard
+The only truly weak link is unavoidable: if the daemon crashes somewhere
+ between having performed the callback from 
+\family typewriter
+FSMonitor
+\family default
+, adding that file to the discover queue and syncing the file from the discover
+ queue to the pipeline queue (which is necessary due to the thread locality
+ restriction of pysqlite).
 \end_layout
 
 \begin_layout Subsection
 Testing
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+better title needed to avoid confusion with unit testing
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -5714,7 +6393,7 @@ At all times, the memory usage remained below 17 MB on Mac OS X and below
  A backlag of more than 10,000 files was no problem.
  Synchronizing 10 GB of files was no problem.
  I also tried alot of variations in the configuration and all of them worked
- (well, sometimes it needed some bugfixing of course).
+ (well, sometimes it needed s.ome bugfixing of course).
  Further testing should happen in real-world environments.
  Even tests in which I forced processors or transporters to crash were completed
  succesfully: no files were lost and they would be synced again after restarting
@@ -8071,6 +8750,133 @@ status collapsed
 \begin_layout Plain Layout
 
 http://www.danga.com/mogilefs/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Apache signals"
+
+\end_inset
+
+
+\emph on
+Stopping and Restarting - Apache HTTP Server,
+\emph default
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://httpd.apache.org/docs/2.2/stopping.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pipes-and-filters-1"
+
+\end_inset
+
+
+\emph on
+Pipes and Filters
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://en.wikipedia.org/wiki/Pipes_and_filters
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pipes-and-filters-2"
+
+\end_inset
+
+
+\emph on
+Pipes and Filters
+\emph default
+, Jorge Luis Ortega Arjona, Department of Computer Science of the University
+ College London, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.cs.ucl.ac.uk/staff/J.Ortega-Arjona/patterns/PF.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pipes-and-filters-3"
+
+\end_inset
+
+
+\emph on
+Pipe-and-filter
+\emph default
+, Jike Chong; Arlo Faria; Satish Nadathur; Youngmin Yi, Electrical Engineering
+ and Computer Sciences department of UC Berkely, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://parlab.eecs.berkeley.edu/wiki/patterns/pipe-and-filter
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "pipes-and-filters-4"
+
+\end_inset
+
+
+\emph on
+Pipes and Filters
+\emph default
+, Enterprise Integration Patterns, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.eaipatterns.com/PipesAndFilters.html
 \end_layout
 
 \end_inset
