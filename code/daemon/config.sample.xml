@@ -33,7 +33,10 @@
         <processor name="yui_compressor.YUICompressor" />
         <processor name="unique_filename.Mtime" />
       </processorChain>
-      <destination server="origin pull cdn" />
+      <destinations>
+        <destination server="origin pull cdn" />
+        <destination server="ftp push cdn" path="static" />
+      </destinations>
     </rule>
 
     <rule for="drupal" label="Videos">
@@ -46,18 +49,19 @@
       <processorChain>
         <processor name="unique_filename.MD5" />
       </processorChain>
-      <destination server="ftp push cdn">
-        <path>videos</path>
-      </destination>
+      <destinations>
+        <destination server="ftp push cdn" path="videos" />
+      </destinations>
     </rule>
 
     <rule for="downloads" label="Mirror">
       <filter>
         <extensions>mov:avi</extensions>
       </filter>
-      <destination server="ftp push cdn">
-        <path>mirror</path>
-      </destination>
+      <destinations>
+        <destination server="origin pull cdn" path="mirror" />
+        <destination server="ftp push cdn" path="mirror" />
+      </destinations>
     </rule>
   </rules>
 </config>

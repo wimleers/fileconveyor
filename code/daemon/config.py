@@ -66,13 +66,13 @@ class Config(object):
 
 
     def __parse_servers(self, root):
-        servers = root.find("servers")
-        for server in servers:
+        servers_node = root.find("servers")
+        for server_node in servers_node:
             settings = {}
-            name           = server.get("name")
-            transporter    = server.get("transporter")
-            maxConnections = server.get("maxConnections", 0)
-            for setting in server.getchildren():
+            name           = server_node.get("name")
+            transporter    = server_node.get("transporter")
+            maxConnections = server_node.get("maxConnections", 0)
+            for setting in server_node.getchildren():
                 settings[setting.tag] = setting.text
             self.servers[name] = {
                 "maxConnections" : int(maxConnections),
@@ -82,32 +82,33 @@ class Config(object):
 
 
     def __parse_rules(self, root):
-        rules = root.find("rules")
-        for rule in rules:
-            for_source = rule.get("for")
-            label      = rule.get("label")
+        rules_node = root.find("rules")
+        for rule_node in rules_node:
+            for_source = rule_node.get("for")
+            label      = rule_node.get("label")
 
-            # 1: filter
+            # 1: filter (optional)
             conditions = None
-            filter_node = rule.find("filter")
+            filter_node = rule_node.find("filter")
             if not filter_node is None:
                 conditions = self.__parse_filter(filter_node, label)
 
-            # 2: processorChain
+            # 2: processorChain (optional)
             processor_chain = None
-            processor_chain_node = rule.find("processorChain")
+            processor_chain_node = rule_node.find("processorChain")
             if not processor_chain_node is None:
                 processor_chain = self.__parse_processor_chain(processor_chain_node, label)
 
-            # 3: destination
-            destination = None
-            destination_node = rule.find("destination")
-            if not destination_node is None:
-                destination = self.__parse_destination(destination_node, label)
-
-            if processor_chain_node is None and destination_node is None:
-                self.logger.error("In rule '%s': either a processChain or a destination must be configured, but neither is." % (label))
+            # 3: destinations (required)
+            destinations = {}
+            destinations_node = rule_node.find("destinations")
+            if destinations_node is None or len(destinations_node) == 0:
+                self.logger.error("In rule '%s': at least one destination must be configured." % (label))
                 self.errors += 1
+            else:
+                for destination_node in destinations_node:
+                    destination = self.__parse_destination(destination_node, label)
+                    destinations[destination["server"]] = {"path" : destination["path"]}
 
             if not self.rules.has_key(for_source):
                 self.rules[for_source] = []
@@ -115,7 +116,7 @@ class Config(object):
                 "label"           : label,
                 "filterConditions": conditions,
                 "processorChain"  : processor_chain,
-                "destination"     : destination,
+                "destinations"    : destinations,
             })
 
 
@@ -152,10 +153,8 @@ class Config(object):
 
     def __parse_destination(self, destination_node, rule_label):
         destination = {}
-        destination["settings"] = {}
         destination["server"] = destination_node.get("server")
-        for setting_node in destination_node.getchildren():
-            destination["settings"][setting_node.tag] = setting_node.text
+        destination["path"]   = destination_node.get("path", None)
 
         # Validate "server" attribute.
         if destination["server"] is None:

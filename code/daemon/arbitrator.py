@@ -213,13 +213,14 @@ class Arbitrator(threading.Thread):
                         "label"          : rule["label"],
                         "filter"         : filter,
                         "processorChain" : rule["processorChain"],
-                        "destination"    : rule["destination"],
+                        "destinations"   : rule["destinations"],
                     })
                     self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], name))
 
         # Initialize the the persistent 'pipeline' queue, the persistent
         # 'files in pipeline' and 'failed files' lists and the 'discover',
-        # 'filter', 'process', 'transport', 'db' and 'retry' queues.
+        # 'filter', 'process', 'transport', 'db' and 'retry' queues. Finally,
+        # initialize the 'remaining transporters' dictionary of lists.
         self.pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_DB)
         self.logger.warning("Setup: initialized 'pipeline' persistent queue, contains %d items." % (self.pipeline_queue.qsize()))
         self.files_in_pipeline =  PersistentList("pipeline_list", PERSISTENT_DATA_DB)
@@ -236,6 +237,7 @@ class Arbitrator(threading.Thread):
             self.transport_queue[server] = AdvancedQueue()
         self.db_queue        = Queue.Queue()
         self.retry_queue     = Queue.Queue()
+        self.remaining_transporters = {}
 
         # Move files from the 'files_in_pipeline' persistent list to the 
         # pipeline queue. This is what prevents files from being dropped from
@@ -262,7 +264,7 @@ class Arbitrator(threading.Thread):
         # Create connection to synced files DB.
         self.dbcon = sqlite3.connect(SYNCED_FILES_DB)
         self.dbcur = self.dbcon.cursor()
-        self.dbcur.execute("CREATE TABLE IF NOT EXISTS synced_files(input_file text, transported_file_basename text, url text)")
+        self.dbcur.execute("CREATE TABLE IF NOT EXISTS synced_files(input_file text, transported_file_basename text, url text, server text)")
         self.dbcon.commit()
         self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
         num_synced_files = self.dbcur.fetchone()[0]
@@ -408,39 +410,40 @@ class Arbitrator(threading.Thread):
                    or
                    rule["filter"].matches(input_file, file_is_deleted=file_is_deleted)):
                     match_found = True
-                    server     = rule["destination"]["server"]
                     self.logger.info("Filtering: '%s' matches the '%s' rule for the '%s' source!" % (input_file, rule["label"], rule["source"]))
+
                     # If the file was deleted, also delete the file on all
                     # servers.
                     self.lock.acquire()
+                    servers = rule["destinations"].keys()
+                    self.remaining_transporters[input_file + str(event) + repr(rule)] = servers
                     if event == FSMonitor.DELETED:
-                        if not rule["destination"] is None:
-                            # Look up the transported file's base name. This
-                            # might be different from the input file's base
-                            # name due to processing.
-                            self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
-                            transport_file_basename = self.dbcur.fetchone()[0]
-                            # The output file that should be transported
-                            # doesn't exist anymore, because it was deleted.
-                            # So we create a filename that is the same as the
-                            # original, except with the different base name.
-                            fake_output_file = os.path.join(os.path.dirname(input_file), transport_file_basename)
-                            # Queue the transport (deletion).
+                        # Look up the transported file's base name. This might
+                        # be different from the input file's base name due to
+                        # processing.
+                        self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
+                        transport_file_basename = self.dbcur.fetchone()[0]
+                        # The output file that should be transported doesn't
+                        # exist anymore, because it was deleted. So we create
+                        # a filename that is the same as the original, except
+                        # with the different base name.
+                        fake_output_file = os.path.join(os.path.dirname(input_file), transport_file_basename)
+                        # Queue the transport (deletion).
+                        for server in servers:
                             self.transport_queue[server].put((input_file, event, rule, fake_output_file))
                             self.logger.info("Filtering: queued transporter to server '%s' for file '%s' to delete it ('%s' rule)." % (server, input_file, rule["label"]))
                     else:
-                        # If a processor chain is configured, queue the file to
-                        # be processed. Otherwise, immediately queue the file
-                        # to be transported 
+                        # If a processor chain is configured, queue the file
+                        # to be processed. Otherwise, immediately queue the
+                        # file to be transported 
                         if not rule["processorChain"] is None:
                             self.process_queue.put((input_file, event, rule))
                             self.logger.warning("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
-                        elif not rule["destination"] is None:
-                            output_file = input_file
-                            self.transport_queue[server].put((input_file, event, rule, output_file))
-                            self.logger.info("Filter queue -> transport queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
                         else:
-                            raise Exception("Either a processor chain or a destination must be defined.")
+                            output_file = input_file
+                            for server in servers:
+                                self.transport_queue[server].put((input_file, event, rule, output_file))
+                                self.logger.info("Filter queue -> transport queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
                     self.lock.release()
 
             # Log the lack of matches.
@@ -519,8 +522,8 @@ class Arbitrator(threading.Thread):
 
                 # Get the additional settings from the rule.
                 dst_parent_path = ""
-                if rule["destination"]["settings"].has_key("path"):
-                    dst_parent_path = rule["destination"]["settings"]["path"]
+                if rule["destinations"][server].has_key("path"):
+                    dst_parent_path = rule["destinations"][server]["path"]
 
                 (id, place_in_queue, transporter) = self.__get_transporter(server)
                 if not transporter is None:
@@ -537,7 +540,8 @@ class Arbitrator(threading.Thread):
                     curried_callback = curry(self.transporter_callback,
                                              input_file=input_file,
                                              event=event,
-                                             rule=rule
+                                             rule=rule,
+                                             server=server
                                              )
                     curried_error_callback = curry(self.transporter_error_callback,
                                                    input_file=input_file,
@@ -576,78 +580,84 @@ class Arbitrator(threading.Thread):
         while processed < QUEUE_PROCESS_BATCH_SIZE and self.db_queue.qsize() > 0:
             # DB queue -> database.
             self.lock.acquire()
-            (input_file, event, rule, output_file, transported_file, url) = self.db_queue.get()
+            (input_file, event, rule, output_file, transported_file, url, server) = self.db_queue.get()
             self.lock.release()
 
-            # Delete the output file, but only if it's different from the
-            # input file.
-            touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
-            if touched and not input_file == output_file:
-                os.remove(output_file)
-
-            # Commit the result to the database.
-            remove_from_pipeline = True
+            # Commit the result to the database.            
+            remove_server_from_remaining_transporters = True
             transported_file_basename = os.path.basename(output_file)
             if event == FSMonitor.CREATED:
-                self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?)", (input_file, transported_file_basename, url))
+                self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
                 self.dbcon.commit()
             elif event == FSMonitor.MODIFIED:
-                self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=?", (input_file, ))
+                self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
                 if self.dbcur.fetchone()[0] > 0:
-                    # TODO
-                    remove_from_pipeline = False
 
                     # Look up the transported file's base name. This
                     # might be different from the input file's base
                     # name due to processing.
-                    self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
+                    self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
                     old_transport_file_basename = self.dbcur.fetchone()[0]
 
                     # Update the transported_file_basename and url fields for
                     # the input_file that has been transported.
-                    self.dbcur.execute("UPDATE synced_files SET transported_file_basename=?, url=? WHERE input_file=?", (transported_file_basename, url, input_file))
+                    self.dbcur.execute("UPDATE synced_files SET transported_file_basename=?, url=? WHERE input_file=? AND server=?", (transported_file_basename, url, input_file, server))
                     self.dbcon.commit()
+                    
+                    # If a file was modified that had already been synced
+                    # before and now has a different basename for the
+                    # transported file than before, we first have to delete
+                    # the old transported file before all work is done.
+                    # remove_server_from_remaining_transporters is set to
+                    # False for this case.
+                    if old_transport_file_basename != transported_file_basename:
+                        remove_server_from_remaining_transporters = False
 
-                    # We only end up in the DB queue if a destination was
-                    # configured, so we don't have to check that anymore.
-
-                    # The output file that should be transported only exists
-                    # on the server. So we create a filename that is the same
-                    # as the old transported file.
-                    fake_output_file = os.path.join(os.path.dirname(input_file), old_transport_file_basename)
-                    # Change the event to Arbitrator.DELETE_OLD_FILE, which
-                    # __process_transport_queues() will recognize and perform
-                    # a deletion for. After the transporter callback gets
-                    # called, this pseudo-event will end up in
-                    # __process_db_queue() (this method) once again and will
-                    # change the event back the original, FSMonitor.MODIFIED,
-                    # so we can remove it from the 'files_in_pipeline'
-                    # persistent list.
-                    pseudo_event = Arbitrator.DELETE_OLD_FILE
-                    # Queue the transport (deletion), but jump the queue!.
-                    server = rule["destination"]["server"]
-                    self.transport_queue[server].jump((input_file, pseudo_event, rule, fake_output_file))
-                    self.logger.info("DB queue -> transport queue (jumped): '%s' to delete its old transported file '%s' on server '%s'." % (input_file, old_transport_file_basename, server))
+                        # The output file that should be transported only
+                        # exists on the server. So we create a filename that
+                        # is the same as the old transported file.
+                        fake_output_file = os.path.join(os.path.dirname(input_file), old_transport_file_basename)
+                        # Change the event to Arbitrator.DELETE_OLD_FILE,
+                        # which __process_transport_queues() will recognize
+                        # and perform a deletion for. After the transporter
+                        # callback gets called, this pseudo-event will end up
+                        # in __process_db_queue() (this method) once again and
+                        # will change the event back the original,
+                        # FSMonitor.MODIFIED, so we can remove it from the
+                        # 'files_in_pipeline' persistent list.
+                        pseudo_event = Arbitrator.DELETE_OLD_FILE
+                        # Queue the transport (deletion), but jump the queue!.
+                        server = rule["destination"]["server"]
+                        self.transport_queue[server].jump((input_file, pseudo_event, rule, fake_output_file))
+                        self.logger.info("DB queue -> transport queue (jumped): '%s' to delete its old transported file '%s' on server '%s'." % (input_file, old_transport_file_basename, server))
                 else:
-                    self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?)", (input_file, transported_file_basename, url))
+                    self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
                     self.dbcon.commit()
             elif event == FSMonitor.DELETED:
-                self.dbcur.execute("DELETE FROM synced_files WHERE input_file=?", (input_file, ))
+                self.dbcur.execute("DELETE FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
                 self.dbcon.commit()
             elif event == Arbitrator.DELETE_OLD_FILE:
-                # TODO: explain this
+                # This is a pseudo-event. See the comments for the
+                # FSMonitor.MODIFIED-branch for details.
                 event = FSMonitor.MODIFIED
             else:
                 raise Exception("Non-existing event set.")
 
             self.logger.debug("DB queue -> 'synced files' DB: '%s' (URL: '%s')." % (input_file, url))
 
-            # If a file was modified that had already been synced before and
-            # now has a different basename for the transported file than
-            # before, we first have to delete the old transported file before
-            # all work is done. remove_from_pipeline is set to False for this
-            # case.
-            if remove_from_pipeline:
+            # Remove this server from the 'remaining transporters' list for
+            # this input file/event/rule.
+            self.remaining_transporters[input_file + str(event) + repr(rule)].remove(server)
+
+            # Only remove the file from the pipeline if no transporters are
+            # remaining.
+            if len(self.remaining_transporters[input_file + str(event) + repr(rule)]) == 0:
+                # Delete the output file, but only if it's different from the
+                # input file.
+                touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
+                if touched and not input_file == output_file:
+                    os.remove(output_file)
+
                 # The file went all the way through the pipeline, so now it's safe
                 # to remove it from the persistent 'files_in_pipeline' list.
                 self.lock.acquire()
@@ -799,19 +809,13 @@ class Arbitrator(threading.Thread):
         self.processorchains_running -= 1
         self.lock.release()
 
-        # If a destination is defined, then add it to the transport queue.
-        # Otherwise, do nothing.
-        if not rule["destination"] is None:
-            # We need to know to which server this file should be transported to
-            # in order to know in which queue to put the file.
-            server = rule["destination"]["server"]
-
+        for server in rule["destinations"].keys():
             # Add to transport queue.
             self.lock.acquire()
             self.transport_queue[server].put((input_file, event, rule, output_file))
             self.lock.release()
 
-            self.logger.warning("Process queue -> transport queue: '%s'." % (input_file))
+        self.logger.warning("Process queue -> transport queue: '%s'." % (input_file))
 
 
     def processor_chain_error_callback(self, input_file, event):
@@ -827,7 +831,7 @@ class Arbitrator(threading.Thread):
         self.lock.release()
 
 
-    def transporter_callback(self, src, dst, url, action, input_file, event, rule):
+    def transporter_callback(self, src, dst, url, action, input_file, event, rule, server):
         # Map Transporter's variable names to ours.
         output_file      = src
         transported_file = dst
@@ -839,11 +843,12 @@ class Arbitrator(threading.Thread):
                     (curried): rule='%s'
                     output_file='%s'
                     transported_file='%s'
-                    url='%s'""" % (input_file, event, rule["label"], output_file, transported_file, url)
+                    url='%s'
+                    server='%s'""" % (input_file, event, rule["label"], output_file, transported_file, url, server)
 
         # Add to db queue.
         self.lock.acquire()
-        self.db_queue.put((input_file, event, rule, output_file, transported_file, url))
+        self.db_queue.put((input_file, event, rule, output_file, transported_file, url, server))
         self.lock.release()
 
         self.logger.info("Transport queue -> DB queue: '%s'." % (input_file))
