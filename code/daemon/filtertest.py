@@ -159,14 +159,13 @@ class TestMatching(unittest.TestCase):
     def testPatternMatches(self):
         """Ensure pattern matching works properly"""
         conditions = {
-            "extensions" : "gif:png",
             "paths" : "foo/bar:baz",
-            "ignoredDirs" : ".svn:CVS",
+            "pattern" : ".*/([a-zA-Z_])+\.[a-zA-Z0-9]{3}$",
         }
         filter = Filter(conditions)
         # Does not match pattern
-        self.assertFalse(filter.matches('/a/foo/bar/.svn/b.gif'))
-        self.assertFalse(filter.matches('/a/baz/CVS/d/e/f.png'))
+        self.assertFalse(filter.matches('/a/foo/bar/.svn/b9.gif'))
+        self.assertFalse(filter.matches('/a/f.png'))
         # Matches pattern
         self.assertTrue(filter.matches('/a/b/c/d/e/foo/bar/this_one_has_underscores.gif'))
         self.assertTrue(filter.matches('/a/and_this_one_too/baz/c.png'))
