@@ -28,13 +28,13 @@ from daemon_thread_runner import *
 LOG_FILE = './daemon.log'
 PERSISTENT_DATA_DB = './persistent_data.db'
 SYNCED_FILES_DB = './synced_files.db'
-WORKING_DIR = '/tmp/test'
+WORKING_DIR = '/tmp/daemon'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
 MAX_TRANSPORTER_QUEUE_SIZE = 1
 QUEUE_PROCESS_BATCH_SIZE = 20
-CONSOLE_OUTPUT = False
+CALLBACKS_CONSOLE_OUTPUT = False
 CONSOLE_LOGGER_LEVEL = logging.WARNING
 FILE_LOGGER_LEVEL = logging.DEBUG
 
@@ -772,7 +772,7 @@ class Arbitrator(threading.Thread):
         # Map FSMonitor's variable names to ours.
         input_file = event_path
 
-        if CONSOLE_OUTPUT:
+        if CALLBACKS_CONSOLE_OUTPUT:
             print """FSMONITOR CALLBACK FIRED:
                     input_file='%s'
                     event=%d""" % (input_file, event)
@@ -797,7 +797,7 @@ class Arbitrator(threading.Thread):
 
 
     def processor_chain_callback(self, input_file, output_file, event, rule):
-        if CONSOLE_OUTPUT:
+        if CALLBACKS_CONSOLE_OUTPUT:
             print """PROCESSOR CHAIN CALLBACK FIRED:
                     input_file='%s'
                     (curried): event=%d
@@ -819,7 +819,7 @@ class Arbitrator(threading.Thread):
 
 
     def processor_chain_error_callback(self, input_file, event):
-        if CONSOLE_OUTPUT:
+        if CALLBACKS_CONSOLE_OUTPUT:
             print """PROCESSOR CHAIN ERROR CALLBACK FIRED:
                     input_file='%s'
                     (curried): event=%d""" % (input_file, event)
@@ -836,7 +836,7 @@ class Arbitrator(threading.Thread):
         output_file      = src
         transported_file = dst
 
-        if CONSOLE_OUTPUT:
+        if CALLBACKS_CONSOLE_OUTPUT:
             print """TRANSPORTER CALLBACK FIRED:
                     (curried): input_file='%s'
                     (curried): event=%d
@@ -855,7 +855,7 @@ class Arbitrator(threading.Thread):
 
 
     def transporter_error_callback(self, src, dst, action, input_file, event):
-        if CONSOLE_OUTPUT:
+        if CALLBACKS_CONSOLE_OUTPUT:
             print """TRANSPORTER ERROR CALLBACK FIRED:
                     (curried): input_file='%s'
                     (curried): event=%d""" % (input_file, event)
