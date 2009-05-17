@@ -67,12 +67,12 @@ class Processor(object):
         return (path, basename, name, extension)
 
 
-    def validate(self):
+    def validate_settings(self):
         """validate the input file and its extensions"""
 
         # Get some variables "as if it were magic", i.e., from subclasses of
         # this class.
-        valid_extensions = getattr(self.__class__, "valid_extensions", [])
+        valid_extensions = getattr(self.__class__, "valid_extensions", ())
 
         (path, basename, name, extension) = self.get_path_parts(self.input_file)
 
@@ -141,14 +141,15 @@ class ProcessorChain(threading.Thread):
             # Run the processor.
             old_output_file = self.output_file
             processor = processor_class(self.output_file, self.working_dir)
-            self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
-            try:
-                self.output_file = processor.run()
-            except Exception, e:
-                self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
-                self.error_callback(self.input_file)
-                return
-            self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
+            if processor.validate_settings():
+                self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
+                try:
+                    self.output_file = processor.run()
+                except Exception, e:
+                    self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
+                    self.error_callback(self.input_file)
+                    return
+                self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
 
             # Delete the old output file if applicable. But never ever remove
             # the input file!

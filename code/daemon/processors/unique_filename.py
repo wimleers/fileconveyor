@@ -14,15 +14,10 @@ class Mtime(Processor):
     """gives the file a unique filename based on its mtime"""
 
 
-    def __init__(self, input_file, working_dir="/tmp"):
-        Processor.__init__(self, input_file, working_dir)
+    valid_extensions = () # Any extension is valid.
 
 
     def run(self):
-        # Return the input file if the file cannot be processed.
-        if not Processor.validate(self):
-            return self.input_file
-
         # Get the parts of the input file.
         (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
@@ -40,11 +35,10 @@ class MD5(Processor):
     """gives the file a unique filename based on its MD5 hash"""
 
 
-    def run(self):
-        # Return the input file if the file cannot be processed.
-        if not Processor.validate(self):
-            return self.input_file
+    valid_extensions = () # Any extension is valid.
 
+
+    def run(self):
         # Get the parts of the input file.
         (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 

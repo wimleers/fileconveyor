@@ -5,7 +5,6 @@ __license__ = "GPL"
 
 
 from processor import *
-import subprocess
 import os
 import stat
 
@@ -31,10 +30,6 @@ class Base(Processor):
 
 
     def run(self):
-        # Return the input file if the file cannot be processed.
-        if not Processor.validate(self):
-            return self.input_file
-
         # Get the parts of the input file.
         (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 

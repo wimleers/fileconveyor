@@ -16,15 +16,7 @@ class YUICompressor(Processor):
     valid_extensions = (".css", ".js")
 
 
-    def __init__(self, input_file, working_dir="/tmp"):
-        Processor.__init__(self, input_file, working_dir)
-
-
     def run(self):
-        # Return the input file if the file cannot be processed.
-        if not Processor.validate(self):
-            return self.input_file
-
         # We don't rename the file, so we can use the default output file.
 
         # Remove the output file if it already exists, otherwise YUI

@@ -5,7 +5,6 @@ __license__ = "GPL"
 
 
 from processor import *
-import subprocess
 import os.path
 import shutil
 import hashlib
@@ -15,6 +14,9 @@ class Base(Processor):
     """replaces one set of strings with another set"""
 
 
+    valid_extensions = () # Any extension is valid.
+
+
     def __init__(self, input_file, working_dir="/tmp", search=[], replace=[]):
         Processor.__init__(self, input_file, working_dir)
         self.search  = search
@@ -22,10 +24,6 @@ class Base(Processor):
 
 
     def run(self):
-        # Return the input file if the file cannot be processed.
-        if not Processor.validate(self) or len(self.search) != len(self.replace):
-            return self.input_file
-
         # Get the parts of the input file.
         (path, basename, name, extension) = self.get_path_parts(self.input_file)
 
