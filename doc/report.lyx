@@ -3713,9 +3713,9 @@ name
 \begin_layout Enumerate
 
 \family typewriter
-destination
+destinations
 \family default
-s: accepts any number of 
+: accepts any number of 
 \family typewriter
 destination
 \family default
@@ -4896,44 +4896,7 @@ class YUICompressor(Processor):
 
 \begin_layout Plain Layout
 
-    def __init__(self, input_file, working_dir="/tmp"):
-\end_layout
-
-\begin_layout Plain Layout
-
-        Processor.__init__(self, input_file, working_dir)
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
     def run(self):
-\end_layout
-
-\begin_layout Plain Layout
-
-        # Return the input file if the file cannot be processed.
-\end_layout
-
-\begin_layout Plain Layout
-
-        if not Processor.validate(self):
-\end_layout
-
-\begin_layout Plain Layout
-
-            return self.input_file
-\end_layout
-
-\begin_layout Plain Layout
-
 \end_layout
 
 \begin_layout Plain Layout
@@ -7061,6 +7024,15 @@ Automatically copy the synced files DB every X seconds, to prevent long
 
 \begin_layout Itemize
 Reorganize code: make a proper packaged structure.
+\end_layout
+
+\begin_layout Itemize
+Make the code redistributable.
+ As a Python egg, or maybe even as binaries for each supported platform.
+\end_layout
+
+\begin_layout Itemize
+Automatically stop transporters after a period of idle time.
 \end_layout
 
 \begin_layout Subsection
