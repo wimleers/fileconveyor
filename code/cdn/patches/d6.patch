@@ -1,0 +1,150 @@
+Index: includes/common.inc
+===================================================================
+RCS file: /cvs/drupal/drupal/includes/common.inc,v
+retrieving revision 1.756.2.47
+diff -u -F^f -r1.756.2.47 common.inc
+--- includes/common.inc	25 Feb 2009 21:02:36 -0000	1.756.2.47
++++ includes/common.inc	17 May 2009 19:52:29 -0000
+@@ -1830,15 +1830,15 @@ function drupal_get_css($css = NULL) {
+             // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
+             // regardless of whether preprocessing is on or off.
+             if (!$preprocess && $type == 'module') {
+-              $no_module_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
++              $no_module_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
+             }
+             // If a CSS file is not to be preprocessed and it's a theme CSS file, it needs to *always* appear at the *bottom*,
+             // regardless of whether preprocessing is on or off.
+             else if (!$preprocess && $type == 'theme') {
+-              $no_theme_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
++              $no_theme_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
+             }
+             else {
+-              $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
++              $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
+             }
+           }
+         }
+@@ -1848,7 +1848,7 @@ function drupal_get_css($css = NULL) {
+     if ($is_writable && $preprocess_css) {
+       $filename = md5(serialize($types) . $query_string) .'.css';
+       $preprocess_file = drupal_build_css_cache($types, $filename);
+-      $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $preprocess_file .'" />'."\n";
++      $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($preprocess_file) .'" />'."\n";
+     }
+   }
+ 
+Index: includes/file.inc
+===================================================================
+RCS file: /cvs/drupal/drupal/includes/file.inc,v
+retrieving revision 1.121.2.5
+diff -u -F^f -r1.121.2.5 file.inc
+--- includes/file.inc	20 Oct 2008 09:42:31 -0000	1.121.2.5
++++ includes/file.inc	17 May 2009 19:52:30 -0000
+@@ -35,19 +35,52 @@
+ /**
+  * Create the download path to a file.
+  *
++ * There are two kinds of files:
++ * - those in the files directory (which is stored in the file_directory_path
++ *   variable and can be retrieved using file_directory_path()). These are
++ *   files that have either been uploaded by users or were generated
++ *   automatically (for example through CSS aggregation).
++ * - those outside of the files directory, which ship as part of Drupal core
++ *   or contributed modules.
++ *
+  * @param $path A string containing the path of the file to generate URL for.
+  * @return A string containing a URL that can be used to download the file.
+  */
+ function file_create_url($path) {
+-  // Strip file_directory_path from $path. We only include relative paths in urls.
+-  if (strpos($path, file_directory_path() .'/') === 0) {
+-    $path = trim(substr($path, strlen(file_directory_path())), '\\/');
+-  }
+-  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
+-    case FILE_DOWNLOADS_PUBLIC:
+-      return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
+-    case FILE_DOWNLOADS_PRIVATE:
+-      return url('system/files/'. $path, array('absolute' => TRUE));
++  // Check if the file is in the files directory.
++  $is_in_files_directory = (strpos($path, file_directory_path() .'/') === 0);
++  
++  // Allow rewriting of file URLs, so one can use static file servers and
++  // CDNs.
++  if (function_exists('custom_file_url_rewrite')) {
++    $rewritten_path = custom_file_url_rewrite($path);
++    if ($rewritten_path != FALSE) {
++      return $rewritten_path;
++    }
++  }
++
++  // Otherwise serve the file from Drupal's web server. This point will only
++  // be reached when either no custom_file_url_rewrite() function has been
++  // defined, or when that function returned FALSE, thereby indicating that it
++  // cannot (or doesn't wish to) rewrite the URL. This is typically because
++  // the file doesn't match some conditions to be served from a CDN or static
++  // file server, or because the file has not yet been synced to the CDN or
++  // static file server.
++  if (!$is_in_files_directory) {
++    return base_path() . $path;
++  }
++  else {
++    // Strip file_directory_path from $path. We only include relative paths in urls.
++    if (strpos($path, file_directory_path() .'/') === 0) {
++      $path = trim(substr($path, strlen(file_directory_path())), '\\/');
++    }
++
++    switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
++      case FILE_DOWNLOADS_PUBLIC:
++        return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
++      case FILE_DOWNLOADS_PRIVATE:
++        return url('system/files/'. $path, array('absolute' => TRUE));
++    }
+   }
+ }
+ 
+Index: includes/theme.inc
+===================================================================
+RCS file: /cvs/drupal/drupal/includes/theme.inc,v
+retrieving revision 1.415.2.19
+diff -u -F^f -r1.415.2.19 theme.inc
+--- includes/theme.inc	25 Feb 2009 21:02:16 -0000	1.415.2.19
++++ includes/theme.inc	17 May 2009 19:52:31 -0000
+@@ -965,24 +965,24 @@ function theme_get_setting($setting_name
+ 
+     if ($settings['toggle_logo']) {
+       if ($settings['default_logo']) {
+-        $settings['logo'] = base_path() . dirname($theme_object->filename) .'/logo.png';
++        $settings['logo'] = file_create_url(dirname($theme_object->filename) .'/logo.png');
+       }
+       elseif ($settings['logo_path']) {
+-        $settings['logo'] = base_path() . $settings['logo_path'];
++        $settings['logo'] = file_create_url($settings['logo_path']);
+       }
+     }
+ 
+     if ($settings['toggle_favicon']) {
+       if ($settings['default_favicon']) {
+         if (file_exists($favicon = dirname($theme_object->filename) .'/favicon.ico')) {
+-          $settings['favicon'] = base_path() . $favicon;
++          $settings['favicon'] = file_create_url($favicon);
+         }
+         else {
+-          $settings['favicon'] = base_path() .'misc/favicon.ico';
++          $settings['favicon'] = file_create_url('misc/favicon.ico');
+         }
+       }
+       elseif ($settings['favicon_path']) {
+-        $settings['favicon'] = base_path() . $settings['favicon_path'];
++        $settings['favicon'] = file_create_url($settings['favicon_path']);
+       }
+       else {
+         $settings['toggle_favicon'] = FALSE;
+@@ -1203,7 +1203,7 @@ function theme_links($links, $attributes
+ function theme_image($path, $alt = '', $title = '', $attributes = NULL, $getsize = TRUE) {
+   if (!$getsize || (is_file($path) && (list($width, $height, $type, $image_attributes) = @getimagesize($path)))) {
+     $attributes = drupal_attributes($attributes);
+-    $url = (url($path) == $path) ? $path : (base_path() . $path);
++    $url = file_create_url($path);
+     return '<img src="'. check_url($url) .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. (isset($image_attributes) ? $image_attributes : '') . $attributes .' />';
+   }
+ }

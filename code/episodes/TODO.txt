@@ -1,4 +1,8 @@
 TODO:
+- Update README.txt to reflect the fact that there are 2 separate, independent
+  modules.
+- More clear separation between episodes and episodes_server module in the
+  directory structure.
 - filters for the reports: (POSTPONED)
    1) time (last six months, last month, last week, today)
    2) browser

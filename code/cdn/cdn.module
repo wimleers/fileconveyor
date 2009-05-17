@@ -1,0 +1,328 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Implementation of the core hooks, defines, public and private functions.
+ */
+
+
+define('CDN_DISABLED', 0);
+define('CDN_DEBUG', 1);
+define('CDN_ENABLED', 2);
+
+// Permissions.
+define('CDN_PERM_ACCESS_STATS', 'access per-page statistics');
+define('CDN_PERM_ACCESS_DEBUG', 'access files on CDN when in debug mode');
+
+// Variables and values.
+define('CDN_MODE_VARIABLE', 'cdn_mode');
+define('CDN_MODE_BASIC', 'basic');
+define('CDN_MODE_ADVANCED', 'advanced');
+define('CDN_STATUS_VARIABLE', 'cdn_status');
+define('CDN_STATS_VARIABLE', 'cdn_stats');
+
+// Variables for basic mode.
+define('CDN_BASIC_URL_VARIABLE', 'cdn_basic_url');
+define('CDN_BASIC_EXTENSIONS_VARIABLE', 'cdn_basic_extensions');
+define('CDN_BASIC_EXTENSIONS_DEFAULT', '.css .js .ico .gif .jpg .jpeg .png .svg .otf .ttf .swf');
+
+// Variables for advanced mode.
+define('CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE', 'cdn_advanced_synced_files_db');
+
+// Hardcoded settings for accessing the daemon's metadata, to show statistics.
+define('CDN_DAEMON_PERSISTENT_DATA_DB', 'persistent_data.db');
+define('CDN_DAEMON_FSMONITOR_DB', 'fsmonitor.db');
+define('CDN_DAEMON_PID_FILE', 'daemon.pid');
+
+
+//----------------------------------------------------------------------------
+// Drupal core.
+
+function custom_file_url_rewrite($path) {
+  $status = variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED);
+  $mode   = variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC);
+
+  if ($status == CDN_ENABLED || ($status == CDN_DEBUG && user_access(CDN_PERM_ACCESS_DEBUG))) {
+    // Depending on the mode, use a different function to get the URL.
+    if ($mode == CDN_MODE_BASIC) {
+      $cdn_url = cdn_basic_get_url($path);
+      $server = FALSE;
+    }
+    else {
+      list($cdn_url, $server) = cdn_advanced_get_url($path);
+    }
+    
+    // If the user can access it, add this to the per-page statistics.
+    if (variable_get(CDN_STATS_VARIABLE, FALSE) && user_access(CDN_PERM_ACCESS_STATS)) {
+      _cdn_devel_page_stats($path, $cdn_url, $server);
+    }
+
+    return $cdn_url;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function cdn_menu() {
+  $items['admin/settings/cdn'] = array(
+    'title'            => 'CDN integration',
+    'description'      => 'Configure various settings for CDN integration.',
+    'access arguments' => array('administer site configuration'),
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('cdn_admin_settings_form'),
+    'type'             => MENU_NORMAL_ITEM,
+    'file'             => 'cdn.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function cdn_perm() {
+  return array(CDN_PERM_ACCESS_STATS, CDN_PERM_ACCESS_DEBUG);
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function cdn_theme() {
+  return array(
+    'cdn_page_stats' => array(
+      'file'      => 'theme.inc',
+      'arguments' => array(
+          $file_count => NULL,
+          $cdn_file_count => NULL,
+          $synced_files => NULL,
+          $unsynced_files => NULL,
+          $synced_files_per_server => NULL,
+      ),
+    ),
+  );
+}
+
+/*
+ * Implementation of hook_exit().
+ */
+function cdn_exit($destination = NULL) {
+  if (!$destination && variable_get(CDN_STATS_VARIABLE, FALSE) && user_access(CDN_PERM_ACCESS_STATS)) {
+    list(
+      $file_count,
+      $cdn_file_count,
+      $synced_files_per_server_count,
+      $synced_files,
+      $unsynced_files,
+    ) = _cdn_devel_page_stats();
+    print theme('cdn_page_stats',
+      $file_count,
+      $cdn_file_count,
+      $synced_files_per_server_count,
+      $synced_files,
+      $unsynced_files
+    );
+  }
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function cdn_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  switch ($phase) {
+    case 'install' :
+    case 'runtime' :
+      $status = variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED);
+      $mode   = variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC);
+
+      $requirements['cdn']['title'] = $t('CDN synchronization');
+
+      if ($status == CDN_DISABLED) {
+        $requirements['cdn'] += array(
+          'description' => $t('CDN integration is enabled for no users.'),
+          'severity' => REQUIREMENT_WARNING,
+          'value' => $t('Disabled'),
+        );        
+      }
+      elseif ($status == CDN_DEBUG) {
+        $requirements['cdn'] += array(
+          'description' => $t('CDN integration is only enabled for users with
+                               the %cdn-debug-mode-permission permission',
+                               array('%cdn-debug-mode-permission' => CDN_PERM_ACCESS_DEBUG)
+                               ),
+          'severity' => REQUIREMENT_WARNING,
+          'value' => $t('In debug mode'),
+        );        
+      }
+      else {
+        if ($mode == CDN_MODE_BASIC) {
+          $requirements['cdn'] += array(
+            'description' => $t(
+              "In order for the CDN integration module to work correctly, it has
+               to be able to synchronize. This can be done automatically through
+               cron, but you will have to copy the file %file to the same
+               directory as Drupal's cron.php.",
+               array('%file' => $path)
+            ),
+            'severity' => $phase == 'install' ? REQUIREMENT_WARNING : REQUIREMENT_ERROR,
+            'value' => $t('Copy cdn_cron.php'),
+          );
+        }
+      }
+  }
+
+  return $requirements;
+}
+
+
+//----------------------------------------------------------------------------
+// Public functions.
+
+/**
+ * Gets the URL for a file when the basic mode is enabled.
+ *
+ * @param $path
+ *   The path to get the URL for.
+ */
+function cdn_basic_get_url($path) {
+  // Ensure the configuration is correct.
+  if (variable_get(CDN_BASIC_URL_VARIABLE, FALSE) === FALSE) {
+    return FALSE;
+  }
+
+  $extensions = str_replace(array(' ', '.'), array('|', '\.'), variable_get(CDN_BASIC_EXTENSIONS_VARIABLE, CDN_BASIC_EXTENSIONS_DEFAULT));
+
+  if (preg_match("/($extensions)$/", $path)) {
+    $base_path = base_path();
+    $cdn_url = variable_get(CDN_BASIC_URL_VARIABLE, 'http://yourcdn.com');
+    return $cdn_url . $base_path . $path;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Gets the URL for a file when the basic mode is enabled.
+ *
+ * @param $path
+ *   The path to get the URL for.
+ */
+function cdn_advanced_get_url($path) {
+  $db = _cdn_advanced_get_db_connection();
+
+  // In case no connection to the database could be made, pretend the file was
+  // not found in the synced files database.
+  if (!$db) {
+    return FALSE;
+  }
+
+  // Retrieve the URLs of the file on the CDN.
+  $sql = "SELECT url FROM synced_files WHERE input_file = :input_file";
+  $stmt = $db->prepare($sql);
+  $stmt->bindParam(':input_file', $path, PDO::PARAM_STR);
+  $stmt->execute();
+  $urls = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+  // TODO: build in mechanisms to allow the file to be served from a specific
+  // server (that can be either a CDN or a static file server), based on the
+  // user's properties (location, membership, …).
+  // For now, we just use the first URL.
+  return (count($urls)) ? $urls[0] : FALSE;
+}
+
+
+//----------------------------------------------------------------------------
+// Private functions.
+
+/**
+ * Get a connection to the database. The resulting PDO object is statically
+ * cached.
+ *
+ * @return
+ *   A database connection (through PDO), or FALSE in case of failure.
+ */
+function _cdn_advanced_get_db_connection() {
+  static $db;
+
+  if (!isset($db)) {
+    try {
+      $db = new PDO('sqlite:' . variable_get(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, ''));
+    } catch(PDOException $e) {
+      watchdog('cdn', t("Could not open synced files DB: %error.", array('%error' => $e)));
+      $db = FALSE;
+    }
+  }
+
+  return $db;
+}
+
+
+/**
+ * Collects per-page CDN integration statistics.
+ *
+ * @param $file
+ *   The local file path.
+ * @param $file_cdn_url
+ *   The URL to the file on the CDN if it exists, FALSE otherwise.
+ * @param $server
+ *   The server the file exists on.
+ * @return
+ *   Only if no parameters were passed: the collected statistics.
+ */
+function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = FALSE) {
+  static $file_count;
+  static $cdn_file_count;
+  static $synced_files;
+  static $unsynced_files;
+  static $synced_files_per_server;
+
+  if (!isset($file_count)) {
+    $file_count = 0;
+    $cdn_file_count = 0;
+    $synced_files = array();
+    $unsynced_files = array();
+    $synced_files_per_server_count = array();
+  }
+
+  // If the function is called with parameters set, save the statistics. If no
+  // parameters are passed, return the collected statistics.
+  if ($file) {
+    $file_count++;
+
+    if ($file_cdn_url !== FALSE) {
+      $cdn_file_count++;
+
+      $synced_files[$file] = array(
+        'cdn_url' => $file_cdn_url,
+        'server'  => ($server === FALSE) ? '' : $server,
+      );
+      // 
+      if ($server !== FALSE) {
+        if (!array_key_exists($synced_files_per_server, $server)) {
+          $synced_files_per_server[$server] = 0;
+        }
+        $synced_files_per_server_count[$server]++;
+      }
+    }
+    else {
+      $unsynced_files[] = $file;
+    }
+  }
+  elseif (!$file) {
+    return array(
+      $file_count,
+      $cdn_file_count,
+      $synced_files_per_server_count,
+      $synced_files,
+      $unsynced_files,
+    );
+  }
+}

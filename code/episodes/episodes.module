@@ -12,13 +12,11 @@ define('EPISODES_DISABLED', 0);
 define('EPISODES_DEBUG', 1);
 define('EPISODES_ENABLED', 2);
 
-
 // Advanced settings.
 define('EPISODES_BEACON_URL_VARIABLE', 'episodes_beacon_url');
 define('EPISODES_LOGGING_VARIABLE', 'episodes_logging');
 define('EPISODES_EXCLUDED_PATHS_VARIABLE', 'episodes_excluded_paths');
 define('EPISODES_EXCLUDED_PATHS_DEFAULT', 'admin/*');
-
 
 // Behavior settings.
 define('EPISODES_BEHAVIOR_LAST_SCAN_VARIABLE', 'episodes_behavior_last_scan');
