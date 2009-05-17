@@ -1,0 +1,83 @@
+Writing new processors
+----------------------
+First and foremost: the filename and unique_filename processor modules are
+intended as simple examples that you can look at to learn how to write
+processors. The other processor modules are also simple (most processors will
+be simple!), but are somewhat larger and therefor more difficult to use to
+grok the possibilities of processors.
+
+
+I've copy/pasted the unique_filename.Mtime processor below and annotated it
+to indicate the helper methods and automagic features the Processor class
+provides:
+
+
+# This imports the Processor class and exceptions it can raise.
+from processor import *
+# Additional imports.
+import stat
+import shutil
+
+# The Mtime processor class is a subclass of Processor.
+class Mtime(Processor):
+    """gives the file a unique filename based on its mtime"""
+
+
+    # This variable is picked up automatically by the Processor base class and
+    # is used to validate the input file. The empty tuple can be used to allow
+    # any extension, otherwise use tuples like (".css", ".js").
+
+    valid_extensions = () # Any extension is valid.
+
+
+    # Each processor must have a run method, which will perform the actual
+    # processing. Before this method is called, basic validation is performed
+    # automatically: it is verified that the input file exists and that the
+    # extension of the input file is in the list of valid extensions.
+
+    def run(self):
+
+        # Processor.get_path_parts() is one of the helper methods provided.
+        # E.g. Processor.get_path_parts("/foo/bar/baz.jpg") yields:
+        #   ("/foo/bar", "baz.jpg", "baz", "jpg")
+
+        # Get the parts of the input file.
+        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
+
+        # Set the output file base name.
+        mtime = os.stat(self.input_file)[stat.ST_MTIME]
+
+        # set_output_file_basename() is another helper method and should be
+        # used to set the output file. It ensures that the path has not been
+        # changed, which is not allowed. Only changes in the filename are
+        # allowed.
+
+        self.set_output_file_basename(name + "_" + str(mtime) + extension)
+
+        # Copy the input file to the output file.
+        shutil.copyfile(self.input_file, self.output_file)
+
+        # Each processor should always return the output file. This makes
+        # perfect sense, as we've received an input file and are now returning
+        # the output file, which will then be used as the input file for the
+        # next processor, and so on.
+        return self.output_file
+
+
+
+Writing new transporters
+------------------------
+Transporters are (very) thin threaded wrappers around Django custom storage
+systems. Django custom storage systems are subclasses of the Django Storage
+class.
+
+So step one is writing a new Django custom storage system. You can learn how
+to do that here:
+  http://docs.djangoproject.com/en/1.0/howto/custom-file-storage/
+But please make sure it's not already been written:
+  http://code.welldev.org/django-storages/wiki/Home
+
+After that is finished, you must write the thin wrapper class that will be
+your Transporter. Look at the FTP and S3 Transporters as an example. Actually
+writing a tutorial on Transporters would make it seem more complex than it is,
+so just read those 50 or so lines of code :)

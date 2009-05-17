@@ -1,7 +1,99 @@
-Addressing Processors
+Description
+-----------
+This daemon (a good name is yet to be found) is designed to discover new,
+changed and deleted files via the operating system's built-in file system
+monitor. After discovering the files, they can be optionally be processed by
+a chain of processors – you can easily write new ones yourself. After files
+have been processed, they can also optionally be transported to a server.
+
+Discovery happens through inotify on Linux (with kernel >= 2.6.13), through
+FSEvents on Mac OS X (>= 10.5) and through polling on other operating systems.
+
+Processors are simple Python scripts that can change the file's base name (it
+is impossible to change the path) and apply any sort of processing to the
+file's contents. Examples are image optimization and video transcoding.
+
+Transporters are simple threaded abstractions around Django storage systems.
+
+For a detailed description of the innards of the daemon, see my bachelor
+thesis text (find it via http://wimleers.com/tags/bachelor-thesis).
+
+
+<BLINK>IMPORTANT WARNING</BLINK>
+--------------------------------
+I've attempted to provide a solid enough README to get you started, but I'm
+well aware that it isn't superb. But as this is just a bachelor thesis, time
+was fairly limited. I've opted to create a solid basis instead of an extremely
+rigourously documented piece of software. If you cannot find the answer in the
+README.txt, nor the INSTALL.txt, nor the API.txt files, then please look at
+my bachelor thesis text instead. If neither of that is sufficient, then please
+contact me.
+
+
+Configuring the daemon
+----------------------
+The sample configuration file (config.sample.xml) should be self explanatory.
+Copy this file to config.xml, which is the file the daemon will look for, and
+edit it to suit your needs.
+For a detailed description, see my bachelor thesis text (look for the
+"Configuration file design" section).
+
+Each rule consists of 3 components:
+- filter
+- processorChain
+- destinations
+
+The filter and processorChain components are optional. You must have at least
+one destination.
+If you want to use the daemon to process files locally, i.e. without
+transporting them to a server, then use the Symlink or Copy transporter (see
+below).
+
+
+Starting the daemon
+-------------------
+The daemon must be started by starting its arbitrator (which links everything
+together; it controls the file system monitor, the processor chains, the
+transporters and so on). You can start the arbitrator like this:
+  python /path/to/daemon/arbitrator.py
+
+
+Stopping the daemon
+-------------------
+The daemon listens to standard signals to know when it should end, like the
+Apache HTTP server does too. Send the TERMinate signal to terminate it:
+  kill -TERM `cat /path/to/daemon/daemon.pid`
+
+
+The daemon's behavior
 ---------------------
-You can address a specific processor by first specifying its Processor module
-and then the exact Processor name (which is its class name):
+Upon startup, the daemon starts the file system monitor and then performs a
+"manual" scan to detect changes since the last time it ran. If you've got a
+lot of files, this may take a while.
+
+Just for fun, type the following while the daemon is syncing:
+  killall -9 python
+Now the daemon is dead. Upon starting it again, you should see something like:
+  2009-05-17 03:52:13,454 - Arbitrator                - WARNING  - Setup: initialized 'pipeline' persistent queue, contains 2259 items.
+  2009-05-17 03:52:13,455 - Arbitrator                - WARNING  - Setup: initialized 'files_in_pipeline' persistent list, contains 47 items.
+  2009-05-17 03:52:13,455 - Arbitrator                - WARNING  - Setup: initialized 'failed_files' persistent list, contains 0 items.
+  2009-05-17 03:52:13,671 - Arbitrator                - WARNING  - Setup: moved 47 items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue.
+  2009-05-17 03:52:13,672 - Arbitrator                - WARNING  - Setup: moved 0 items from the 'failed_files' persistent list into the 'pipeline' persistent queue.
+As you can see, 47 items were still in the pipeline when the daemon was
+killed. They're now simply added to the pipeline queue again and they will be
+processed once again.
+
+
+The initial sync
+----------------
+To get a feeling of the daemon's speed, you may want to run it in the console
+and look at its output.
+
+
+Addressing processors
+---------------------
+You can address a specific processor by first specifying its processor module
+and then the exact processor name (which is its class name):
   ProcessorModuleName.ProcessorName
 E.g.:
 - unique_filename.MD5
@@ -9,9 +101,20 @@ E.g.:
 - yui_compressor.YUICompressor
 
 
+Processor module: filename
+--------------------------
+Available processors:
+1) SpacesToUnderscores
+   Changes a filename; replaces spaces by underscores. E.g.:
+     this is a test.txt --> this_is_a_test.txt
+2) SpacesToDashes
+Changes a filename; replaces spaces by dashes. E.g.:
+  this is a test.txt --> this-is-a-test.txt
+
+
 Processor module: unique_filename
 ---------------------------------
-Available Processors:
+Available processors:
 1) Mtime
    Changes a filename based on the file's mtime. E.g.:
      logo.gif --> logo_1240668971.gif
@@ -27,9 +130,9 @@ is the most effective way to reduce the image size. However, this might also
 strip copyright information, i.e. this can also have legal consequences.
 Choose one of the "keep metadata" classes if you want to avoid this.
 When optimizing GIF images, they are converted to the PNG format, which also
-changes their filename. This means they have to be stored
+changes their filename.
 
-Available Processors:
+Available processors:
 1) Max
    optimizes image files losslessly (GIF, PNG, JPEG, animated GIF)
 2) KeepMetadata
@@ -37,24 +140,68 @@ Available Processors:
 3) KeepFilename
    same as Max, but keeps the original filename (no GIF optimization)
 4) KeepMetadataAndFilename
-   same as Max, but keeps JPEG metadata and the original filename (no GIF optimization)
+   same as Max, but keeps JPEG metadata and the original filename (no GIF
+   optimization)
 
 
 Processor module: YUI Compressor
 --------------------------------
-Available Processors:
+Warning: this processor is CPU-intensive! Since you typically don't get new
+CSS and JS files all the time, it's still fine to use this. But the initial
+sync may cause a lot of CSS and JS files to be processed and thereby cause a
+lot of load!
+Available processors:
 1) YUICompressor
    Compresses .css and .js files with the YUI Compressor
 
 
-Transporter: S3
----------------
+Transporter: FTP (ftp)
+----------------------
+Value to enter: "ftp".
+
+Available settings:
+- host
+- username
+- password
+- port
+- path
+
+
+Transporter: Amazon S3
+----------------------
+Value to enter: "s3".
+
+Available settings:
+- access_key_id
+- secret_access_key
+- bucket_name
+- bucket_prefix
+
 More than 4 concurrent connections doesn't show a significant speedup.
 
 
-Transporter: CloudFront - Creating a CloudFront distribution
-------------------------------------------------------------
+Transporter: Amazon CloudFront
+------------------------------
+Value to enter: "cf".
 
+Available settings:
+- access_key_id
+- secret_access_key
+- bucket_name
+- bucket_prefix
+
+
+Transporter: Symlink or Copy
+----------------------------
+Value to enter: "symlink_or_copy".
+
+Available settings:
+- location
+- url
+
+
+Transporter: Amazon CloudFront - Creating a CloudFront distribution
+-------------------------------------------------------------------
 You can either use the S3Fox Firefox add-on to create a distribution or use
 the included Python function to do so. In the latter case, do the following:
 
@@ -74,3 +221,183 @@ Created distribution
     function will keep running until that happens.
     ............................
     The distribution has been deployed!
+
+
+Constants in Arbitrator.py
+--------------------------
+The following constants can be tweaked to change where the daemon stores its
+files, or to change its behavior.
+
+LOG_FILE = './daemon.log'
+  The log file.
+PERSISTENT_DATA_DB = './persistent_data.db'
+  Where to store persistent data (pipeline queue, 'files in pipeline' list and
+  'failed files' list).
+SYNCED_FILES_DB = './synced_files.db'
+  Where to store the input_file, transported_file_basename, url and server for
+  each synced file.
+WORKING_DIR = '/tmp/daemon'
+  The working directory.
+MAX_FILES_IN_PIPELINE = 50
+  The maximum number of files in the pipeline. Should be high enough in order
+  to prevent transporters from idling too long.
+MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
+  The maximum number of processor chains that may be executed simultaneously.
+  If you've got CPU intensive processors and if you're running the daemon on
+  the web server, you'll want to keep this very low, probably at 1.
+MAX_SIMULTANEOUS_TRANSPORTERS = 10
+  The maximum number of transporters that may be running simultaneously. This
+  effectively caps the number of simultaneous connections. It can also be used
+  to have some -- although limited -- control on the throughput consumed by
+  the transporters.
+MAX_TRANSPORTER_QUEUE_SIZE = 1
+  The maximum of files queued for each transporters. It's recommended to keep
+  this low enough to ensure files are not unnecessarily waiting. If you set
+  this too high, no new transporters will be spawned, because all files will
+  be queued on the existing transporters. Setting this to 0 can only be
+  recommended in environments with a continuous stream of files that need
+  syncing. The default of 1 is to ensure each transporter is idling as little
+  as possible.
+QUEUE_PROCESS_BATCH_SIZE = 20
+  The number of files that will be processed when processing one of the many
+  queues. Setting this too low will cause overhead. Setting this too high will
+  cause delays for files that are ready to be processed or transported. See
+  the "Pipeline design pattern" section in my bachelor thesis text.
+CALLBACKS_CONSOLE_OUTPUT = False
+  Controls whether output will be generated for each callback. (There are
+  callbacks for the file system monitor, processor chains and transporters.)
+CONSOLE_LOGGER_LEVEL = logging.WARNING
+  Controls the output level of the logging to the console.
+FILE_LOGGER_LEVEL = logging.DEBUG
+  Controls the output level of the logging to the log file.
+
+
+Understanding persistent_data.db
+--------------------------------
+We'll go through this by using a sample database I created. You should be able
+to reproduce similar output on your persistent_data.db file using the exact
+same commands.
+Access the database, by using the SQLite console application.
+  $ sqlite3 persistent_data.db
+  SQLite version 3.6.11
+  Enter ".help" for instructions
+  Enter SQL statements terminated with a ";"
+  sqlite>
+
+As you can see, there are three tables in the database, one for every
+persistent data structure:
+  sqlite> .table
+  failed_files_list  pipeline_list      pipeline_queue
+
+Simple count queries show how many items there are in each persistent data
+structure. In this case for example, there are 2560 files waiting to enter the
+pipeline, 50 were in the pipeline at the time of stopping the daemon (these
+will be added to the queue again once we restart the daemon) and 0 files are
+in the list of failed files. Files end up in there when their processor chain
+or (one of) their transporters fails.
+  sqlite> SELECT COUNT(*) FROM pipeline_queue;
+  2560
+  sqlite> SELECT COUNT(*) FROM pipeline_list;
+  50
+  sqlite> SELECT COUNT(*) FROM failed_files_list;
+  0
+
+You can also look at the database schemas of these tables:
+  sqlite> .schema pipeline_queue
+  CREATE TABLE pipeline_queue(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle);
+  sqlite> .schema pipeline_list
+  CREATE TABLE pipeline_list(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle);
+  sqlite> .schema failed_files_list
+  CREATE TABLE failed_files_list(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle);
+
+As you can see, the three tables have identical schemas. the type for the
+stored item is 'pickle', which means that you can store any Python object in
+there as long as it can be "pickled", which means as much as "convertable to
+a string representation". "Serialization" is the term PHP developers have
+given to this, although pickling is much more advanced.
+The Python object stored in there is the same for all three tables: a tuple of
+the filename (as a string) and the event (as an integer). The event is one of
+FSMonitor.CREATED, FSMonitor.MODIFIED, FSMonitor.DELETED.
+
+This file is what tracks the curent state of the daemon. Thanks to this file,
+it is possible for the daemon to crash and not lose any data.
+Deleting this file would cause the daemon to lose all of its current work.
+Only new (as in: after the file was deleted) changes in the file system would
+be picked up. Changes that still had to be synced, would be forgotten.
+
+
+Understanding fsmonitor.db
+--------------------------
+This database has a single table: pathscanner (which is inherited from the
+pathscanner module around which the fsmonitor module is built). Its schema is:
+
+  sqlite> .schema pathscanner
+  CREATE TABLE pathscanner(path text, filename text, mtime integer);
+
+This file is what tracks the current state of the directory tree associated
+with each source. When an operating system's file system monitor is used, this
+database will be updated through its callbacks. When no such file system
+monitor is available, it will be updated through polling.
+Deleting this file would cause the daemon to have to sync all files again.
+
+
+Understanding synced_files.db
+-----------------------------
+We'll go through this by using a sample database I created. You should be able
+to reproduce similar output on your synced_files.db file using the exact
+same commands.
+Access the database, by using the SQLite console application.
+  $ sqlite3 synced_files.db 
+  SQLite version 3.6.11
+  Enter ".help" for instructions
+  Enter SQL statements terminated with a ";"
+  sqlite>
+  
+As you can see, there's only one table: synced_files.
+  sqlite> .table
+  synced_files
+
+Let's look at the schema. There are 4 fields: input_file,
+transported_file_basename, url and server. input_file is the full path.
+transported_file_basename is the base name of the file that was transported to
+the server. This is stored because the filename might have been altered by the
+processors that have been applied to it, but the path cannot change. I use
+this to delete the previous version of a file if a file has been modified. The
+url field is of course the URL to retrieve the file from the server. Finally,
+the server field contains the name you've assigned to the server in the
+configuration file. Each file may be synced to multiple servers and this
+allows you to check if a file has been synchronized to a specific server.
+  sqlite> .schema synced_files
+  CREATE TABLE synced_files(input_file text, transported_file_basename text, url text, server text);
+
+We can again use simple count queries to learn more about the synced files. As
+you can see, 845 files have been synced, of which 602 have been synced to a
+the server that was named "origin pull cdn" and 243 to the server that was
+named "ftp push cdn".
+  sqlite> SELECT COUNT(*) FROM synced_files;
+  845
+  sqlite> SELECT COUNT(*) FROM synced_files WHERE server="origin pull cdn";
+  602
+  sqlite> SELECT COUNT(*) FROM synced_files WHERE server="ftp push cdn";
+  243
+
+
+License
+-------
+This application is released under the GPL.
+This application depends on various pieces of 3rd party code:
+- parts of Django (dependencies/django). Django is released under the modified
+  BSD license, which is GPL-compatible.
+- boto (dependencies/boto). boto is released under the MIT license, which is
+  GPL-compatible.
+- django-storages (dependencies/storages). django-storages is released under
+  the modified BSD license, which is GPL-compatible.
+Hence it made sense to release the source code under the GPL.
+
+
+Author
+------
+Wim Leers ~ http://wimleers.com/
+
+Written as part of a bachelor thesis at the School for Information Technology
+of the Transnational University of Limburg.
