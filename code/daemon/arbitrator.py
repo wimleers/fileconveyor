@@ -36,7 +36,7 @@ MAX_TRANSPORTER_QUEUE_SIZE = 1
 QUEUE_PROCESS_BATCH_SIZE = 20
 CALLBACKS_CONSOLE_OUTPUT = False
 CONSOLE_LOGGER_LEVEL = logging.WARNING
-FILE_LOGGER_LEVEL = logging.DEBUG
+FILE_LOGGER_LEVEL = logging.INFO
 
 
 # Copied from django.utils.functional
@@ -438,7 +438,7 @@ class Arbitrator(threading.Thread):
                         # file to be transported 
                         if not rule["processorChain"] is None:
                             self.process_queue.put((input_file, event, rule))
-                            self.logger.warning("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
+                            self.logger.info("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
                         else:
                             output_file = input_file
                             for server in servers:
@@ -815,7 +815,7 @@ class Arbitrator(threading.Thread):
             self.transport_queue[server].put((input_file, event, rule, output_file))
             self.lock.release()
 
-        self.logger.warning("Process queue -> transport queue: '%s'." % (input_file))
+        self.logger.info("Process queue -> transport queue: '%s'." % (input_file))
 
 
     def processor_chain_error_callback(self, input_file, event):
