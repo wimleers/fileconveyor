@@ -69,8 +69,13 @@ function cdn_admin_settings_form() {
   $form['basic'][CDN_BASIC_URL_VARIABLE] = array(
     '#type'          => 'textfield',
     '#title'         => t('CDN URL'),
-    '#description'   => t('The CDN URL prefix that should be used. Only works
-                         for CDNs that support Origin Pull.'),
+    '#description'   => t("The CDN URL prefix that should be used. Only works
+                           for CDNs that support Origin Pull.<br />
+                           <strong>WARNING</strong>: do not use subdirectories
+                           when you're serving CSS files from the CDN. The
+                           references to images and fonts from within the CSS
+                           files will break because the URLs are no longer
+                           valid."),
     '#default_value' => variable_get(CDN_BASIC_URL_VARIABLE, ''),
   );
   

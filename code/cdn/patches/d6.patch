@@ -4,7 +4,7 @@ RCS file: /cvs/drupal/drupal/includes/common.inc,v
 retrieving revision 1.756.2.47
 diff -u -F^f -r1.756.2.47 common.inc
 --- includes/common.inc	25 Feb 2009 21:02:36 -0000	1.756.2.47
-+++ includes/common.inc	17 May 2009 19:52:29 -0000
++++ includes/common.inc	17 May 2009 20:28:05 -0000
 @@ -1830,15 +1830,15 @@ function drupal_get_css($css = NULL) {
              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
              // regardless of whether preprocessing is on or off.
@@ -33,13 +33,31 @@ diff -u -F^f -r1.756.2.47 common.inc
      }
    }
  
+@@ -2183,7 +2183,7 @@ function drupal_get_js($scope = 'header'
+         // Additionally, go through any remaining scripts if JS preprocessing is on and output the non-cached ones.
+         foreach ($data as $path => $info) {
+           if (!$info['preprocess'] || !$is_writable || !$preprocess_js) {
+-            $no_preprocess[$type] .= '<script type="text/javascript"'. ($info['defer'] ? ' defer="defer"' : '') .' src="'. base_path() . $path . ($info['cache'] ? $query_string : '?'. time()) ."\"></script>\n";
++            $no_preprocess[$type] .= '<script type="text/javascript"'. ($info['defer'] ? ' defer="defer"' : '') .' src="'. file_create_url($path) . ($info['cache'] ? $query_string : '?'. time()) ."\"></script>\n";
+           }
+           else {
+             $files[$path] = $info;
+@@ -2196,7 +2196,7 @@ function drupal_get_js($scope = 'header'
+   if ($is_writable && $preprocess_js && count($files) > 0) {
+     $filename = md5(serialize($files) . $query_string) .'.js';
+     $preprocess_file = drupal_build_js_cache($files, $filename);
+-    $preprocessed .= '<script type="text/javascript" src="'. base_path() . $preprocess_file .'"></script>'."\n";
++    $preprocessed .= '<script type="text/javascript" src="'. file_create_url($preprocess_file) .'"></script>'."\n";
+   }
+ 
+   // Keep the order of JS files consistent as some are preprocessed and others are not.
 Index: includes/file.inc
 ===================================================================
 RCS file: /cvs/drupal/drupal/includes/file.inc,v
 retrieving revision 1.121.2.5
 diff -u -F^f -r1.121.2.5 file.inc
 --- includes/file.inc	20 Oct 2008 09:42:31 -0000	1.121.2.5
-+++ includes/file.inc	17 May 2009 19:52:30 -0000
++++ includes/file.inc	17 May 2009 20:28:06 -0000
 @@ -35,19 +35,52 @@
  /**
   * Create the download path to a file.
@@ -108,7 +126,7 @@ RCS file: /cvs/drupal/drupal/includes/theme.inc,v
 retrieving revision 1.415.2.19
 diff -u -F^f -r1.415.2.19 theme.inc
 --- includes/theme.inc	25 Feb 2009 21:02:16 -0000	1.415.2.19
-+++ includes/theme.inc	17 May 2009 19:52:31 -0000
++++ includes/theme.inc	17 May 2009 20:28:08 -0000
 @@ -965,24 +965,24 @@ function theme_get_setting($setting_name
  
      if ($settings['toggle_logo']) {
@@ -148,3 +166,22 @@ diff -u -F^f -r1.415.2.19 theme.inc
      return '<img src="'. check_url($url) .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. (isset($image_attributes) ? $image_attributes : '') . $attributes .' />';
    }
  }
+Index: themes/garland/template.php
+===================================================================
+RCS file: /cvs/drupal/drupal/themes/garland/template.php,v
+retrieving revision 1.16.2.1
+diff -u -F^f -r1.16.2.1 template.php
+--- themes/garland/template.php	25 Feb 2009 11:47:37 -0000	1.16.2.1
++++ themes/garland/template.php	17 May 2009 20:28:19 -0000
+@@ -93,9 +93,9 @@ function phptemplate_node_submitted($nod
+ function phptemplate_get_ie_styles() {
+   global $language;
+ 
+-  $iecss = '<link type="text/css" rel="stylesheet" media="all" href="'. base_path() . path_to_theme() .'/fix-ie.css" />';
++  $iecss = '<link type="text/css" rel="stylesheet" media="all" href="'. file_create_url(path_to_theme() .'/fix-ie.css') . ' />';
+   if ($language->direction == LANGUAGE_RTL) {
+-    $iecss .= '<style type="text/css" media="all">@import "'. base_path() . path_to_theme() .'/fix-ie-rtl.css";</style>';
++    $iecss .= '<style type="text/css" media="all">@import "'. file_create_url(path_to_theme() .'/fix-ie-rtl.css') . '";</style>';
+   }
+ 
+   return $iecss;
