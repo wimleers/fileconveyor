@@ -30,6 +30,12 @@ my bachelor thesis text instead. If neither of that is sufficient, then please
 contact me.
 
 
+
+
+==============================================================================
+| The basics                                                                 |
+==============================================================================
+
 Configuring the daemon
 ----------------------
 The sample configuration file (config.sample.xml) should be self explanatory.
@@ -90,6 +96,12 @@ To get a feeling of the daemon's speed, you may want to run it in the console
 and look at its output.
 
 
+
+
+==============================================================================
+| Processors                                                                 |
+==============================================================================
+
 Addressing processors
 ---------------------
 You can address a specific processor by first specifying its processor module
@@ -99,6 +111,7 @@ E.g.:
 - unique_filename.MD5
 - image_optimizer.KeepMetadata
 - yui_compressor.YUICompressor
+- link_updater.CSSURLUpdater
 
 
 Processor module: filename
@@ -144,16 +157,43 @@ Available processors:
    optimization)
 
 
-Processor module: YUI Compressor
+Processor module: yui_compressor
 --------------------------------
 Warning: this processor is CPU-intensive! Since you typically don't get new
 CSS and JS files all the time, it's still fine to use this. But the initial
 sync may cause a lot of CSS and JS files to be processed and thereby cause a
 lot of load!
+
 Available processors:
 1) YUICompressor
    Compresses .css and .js files with the YUI Compressor
 
+
+Processor module: link_updater
+------------------------------
+This processor will replace all URLs in CSS files with references to their
+counterparts on the CDN. There are a couple of important gotchas to use this
+processor module:
+ - absolute URLs (http://, https://) are ignored, only relative URLs are
+   processed
+ - if a referenced file doesn't exist, its URL will remain unchanged
+ - if one of the referenced images or fonts is changed and therefor resynced,
+   and if it is configured to have a unique filename, the CDN URL referenced
+   from the updated CSS file will no longer be valid. Therefor, when you
+   update an image file or font file that is referenced by CSS files, you
+   should modify the CSS files as well. Just modifying the mtime (by using the
+   touch command) is sufficient.
+
+Available processors:
+1) CSSURLUpdater
+   Replaces URLs in .css files with their counterparts on the CDN
+
+
+
+
+==============================================================================
+| Transporters                                                               |
+==============================================================================
 
 Transporter: FTP (ftp)
 ----------------------
@@ -222,6 +262,12 @@ Created distribution
     ............................
     The distribution has been deployed!
 
+
+
+
+==============================================================================
+| The advanced stuff                                                         |
+==============================================================================
 
 Constants in Arbitrator.py
 --------------------------

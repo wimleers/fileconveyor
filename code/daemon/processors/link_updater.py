@@ -16,7 +16,7 @@ from settings import SYNCED_FILES_DB
 
 
 class CSSURLUpdater(Processor):
-    """replaces URLs in .css files with their """
+    """replaces URLs in .css files with their counterparts on the CDN"""
 
 
     valid_extensions = (".css")

@@ -7,6 +7,12 @@ Each processor may also require additional setup. See below for the
 installation instructions of the included processors.
 
 
+
+
+==============================================================================
+| OS-specific additional instructions                                        |
+==============================================================================
+
 Linux
 -----
 Linux is fully supported and requires additional setup.
@@ -31,16 +37,22 @@ The necessary abstractions for Windows are built in, but the daemon has not
 yet been tested in it.
 
 
-Processor: YUI Compressor
--------------------------
+
+
+==============================================================================
+| Per-processor module additional instructions                               |
+==============================================================================
+
+Processor module: yui_compressor
+--------------------------------
 * instructions:
   1. download from http://www.julienlecomte.net/yuicompressor/
   2. copy the executable from the "build" directory to the "processors" directory of the daemon
   3. rename the executable from e.g. "yuicompressor-2.4.2.jar" to "yuicompressor.jar"
 
 
-Processor: Image Optimizer
---------------------------
+Processor module: image_optimizer
+---------------------------------
 You only have to install these libraries if you don't have them already. This
 processor only works on UNIX, at least for now.
 
@@ -71,3 +83,10 @@ processor only works on UNIX, at least for now.
       2. ./configure
       3. make
       4. make install
+
+
+Processor module: link_updater
+------------------------------
+* instructions:
+ 1) download the Python Egg from http://code.google.com/p/cssutils/
+ 2) easy_install cssutils-<VERSION>-py<PYTHON VERSION>.egg
