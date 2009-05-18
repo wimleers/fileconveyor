@@ -41,7 +41,7 @@ class CSSURLUpdater(Processor):
         # Step 2: resolve the relative URLs to absolute paths.
         cssutils.replaceUrls(sheet, self.resolveToAbsolutePath)
 
-    
+
         # Step 3: verify that each of these files has been synced.
         synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
         self.dbcon = sqlite3.connect(synced_files_db)
@@ -60,9 +60,8 @@ class CSSURLUpdater(Processor):
             # Get the CDN URL for the given absolute path.
             self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=?", (urlstring, ))
             result = self.dbcur.fetchone()
-        
+
             if result == None:
-                print "\t\t", urlstring
                 raise RequestToRequeueException("The file '%s' has not yet been synced." % (urlstring))
             else:
                 cdn_url = result[0]
@@ -83,13 +82,22 @@ class CSSURLUpdater(Processor):
 
 
     def resolveToAbsolutePath(self, urlstring):
-        """rewrite relative URLs (which are also relative paths) to absolute
-        paths. Absolute URLs are returned unchanged."""
+        """rewrite relative URLs (which are also relative paths, relative to
+        the CSS file's path or to the document root) to absolute paths.
+        Absolute URLs are returned unchanged."""
 
         # Skip absolute URLs.
         if urlstring.startswith("http://") or urlstring.startswith("https://"):
             return urlstring
 
+        # Resolve paths that are relative to the document root.
+        if urlstring.startswith(self.base_path):
+            # Strip the leading slash.
+            relative_path = urlstring[1:]
+            # Prepend the document root.
+            return os.path.join(self.document_root, relative_path)
+
+        # Resolve paths that are relative to the CSS file's path.
         return urljoin(self.original_file, urlstring)
 
 

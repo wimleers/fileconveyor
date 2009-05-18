@@ -52,16 +52,34 @@ class Config(object):
     def __parse_sources(self, root):
         sources = root.find("sources")
         for source in sources:
-            name      = source.get("name")
-            directory = source.get("directory")
-            self.sources[name] = directory
+            name          = source.get("name")
+            scan_path     = source.get("scanPath")
+            document_root = source.get("documentRoot")
+            base_path     = source.get("basePath")
+
+            self.sources[name] = {
+                "name"          : name,
+                "scan_path"     : scan_path,
+                "document_root" : document_root,
+                "base_path"     : base_path,
+            }
 
             # Validate.
             if not self.source_name_regex.match(name):
                 self.logger.error("The name '%s' for a source is invalid. Only use alphanumeric characters, the dash and the underscore." % (name))
                 self.errors += 1
-            if not os.path.exists(directory):
-                self.logger.error("The %s directory ('%s') does not exist." % (name, directory))
+            if not os.path.exists(scan_path):
+                self.logger.error("The %s scan path ('%s') does not exist." % (name, scan_path))
+                self.errors += 1
+            if not os.path.exists(document_root):
+                self.logger.error("The %s document root ('%s') does not exist." % (name, document_root))
+                self.errors += 1
+            if base_path[0] != "/" or base_path[-1] != "/":
+                self.logger.error("The %s base path ('%s') is invalid. It should have both leading and trailing slashes." % (name, base_path))
+                self.errors += 1
+            site_path = os.path.join(document_root, base_path[1:])
+            if not os.path.exists(site_path):
+                self.logger.error("The %s site path (the base path within the document root, '%s') does not exist." % (name, site_path))
                 self.errors += 1
 
 

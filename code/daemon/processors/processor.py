@@ -23,9 +23,11 @@ class Processor(object):
     """base class for file processors"""
 
 
-    def __init__(self, input_file, original_file, parent_logger, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp"):
         self.input_file    = input_file
         self.original_file = original_file
+        self.document_root = document_root
+        self.base_path     = base_path
         self.working_dir   = working_dir
         self.parent_logger = parent_logger
 
@@ -112,7 +114,7 @@ class ProcessorChain(threading.Thread):
     """chains the given file processors (runs them in sequence)"""
 
 
-    def __init__(self, processors, input_file, callback, error_callback, parent_logger, working_dir="/tmp"):
+    def __init__(self, processors, input_file, document_root, base_path, callback, error_callback, parent_logger, working_dir="/tmp"):
         if not callable(callback):
             raise InvalidCallbackError("callback function is not callable")
         if not callable(error_callback):
@@ -121,6 +123,8 @@ class ProcessorChain(threading.Thread):
         self.processors     = processors
         self.input_file     = input_file
         self.output_file    = None
+        self.document_root  = document_root
+        self.base_path      = base_path
         self.callback       = callback
         self.error_callback = error_callback
         self.working_dir    = working_dir
@@ -146,7 +150,7 @@ class ProcessorChain(threading.Thread):
 
             # Run the processor.
             old_output_file = self.output_file
-            processor = processor_class(self.output_file, self.input_file, self.parent_logger_for_processor, self.working_dir)
+            processor = processor_class(self.output_file, self.input_file, self.document_root, self.base_path, self.parent_logger_for_processor, self.working_dir)
             if processor.validate_settings():
                 self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
                 try:
@@ -179,8 +183,8 @@ class ProcessorChainFactory(object):
         self.working_dir   = working_dir
 
 
-    def make_chain_for(self, input_file, processors, callback, error_callback):
-        return ProcessorChain(copy.copy(processors), input_file, callback, error_callback, self.parent_logger, self.working_dir)
+    def make_chain_for(self, input_file, processors, document_root, base_path, callback, error_callback):
+        return ProcessorChain(copy.copy(processors), input_file, document_root, base_path, callback, error_callback, self.parent_logger, self.working_dir)
 
 
 if __name__ == '__main__':

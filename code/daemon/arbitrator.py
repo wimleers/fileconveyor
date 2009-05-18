@@ -104,8 +104,8 @@ class Arbitrator(threading.Thread):
         # transporters First calculate the value for the "symlinkWithin"
         # setting.
         source_paths = []
-        for (name, path) in self.config.sources.items():
-            source_paths.append(path)
+        for source in self.config.sources.values():
+            source_paths.append(source["scan_path"])
         symlinkWithin = ":".join(source_paths)
         # Then set it for every server that uses this transporter.
         for name in self.config.servers.keys():
@@ -178,26 +178,26 @@ class Arbitrator(threading.Thread):
 
         # Collecting all necessary metadata for each rule.
         self.rules = []
-        for (name, path) in self.config.sources.items():
-            # Create a function to prepend the source's path to another path.
-            source_path = path
-            prepend_source_path = lambda path: os.path.join(source_path, path)
-            if self.config.rules.has_key(name):
-                for rule in self.config.rules[name]:
+        for source in self.config.sources.values():
+            # Create a function to prepend the source's scan path to another
+            # path.
+            prepend_scan_path = lambda path: os.path.join(source["scan_path"], path)
+            if self.config.rules.has_key(source["name"]):
+                for rule in self.config.rules[source["name"]]:
                     if rule["filterConditions"] is None:
                         filter = None
                     else:
                         if rule["filterConditions"].has_key("paths"):
-                            # Prepend the source's path (effectively the "root path")
-                            # for a rule to each of the paths in the "paths" condition
-                            # in the filter.
-                            paths = map(prepend_source_path, rule["filterConditions"]["paths"].split(":"))
+                            # Prepend the source's scan path (effectively the
+                            # "root path") for a rule to each of the paths in
+                            # the "paths" condition in the filter.
+                            paths = map(prepend_scan_path, rule["filterConditions"]["paths"].split(":"))
                             rule["filterConditions"]["paths"] = ":".join(paths)
                         filter = Filter(rule["filterConditions"])
 
                     # Store all the rule metadata.
                     self.rules.append({
-                        "source"         : name,
+                        "source"         : source["name"],
                         "label"          : rule["label"],
                         "filter"         : filter,
                         "processorChain" : rule["processorChain"],
@@ -258,10 +258,10 @@ class Arbitrator(threading.Thread):
         self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True)
         self.logger.warning("Setup: initialized FSMonitor.")
 
-        # Monitor all source paths.
-        for (name, path) in self.config.sources.items():
-            self.logger.info("Setup: monitoring '%s' (%s)." % (path, name))
-            self.fsmonitor.add_dir(path, FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
+        # Monitor all sources' scan paths.
+        for source in self.config.sources.values():
+            self.logger.info("Setup: monitoring '%s' (%s)." % (source["scan_path"], source["name"]))
+            self.fsmonitor.add_dir(source["scan_path"], FSMonitor.CREATED | FSMonitor.MODIFIED | FSMonitor.DELETED)
 
 
     def run(self):
@@ -386,9 +386,10 @@ class Arbitrator(threading.Thread):
             # Find all rules that apply to the detected file event.
             match_found = False
             file_is_deleted = event == FSMonitor.DELETED
+            
             for rule in self.rules:
                 # Try to find a rule that matches the file.
-                if input_file.startswith(self.config.sources[rule["source"]]) and \
+                if input_file.startswith(self.config.sources[rule["source"]]["scan_path"]) and \
                    (rule["filter"] is None
                    or
                    rule["filter"].matches(input_file, file_is_deleted=file_is_deleted)):
@@ -463,6 +464,8 @@ class Arbitrator(threading.Thread):
             # Start the processor chain.
             processor_chain = self.processor_chain_factory.make_chain_for(input_file,
                                                                           rule["processorChain"],
+                                                                          self.config.sources[rule["source"]]["document_root"],
+                                                                          self.config.sources[rule["source"]]["base_path"],
                                                                           curried_callback,
                                                                           curried_error_callback
                                                                           )
@@ -543,7 +546,7 @@ class Arbitrator(threading.Thread):
                     #     - /htdocs/mysite/dir/the_file -> dir/the_file
                     #     - /tmp/dir/the_file           -> dir/the_file
                     src = output_file
-                    relative_paths = [WORKING_DIR, self.config.sources[rule["source"]]]
+                    relative_paths = [WORKING_DIR, self.config.sources[rule["source"]]["scan_path"]]
                     dst = self.__calculate_transporter_dst(output_file, dst_parent_path, relative_paths)
 
                     # Start the transport.
