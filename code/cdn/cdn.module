@@ -344,11 +344,13 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
     if ($file_cdn_url !== FALSE) {
       $cdn_file_count++;
 
-      $synced_files[$file] = array(
+      $synced_files[] = array(
+        'file'    => $file,
         'cdn_url' => $file_cdn_url,
         'server'  => ($server === FALSE) ? '' : $server,
       );
-      // 
+
+      // $server is only set in advanced mode.
       if ($server !== FALSE) {
         if (!array_key_exists($server, $synced_files_per_server_count)) {
           $synced_files_per_server_count[$server] = 0;

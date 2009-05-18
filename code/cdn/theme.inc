@@ -48,9 +48,10 @@ function theme_cdn_page_stats($file_count, $cdn_file_count, $synced_files_per_se
   // Nested list of synced files.
   if (count($synced_files)) {
     $synced_items = array();
-    foreach (array_keys($synced_files) as $file) {
-      $cdn_url = $synced_files[$file]['cdn_url'];
-      $server  = $synced_files[$file]['server'];
+    foreach ($synced_files as $synced_file) {
+      $file    = $synced_file['file'];
+      $cdn_url = $synced_file['cdn_url'];
+      $server  = $synced_file['server'];
       $text = ($mode == CDN_MODE_BASIC) ? '!file' : '!file (server: !server)';
       $synced_items[] = array(l(t($text, array('!file' => $file, '!server' => $server)), $cdn_url));
     }
