@@ -688,7 +688,7 @@ class Arbitrator(threading.Thread):
             self.last_retry = time.time()
 
             # Log.
-            self.logger.warning("Setup: moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue." % (len(self.failed_files)))
+            self.logger.warning("Moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue." % (processed))
 
 
     def __get_transporter(self, server):
