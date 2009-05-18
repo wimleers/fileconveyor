@@ -53,6 +53,11 @@ class PersistentList(object):
         return len(self.memory_list)
 
 
+    def __getitem__(self, index):
+        keys = self.memory_list.keys()
+        return keys[index]
+
+
     def append(self, item):
         # Insert the item into the database.
         self.dbcur.execute("INSERT INTO %s (item) VALUES(?)" % (self.table), (cPickle.dumps(item), ))
