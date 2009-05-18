@@ -31,6 +31,7 @@ define('CDN_BASIC_EXTENSIONS_DEFAULT', '.css .js .ico .gif .jpg .jpeg .png .svg 
 define('CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE', 'cdn_advanced_synced_files_db');
 
 // Hardcoded settings for accessing the daemon's metadata, to show statistics.
+define('CDN_DAEMON_SYNCED_FILES_DB', 'synced_files.db');
 define('CDN_DAEMON_PERSISTENT_DATA_DB', 'persistent_data.db');
 define('CDN_DAEMON_FSMONITOR_DB', 'fsmonitor.db');
 define('CDN_DAEMON_PID_FILE', 'daemon.pid');
@@ -97,11 +98,11 @@ function cdn_theme() {
     'cdn_page_stats' => array(
       'file'      => 'theme.inc',
       'arguments' => array(
-          $file_count => NULL,
-          $cdn_file_count => NULL,
-          $synced_files => NULL,
-          $unsynced_files => NULL,
-          $synced_files_per_server => NULL,
+          $file_count                    => NULL,
+          $cdn_file_count                => NULL,
+          $synced_files_per_server_count => NULL,
+          $synced_files                  => NULL,
+          $unsynced_files                => NULL,
       ),
     ),
   );
@@ -142,13 +143,14 @@ function cdn_requirements($phase) {
       $status = variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED);
       $mode   = variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC);
 
-      $requirements['cdn']['title'] = $t('CDN synchronization');
+      $requirements['cdn']['title'] = $t('CDN integration');
 
+      // Set the basic info: disabled/debug/enabled.
       if ($status == CDN_DISABLED) {
-        $requirements['cdn'] += array(
+        $requirements['cdn'] = array(
           'description' => $t('CDN integration is enabled for no users.'),
-          'severity' => REQUIREMENT_WARNING,
-          'value' => $t('Disabled'),
+          'severity'    => REQUIREMENT_WARNING,
+          'value'       => $t('Disabled'),
         );        
       }
       elseif ($status == CDN_DEBUG) {
@@ -158,22 +160,52 @@ function cdn_requirements($phase) {
                                array('%cdn-debug-mode-permission' => CDN_PERM_ACCESS_DEBUG)
                                ),
           'severity' => REQUIREMENT_WARNING,
-          'value' => $t('In debug mode'),
+          'value'    => $t('In debug mode'),
         );        
       }
       else {
+        $requirements['cdn'] += array(
+          'description' => $t('CDN integration is enabled for all users.'),
+          'severity'    => REQUIREMENT_OK,
+          'value'       => $t('Enabled'),
+        );        
+      }
+
+      // When CDN integration is enabled, add on more information.
+      if ($status != CDN_DISABLED) {
         if ($mode == CDN_MODE_BASIC) {
-          $requirements['cdn'] += array(
-            'description' => $t(
-              "In order for the CDN integration module to work correctly, it has
-               to be able to synchronize. This can be done automatically through
-               cron, but you will have to copy the file %file to the same
-               directory as Drupal's cron.php.",
-               array('%file' => $path)
-            ),
-            'severity' => $phase == 'install' ? REQUIREMENT_WARNING : REQUIREMENT_ERROR,
-            'value' => $t('Copy cdn_cron.php'),
-          );
+          $requirements['cdn']['value'] .= ' – '. t('basic mode');
+        }
+        else {
+          $requirements['cdn']['value'] .= ' – '. t('advanced mode');
+
+          $items = array();
+
+          $synced_files_db = variable_get(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, FALSE);
+
+          if ($synced_files_db !== FALSE) {
+            $daemon_pid_file = str_replace(CDN_DAEMON_SYNCED_FILES_DB, CDN_DAEMON_PID_FILE, $synced_files_db);
+
+            $synced_files_db_exists = file_exists($synced_files_db);
+            $synced_files_db_readable = @fopen($synced_files_db, 'r');
+            $daemon_pid_file_exists = file_exists($daemon_pid_file);
+
+            $items[] = ($synced_files_db_exists) ? t('The synced files database exists.') : t("The synced files database doesn't exist.");
+            $items[] = ($synced_files_db_readable) ? t('The synced files database is readable.') : t("The synced files database isn't readable.");
+            $items[] = ($daemon_pid_file_exists) ? t('The daemon is currently running.') : '<strong>' . t('The daemon is currently not running.') . '</strong>';
+
+            // If either of these 3 checks failed, mark this requirement's
+            // severity as being an error.
+            if (!($synced_files_db_exists && $synced_files_db_readable && $daemon_pid_file_exists)) {
+              $requirements['cdn']['severity'] = REQUIREMENT_ERROR;
+            }
+          }
+          else {
+            $items[] = t('The synced files database setting has not yet been configured.');
+            $requirements['cdn']['severity'] = REQUIREMENT_ERROR;
+          }
+
+          $requirements['cdn']['description'] .= '<br />' . theme('item_list', $items);
         }
       }
   }
@@ -216,6 +248,12 @@ function cdn_basic_get_url($path) {
  *   The path to get the URL for.
  */
 function cdn_advanced_get_url($path) {
+  static $drupal_root_path;
+
+  if (!isset($drupal_root_path)) {
+    $drupal_root_path = realpath('.');
+  }
+
   $db = _cdn_advanced_get_db_connection();
 
   // In case no connection to the database could be made, pretend the file was
@@ -225,17 +263,18 @@ function cdn_advanced_get_url($path) {
   }
 
   // Retrieve the URLs of the file on the CDN.
-  $sql = "SELECT url FROM synced_files WHERE input_file = :input_file";
+  $input_file = $drupal_root_path . '/' . $path;
+  $sql = "SELECT url, server FROM synced_files WHERE input_file = :input_file";
   $stmt = $db->prepare($sql);
-  $stmt->bindParam(':input_file', $path, PDO::PARAM_STR);
+  $stmt->bindParam(':input_file', $input_file, PDO::PARAM_STR);
   $stmt->execute();
-  $urls = $stmt->fetchAll(PDO::FETCH_COLUMN);
+  $urls = $stmt->fetchAll();
 
   // TODO: build in mechanisms to allow the file to be served from a specific
   // server (that can be either a CDN or a static file server), based on the
   // user's properties (location, membership, …).
   // For now, we just use the first URL.
-  return (count($urls)) ? $urls[0] : FALSE;
+  return (count($urls)) ? array($urls[0]['url'], $urls[0]['server']) : array(FALSE, FALSE);
 }
 
 
@@ -282,7 +321,7 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
   static $cdn_file_count;
   static $synced_files;
   static $unsynced_files;
-  static $synced_files_per_server;
+  static $synced_files_per_server_count;
 
   if (!isset($file_count)) {
     $file_count = 0;
@@ -306,8 +345,8 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
       );
       // 
       if ($server !== FALSE) {
-        if (!array_key_exists($synced_files_per_server, $server)) {
-          $synced_files_per_server[$server] = 0;
+        if (!array_key_exists($server, $synced_files_per_server_count)) {
+          $synced_files_per_server_count[$server] = 0;
         }
         $synced_files_per_server_count[$server]++;
       }

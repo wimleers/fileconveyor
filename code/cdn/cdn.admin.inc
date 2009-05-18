@@ -128,3 +128,27 @@ function cdn_admin_settings_form() {
 
   return system_settings_form($form);
 }
+
+/**
+ * Default validate callback for the settings form.
+ */
+function cdn_admin_settings_form_validate($form, &$form_state) {
+  if (isset($form_state['values'][CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE])) {
+    $synced_files_db = $form_state['values'][CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE];
+
+    // Validate the file name.
+    if (strpos($synced_files_db, CDN_DAEMON_SYNCED_FILES_DB) === FALSE) {
+      form_set_error(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, t('The synced files database should have the file name %name.', array('%name' => CDN_DAEMON_SYNCED_FILES_DB)));
+    }
+
+    // Validate the entered synced files database.
+    if (!file_exists($synced_files_db)) {
+      form_set_error(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, t('The synced files database does not exist.'));
+    }
+    else {
+      if (!@fopen($synced_files_db, 'r')) {
+        form_set_error(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, t('The synced files database could not be opened for reading.'));
+      }
+    }
+  }
+}
