@@ -270,6 +270,9 @@ CONSOLE_LOGGER_LEVEL = logging.WARNING
   Controls the output level of the logging to the console.
 FILE_LOGGER_LEVEL = logging.DEBUG
   Controls the output level of the logging to the log file.
+RETRY_INTERVAL = 30
+  Sets the interval in which the 'failed files' list is appended to the
+  pipeline queue, to retry to sync these failed files.
 
 
 Understanding persistent_data.db

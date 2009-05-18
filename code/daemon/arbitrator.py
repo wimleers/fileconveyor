@@ -73,6 +73,7 @@ class Arbitrator(threading.Thread):
         self.die = False
         self.processorchains_running = 0
         self.transporters_running = 0
+        self.last_retry = 0
 
         # Set up logger.
         self.logger = logging.getLogger("Arbitrator")
@@ -240,13 +241,7 @@ class Arbitrator(threading.Thread):
         # Move files from the 'failed_files' persistent list to the
         # pipeline queue. This is what ensures that even problematic files
         # are not forgotten!
-        failed_items = []
-        for item in self.failed_files:
-            failed_items.append(item)
-            self.pipeline_queue.put(item)
-        for item in failed_items:
-            self.failed_files.remove(item)
-        self.logger.warning("Setup: moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue." % (num_failed_files))
+        self.__allow_retry()
 
         # Create connection to synced files DB.
         self.dbcon = sqlite3.connect(SYNCED_FILES_DB)
@@ -290,6 +285,7 @@ class Arbitrator(threading.Thread):
             self.__process_transport_queues()
             self.__process_db_queue()
             self.__process_retry_queue()
+            self.__allow_retry()
 
             # Processing the queues 10 times per second is more than
             # sufficient, because files are modified, processed and
@@ -670,6 +666,19 @@ class Arbitrator(threading.Thread):
             # Log.
             self.logger.warning("Retry queue -> 'failed_files' persistent list: '%s'. Retrying later." % (input_file))
             processed += 1
+
+    def __allow_retry(self):
+        if self.last_retry + RETRY_INTERVAL < time.time():
+            failed_items = []
+            for item in self.failed_files:
+                failed_items.append(item)
+                self.pipeline_queue.put(item)
+            for item in failed_items:
+                self.failed_files.remove(item)
+
+            self.last_retry = time.time()
+
+            self.logger.warning("Setup: moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue." % (len(self.failed_files)))
 
 
     def __get_transporter(self, server):
