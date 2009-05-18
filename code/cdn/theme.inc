@@ -10,6 +10,8 @@
  *   The number of files on this page that are served from a CDN.
  * @param $synced_files_per_server_count
  *   The number of files synced to each server.
+ * @param $total_time
+ *   The total time it took to get all current CDN URLs.
  * @param $synced_files
  *   Array of synchronized files.
  * @param $unsynced_files
@@ -17,7 +19,7 @@
  * @return
  *   The rendered HTML.
  */
-function theme_cdn_page_stats($file_count, $cdn_file_count, $synced_files_per_server_count, $synced_files, $unsynced_files) {
+function theme_cdn_page_stats($file_count, $cdn_file_count, $synced_files_per_server_count, $total_time, $synced_files, $unsynced_files) {
   $output = '';
   $items = array();
   $mode = variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC);
@@ -34,6 +36,13 @@ function theme_cdn_page_stats($file_count, $cdn_file_count, $synced_files_per_se
   else {
     $items[] = 'All files are being served from a single CDN, because basic mode is being used.';
   }
+  $items[] = t('Total time it took to look up the CDN URLs for these files:
+                !total-time ms, or !avg-time ms on average per file.',
+                array(
+                  '!total-time' => round($total_time * 1000, 3),
+                  '!avg-time'   => round($total_time * 1000 / $file_count, 3),
+                )
+               );
   
   
   // Nested list of unsynced files.

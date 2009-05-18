@@ -43,8 +43,13 @@ define('CDN_DAEMON_PID_FILE', 'daemon.pid');
 function custom_file_url_rewrite($path) {
   $status = variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED);
   $mode   = variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC);
+  $stats = variable_get(CDN_STATS_VARIABLE, FALSE) && user_access(CDN_PERM_ACCESS_STATS);
 
   if ($status == CDN_ENABLED || ($status == CDN_DEBUG && user_access(CDN_PERM_ACCESS_DEBUG))) {
+    if ($stats) {
+      $start = microtime();
+    }
+
     // Depending on the mode, use a different function to get the URL.
     if ($mode == CDN_MODE_BASIC) {
       $cdn_url = cdn_basic_get_url($path);
@@ -53,10 +58,11 @@ function custom_file_url_rewrite($path) {
     else {
       list($cdn_url, $server) = cdn_advanced_get_url($path);
     }
-    
+
     // If the user can access it, add this to the per-page statistics.
-    if (variable_get(CDN_STATS_VARIABLE, FALSE) && user_access(CDN_PERM_ACCESS_STATS)) {
-      _cdn_devel_page_stats($path, $cdn_url, $server);
+    if ($stats) {
+      $end = microtime();
+      _cdn_devel_page_stats($path, $cdn_url, $server, $end - $start);
     }
 
     return $cdn_url;
@@ -101,6 +107,7 @@ function cdn_theme() {
           $file_count                    => NULL,
           $cdn_file_count                => NULL,
           $synced_files_per_server_count => NULL,
+          $total_time                    => NULL,
           $synced_files                  => NULL,
           $unsynced_files                => NULL,
       ),
@@ -117,13 +124,17 @@ function cdn_exit($destination = NULL) {
       $file_count,
       $cdn_file_count,
       $synced_files_per_server_count,
+      $total_time,
       $synced_files,
       $unsynced_files,
     ) = _cdn_devel_page_stats();
+    
+    
     print theme('cdn_page_stats',
       $file_count,
       $cdn_file_count,
       $synced_files_per_server_count,
+      $total_time,
       $synced_files,
       $unsynced_files
     );
@@ -328,28 +339,33 @@ function _cdn_advanced_get_db_connection() {
  *   The URL to the file on the CDN if it exists, FALSE otherwise.
  * @param $server
  *   The server the file exists on.
+ * @param $time
+ *   The time it took to get the current CDN URL.
  * @return
  *   Only if no parameters were passed: the collected statistics.
  */
-function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = FALSE) {
+function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = FALSE, $time = FALSE) {
   static $file_count;
   static $cdn_file_count;
+  static $synced_files_per_server_count;
+  static $total_time;
   static $synced_files;
   static $unsynced_files;
-  static $synced_files_per_server_count;
 
   if (!isset($file_count)) {
     $file_count = 0;
     $cdn_file_count = 0;
+    $synced_files_per_server_count = array();
+    $total_time = 0;
     $synced_files = array();
     $unsynced_files = array();
-    $synced_files_per_server_count = array();
   }
 
   // If the function is called with parameters set, save the statistics. If no
   // parameters are passed, return the collected statistics.
   if ($file) {
     $file_count++;
+    $total_time += $time;
 
     if ($file_cdn_url !== FALSE) {
       $cdn_file_count++;
@@ -377,6 +393,7 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
       $file_count,
       $cdn_file_count,
       $synced_files_per_server_count,
+      $total_time,
       $synced_files,
       $unsynced_files,
     );
