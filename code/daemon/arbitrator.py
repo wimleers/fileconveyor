@@ -8,13 +8,14 @@ import time
 import sys
 import sqlite3
 from UserList import UserList
+import os.path
+
+sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
+sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'processors')))
+sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'transporters')))
 
 
-sys.path.append(os.path.abspath('dependencies'))
-sys.path.append(os.path.abspath('processors'))
-sys.path.append(os.path.abspath('transporters'))
-
-
+from settings import *
 from config import *
 from persistent_queue import *
 from persistent_list import *
@@ -23,20 +24,6 @@ from filter import *
 from processors.processor import *
 from transporters.transporter import *
 from daemon_thread_runner import *
-
-
-LOG_FILE = './daemon.log'
-PERSISTENT_DATA_DB = './persistent_data.db'
-SYNCED_FILES_DB = './synced_files.db'
-WORKING_DIR = '/tmp/daemon'
-MAX_FILES_IN_PIPELINE = 50
-MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
-MAX_SIMULTANEOUS_TRANSPORTERS = 10
-MAX_TRANSPORTER_QUEUE_SIZE = 1
-QUEUE_PROCESS_BATCH_SIZE = 20
-CALLBACKS_CONSOLE_OUTPUT = False
-CONSOLE_LOGGER_LEVEL = logging.WARNING
-FILE_LOGGER_LEVEL = logging.INFO
 
 
 # Copied from django.utils.functional
@@ -881,7 +868,7 @@ class Arbitrator(threading.Thread):
 
 if __name__ == '__main__':
     try:
-        arbitrator = Arbitrator("config.xml")
+        arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"))
     except ArbitratorError, e:
         print e.__class__, e
     else:
