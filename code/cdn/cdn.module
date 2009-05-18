@@ -259,7 +259,7 @@ function cdn_advanced_get_url($path) {
   // In case no connection to the database could be made, pretend the file was
   // not found in the synced files database.
   if (!$db) {
-    return FALSE;
+    return array(FALSE, FALSE);
   }
 
   // Retrieve the URLs of the file on the CDN.
@@ -291,7 +291,12 @@ function cdn_advanced_get_url($path) {
 function _cdn_advanced_get_db_connection() {
   static $db;
 
-  if (!isset($db)) {
+  $synced_files_db = variable_get(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, FALSE);
+
+  if ($synced_files_db === FALSE || !file_exists($synced_files_db) || filesize($synced_files_db) == 0) {
+    $db = FALSE;
+  }
+  elseif (!isset($db)) {
     try {
       $db = new PDO('sqlite:' . variable_get(CDN_ADVANCED_SYNCED_FILES_DB_VARIABLE, ''));
     } catch(PDOException $e) {
