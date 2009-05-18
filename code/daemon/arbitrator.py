@@ -668,16 +668,26 @@ class Arbitrator(threading.Thread):
             processed += 1
 
     def __allow_retry(self):
-        if self.last_retry + RETRY_INTERVAL < time.time():
+        num_failed_files = len(self.failed_files)
+        should_retry = self.last_retry + RETRY_INTERVAL < time.time()
+        pipeline_queue_almost_empty = self.pipeline_queue < MAX_FILES_IN_PIPELINE
+        
+        if num_failed_files > 0 and (should_retry or pipeline_queue_almost_empty):
             failed_items = []
-            for item in self.failed_files:
+
+            processed = 0
+            while processed < QUEUE_PROCESS_BATCH_SIZE and processed < len(self.failed_files):
+                item = self.failed_files[processed]
                 failed_items.append(item)
                 self.pipeline_queue.put(item)
+                processed += 1
+            
             for item in failed_items:
                 self.failed_files.remove(item)
 
             self.last_retry = time.time()
 
+            # Log.
             self.logger.warning("Setup: moved %d items from the 'failed_files' persistent list into the 'pipeline' persistent queue." % (len(self.failed_files)))
 
 
