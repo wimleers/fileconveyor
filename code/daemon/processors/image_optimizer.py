@@ -22,8 +22,8 @@ class Base(Processor):
     valid_extensions = (".gif", ".png", ".jpg", ".jpeg")
 
 
-    def __init__(self, input_file, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
-        Processor.__init__(self, input_file, working_dir)
+    def __init__(self, input_file, original_file, parent_logger, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
+        Processor.__init__(self, input_file, original_file, parent_logger, working_dir)
         self.copy_metadata    = copy_metadata
         self.filename_mutable = filename_mutable
         self.devnull = open(os.devnull, 'w')

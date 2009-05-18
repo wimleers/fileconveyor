@@ -8,6 +8,7 @@ __license__ = "GPL"
 class ProcessorError(Exception): pass
 class InvalidCallbackError(ProcessorError): pass
 class FileIOError(ProcessorError): pass
+class RequestToRequeueException(ProcessorError): pass
 
 
 import threading
@@ -22,9 +23,11 @@ class Processor(object):
     """base class for file processors"""
 
 
-    def __init__(self, input_file, working_dir="/tmp"):
-        self.input_file  = input_file
-        self.working_dir = working_dir
+    def __init__(self, input_file, original_file, parent_logger, working_dir="/tmp"):
+        self.input_file    = input_file
+        self.original_file = original_file
+        self.working_dir   = working_dir
+        self.parent_logger = parent_logger
 
         # Get the parts of the input file.
         (path, basename, name, extension) = self.get_path_parts(self.input_file)
@@ -122,6 +125,9 @@ class ProcessorChain(threading.Thread):
         self.error_callback = error_callback
         self.working_dir    = working_dir
         self.logger         = logging.getLogger(".".join([parent_logger, "ProcessorChain"]))
+
+        self.parent_logger_for_processor = ".".join([parent_logger, "ProcessorChain"]);
+
         threading.Thread.__init__(self)
 
 
@@ -140,11 +146,15 @@ class ProcessorChain(threading.Thread):
 
             # Run the processor.
             old_output_file = self.output_file
-            processor = processor_class(self.output_file, self.working_dir)
+            processor = processor_class(self.output_file, self.input_file, self.parent_logger_for_processor, self.working_dir)
             if processor.validate_settings():
                 self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
                 try:
                     self.output_file = processor.run()
+                except RequestToRequeueException, e:
+                    self.logger.warning("The processor '%s' has requested to requeue the file '%s'." % (processor_classname, self.input_file))
+                    self.error_callback(self.input_file)
+                    return
                 except Exception, e:
                     self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
                     self.error_callback(self.input_file)
