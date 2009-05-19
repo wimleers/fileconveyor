@@ -41,7 +41,6 @@ class CSSURLUpdater(Processor):
         # Step 2: resolve the relative URLs to absolute paths.
         cssutils.replaceUrls(sheet, self.resolveToAbsolutePath)
 
-
         # Step 3: verify that each of these files has been synced.
         synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
         self.dbcon = sqlite3.connect(synced_files_db)
@@ -66,17 +65,13 @@ class CSSURLUpdater(Processor):
             else:
                 cdn_url = result[0]
 
-        try:
-            # Step 4: resolve the absolute paths to CDN URLs.
-            cssutils.replaceUrls(sheet, self.resolveToCDNURL)
+        # Step 4: resolve the absolute paths to CDN URLs.
+        cssutils.replaceUrls(sheet, self.resolveToCDNURL)
 
-            # Step 5: write the updated CSS to the output file.
-            f = open(self.output_file, 'w')
-            f.write(sheet.cssText)
-            f.close()
-        except Exception, e:
-            print "\t\t\t\t", Exception, e
-            raise Exception(e)
+        # Step 5: write the updated CSS to the output file.
+        f = open(self.output_file, 'w')
+        f.write(sheet.cssText)
+        f.close()
 
         return self.output_file
 
