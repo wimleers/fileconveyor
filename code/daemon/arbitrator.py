@@ -10,6 +10,7 @@ import sqlite3
 from UserList import UserList
 import os.path
 
+
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'processors')))
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'transporters')))
@@ -287,10 +288,10 @@ class Arbitrator(threading.Thread):
             self.__process_retry_queue()
             self.__allow_retry()
 
-            # Processing the queues 10 times per second is more than
-            # sufficient, because files are modified, processed and
-            # transported much slower than that.
-            time.sleep(0.1)
+            # Processing the queues 5 times per second is more than sufficient
+            # because files are modified, processed and transported much
+            # slower than that.
+            time.sleep(0.2)
         self.logger.warning("Stopping.")
 
         # Stop the FSMonitor and wait for its thread to end.
@@ -613,7 +614,6 @@ class Arbitrator(threading.Thread):
                         # 'files_in_pipeline' persistent list.
                         pseudo_event = Arbitrator.DELETE_OLD_FILE
                         # Queue the transport (deletion), but jump the queue!.
-                        server = rule["destination"]["server"]
                         self.transport_queue[server].jump((input_file, pseudo_event, rule, fake_output_file))
                         self.logger.info("DB queue -> transport queue (jumped): '%s' to delete its old transported file '%s' on server '%s'." % (input_file, old_transport_file_basename, server))
                 else:
@@ -631,17 +631,20 @@ class Arbitrator(threading.Thread):
 
             self.logger.debug("DB queue -> 'synced files' DB: '%s' (URL: '%s')." % (input_file, url))
 
+            key = input_file + str(event) + repr(rule)
+
             # Remove this server from the 'remaining transporters' list for
             # this input file/event/rule.
-            self.remaining_transporters[input_file + str(event) + repr(rule)].remove(server)
+            if remove_server_from_remaining_transporters:
+                self.remaining_transporters[key].remove(server)
 
             # Only remove the file from the pipeline if no transporters are
             # remaining.
-            if len(self.remaining_transporters[input_file + str(event) + repr(rule)]) == 0:
+            if len(self.remaining_transporters[key]) == 0:
                 # Delete the output file, but only if it's different from the
                 # input file.
                 touched = event == FSMonitor.CREATED or event == FSMonitor.MODIFIED
-                if touched and not input_file == output_file:
+                if touched and not input_file == output_file and os.path.exists(output_file):
                     os.remove(output_file)
 
                 # The file went all the way through the pipeline, so now it's safe
