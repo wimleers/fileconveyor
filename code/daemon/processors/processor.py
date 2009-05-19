@@ -156,11 +156,11 @@ class ProcessorChain(threading.Thread):
                 try:
                     self.output_file = processor.run()
                 except RequestToRequeueException, e:
-                    self.logger.warning("The processor '%s' has requested to requeue the file '%s'." % (processor_classname, self.input_file))
+                    self.logger.warning("The processor '%s' has requested to requeue the file '%s'. Message: %s." % (processor_classname, self.input_file, e))
                     self.error_callback(self.input_file)
                     return
                 except Exception, e:
-                    self.logger.error("The processsor '%s' has failed while processing the file '%s'." % (processor_classname, self.input_file))
+                    self.logger.error("The processsor '%s' has failed while processing the file '%s'. Message: %s." % (processor_classname, self.input_file, e))
                     self.error_callback(self.input_file)
                     return
                 self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
