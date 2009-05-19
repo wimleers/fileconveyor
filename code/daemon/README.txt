@@ -171,6 +171,20 @@ Available processors:
 
 Processor module: link_updater
 ------------------------------
+Warning: this processor is CPU-intensive! Since you typically don't get new
+CSS files all the time, it's still fine to use this. But the initial sync may
+cause a lot of CSS files to be processed and thereby cause a lot of load! Note
+that this processor will skip processing a CSS file if not all files that are
+referenced from it, have been synced to the CDN yet. Which means the CSS files
+may need to parsed over and over again until the images have been synced.
+
+It seems this processor is suited for optimization. It uses the cssutils
+Python module, which validates every CSS property. This is an enormous slow-
+down: on a 2.66 GHz Core 2 Duo, it causes 100% CPU usage every time it runs.
+This module also seems to suffer from rather massive memory leaks. Memory
+usage can easily top 30 MB on Mac OS X where it would never go over 17 MB
+without this processor!
+
 This processor will replace all URLs in CSS files with references to their
 counterparts on the CDN. There are a couple of important gotchas to use this
 processor module:
