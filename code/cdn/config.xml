@@ -27,7 +27,7 @@
     -->
     <rule for="drupal" label="JS, CSS, images, fonts and Flash">
       <filter>
-        <paths>misc:profiles:modules:sites/all:sites/default:sites/YOURSITE.COM</paths>
+        <paths>misc:profiles:modules:themes:sites/all:sites/default:sites/YOURSITE.COM</paths>
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:otf:ttf:swf</extensions>
         <ignoredDirs>CVS:.svn</ignoredDirs>
       </filter>
