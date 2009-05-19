@@ -219,7 +219,6 @@ function cdn_requirements($phase) {
             if ($db !== FALSE) {
               $sql = "SELECT COUNT(*) FROM pipeline_queue";
               $stmt = $db->prepare($sql);
-              dvm($stmt);
               $stmt->execute();
               $result = $stmt->fetchAll();
               $pipeline_queue_count = $result[0][0];
