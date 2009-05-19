@@ -2,15 +2,15 @@
 <config>
   <!-- Sources -->
   <sources>
-    <source name="drupal" directory="/htdocs/drupal" />
-    <source name="downloads" directory="/Users/wimleers/Downloads" />
+    <source name="drupal" scanPath="/htdocs/drupal" documentRoot="/htdocs" basePath="/drupal/" />
+    <source name="downloads" scanPath="/Users/wimleers/Downloads" />
   </sources>
 
   <!-- Servers -->
   <servers>
     <server name="origin pull cdn" transporter="symlink_or_copy">
-      <location>/htdocs/drupal/staticfiles</location>
-      <url>http://mydomain.cdn.com/staticfiles</url>
+      <location>/htdocs/static.example.com</location>
+      <url>http://localhost/static.example.com</url>
     </server>
     <server name="ftp push cdn" transporter="ftp" maxConnections="5">
       <host>localhost</host>

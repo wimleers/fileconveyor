@@ -23,6 +23,12 @@ class CSSURLUpdater(Processor):
 
 
     def run(self):
+        # Step 0: ensure that the document_root and base_path variables are
+        # set. If the file that's being processed was inside a source that has
+        # either one or both not set, then this processor can't run.
+        if self.document_root is None or self.base_path is None:
+            raise DocumentRootAndBasePathRequiredException
+
         # We don't rename the file, so we can use the default output file.
 
         cssutils.log.setLog(logging.getLogger(".".join([self.parent_logger, "CSSURLUpdater"])))

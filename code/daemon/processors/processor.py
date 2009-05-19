@@ -9,6 +9,7 @@ class ProcessorError(Exception): pass
 class InvalidCallbackError(ProcessorError): pass
 class FileIOError(ProcessorError): pass
 class RequestToRequeueException(ProcessorError): pass
+class DocumentRootAndBasePathRequiredException(ProcessorError): pass
 
 
 import threading
@@ -159,11 +160,14 @@ class ProcessorChain(threading.Thread):
                     self.logger.warning("The processor '%s' has requested to requeue the file '%s'. Message: %s." % (processor_classname, self.input_file, e))
                     self.error_callback(self.input_file)
                     return
+                except DocumentRootAndBasePathRequiredException, e:
+                    self.logger.warning("The processor '%s' has skipped processing the file '%s' because the document root and/or base path are not set for the source associated with the file." % (processor_classname))
                 except Exception, e:
                     self.logger.error("The processsor '%s' has failed while processing the file '%s'. Message: %s." % (processor_classname, self.input_file, e))
                     self.error_callback(self.input_file)
                     return
-                self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
+                else:
+                    self.logger.debug("The processor '%s' has finished processing the file '%s', the output file is '%s'." % (processor_classname, self.input_file, self.output_file))
 
             # Delete the old output file if applicable. But never ever remove
             # the input file!

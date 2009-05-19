@@ -74,16 +74,10 @@ class Config(object):
             elif not os.path.exists(scan_path):
                 self.logger.error("The %s scan path ('%s') does not exist." % (name, scan_path))
                 self.errors += 1
-            if document_root is None:
-                self.logger.error("The %s document root is not configured." % (name))
-                self.errors += 1                
-            elif not os.path.exists(document_root):
+            if not document_root is None and not os.path.exists(document_root):
                 self.logger.error("The %s document root ('%s') does not exist." % (name, document_root))
                 self.errors += 1
-            if base_path is None:
-                self.logger.error("The %s base path is not configured." % (name))
-                self.errors += 1                
-            elif base_path[0] != "/" or base_path[-1] != "/":
+            if not base_path is None and (base_path[0] != "/" or base_path[-1] != "/"):
                 self.logger.error("The %s base path ('%s') is invalid. It should have both leading and trailing slashes." % (name, base_path))
                 self.errors += 1
             if not document_root is None and not base_path is None:
