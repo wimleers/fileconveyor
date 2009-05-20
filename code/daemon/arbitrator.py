@@ -407,7 +407,10 @@ class Arbitrator(threading.Thread):
                         # be different from the input file's base name due to
                         # processing.
                         self.dbcur.execute("SELECT transported_file_basename FROM synced_files WHERE input_file=?", (input_file, ))
-                        transport_file_basename = self.dbcur.fetchone()[0]
+                        result = self.dbcur.fetchone()
+
+                    if event == FSMonitor.DELETED and not result is None:
+                        transport_file_basename = result[0]
                         # The output file that should be transported doesn't
                         # exist anymore, because it was deleted. So we create
                         # a filename that is the same as the original, except
@@ -466,7 +469,7 @@ class Arbitrator(threading.Thread):
             document_root = None
             base_path     = None
             if self.config.sources[rule["source"]].has_key("document_root"):
-                document_root = self.config.sources[rule["source"]]["document_root"],
+                document_root = self.config.sources[rule["source"]]["document_root"]
             if self.config.sources[rule["source"]].has_key("base_path"):
                 base_path = self.config.sources[rule["source"]]["base_path"]
             processor_chain = self.processor_chain_factory.make_chain_for(input_file,
