@@ -209,6 +209,33 @@ AHAH Asynchronous HTML And HTTP.
 \end_layout
 
 \begin_layout Description
+base
+\begin_inset space ~
+\end_inset
+
+path The relative path in a URL that defined the root of a web site.
+ E.g.
+ if the site 
+\family typewriter
+http://yoursite.com/
+\family default
+ is where a web site lives, then the base path is 
+\family typewriter
+/
+\family default
+.
+ If you've got another web site at 
+\family typewriter
+http://yoursite.com/subsite/
+\family default
+, then the base path for that web site is 
+\family typewriter
+/subsite/
+\family default
+.
+\end_layout
+
+\begin_layout Description
 browser A web browser is an application that runs on end user computers
  to view web sites (which live on the World Wide Web).
  Examples are Firefox, Internet Explorer, Safari and Opera.
@@ -225,6 +252,20 @@ CDN A content delivery network (CDN) is a collection of web servers distributed
 \begin_layout Description
 component A component of a web page, this can be a CSS style sheet, a JavaScript
  file, an image, a font, a movie file, etc.
+\end_layout
+
+\begin_layout Description
+document
+\begin_inset space ~
+\end_inset
+
+root The absolute path on the file system of the web server that corresponds
+ with the root direcory of a web site.
+ This is typically something like 
+\family typewriter
+/htdocs/yoursite.com
+\family default
+.
 \end_layout
 
 \begin_layout Description
@@ -3444,8 +3485,8 @@ As said before, the ability to use either push or pull CDNs is an absolute
 \end_layout
 
 \begin_layout Itemize
-Easy to use: the configuration file is the interface, so it should speak
- for itself
+Easy to use: the configuration file is the interface and explain itself
+ just by its structure
 \end_layout
 
 \begin_layout Itemize
@@ -3485,7 +3526,8 @@ Design for reuse wherever possible
 \end_layout
 
 \begin_layout Itemize
-Low resource consumption
+Low resource consumption (except for processors, which may be very demanding
+ because of their nature)
 \end_layout
 
 \begin_layout Itemize
@@ -3602,7 +3644,22 @@ sources
 : indicate each data source, in which new, modified and deleted files will
  be detected recursively.
  Each source has a name (that we will reference later in the configuration
- file) and of course a path.
+ file) and of course a 
+\family typewriter
+scanPath
+\family default
+, which defines the root directory within which new/modified/deleted files
+ will be detected.
+ It can also optionally have the 
+\family typewriter
+documentRoot
+\family default
+ and 
+\family typewriter
+basePath
+\family default
+ attributes, which may be necessary for some processors that perform magic
+ with URLs.
 \end_layout
 
 \begin_layout Enumerate
@@ -3776,12 +3833,28 @@ status open
 
 \begin_layout Plain Layout
 
-    <source name="drupal" directory="/htdocs/drupal" />
+    <source name="drupal" scanPath="/htdocs/drupal" documentRoot=
+\begin_inset Quotes erd
+\end_inset
+
+/htdocs
+\begin_inset Quotes erd
+\end_inset
+
+ basePath=
+\begin_inset Quotes erd
+\end_inset
+
+/drupal/
+\begin_inset Quotes erd
+\end_inset
+
+ />
 \end_layout
 
 \begin_layout Plain Layout
 
-    <source name="downloads" directory="/Users/wimleers/Downloads" />
+    <source name="downloads" scanPath="/Users/wimleers/Downloads" />
 \end_layout
 
 \begin_layout Plain Layout
@@ -3915,6 +3988,19 @@ status open
 \begin_layout Plain Layout
 
         <processor name="yui_compressor.YUICompressor" />
+\end_layout
+
+\begin_layout Plain Layout
+
+		<processor name=
+\begin_inset Quotes erd
+\end_inset
+
+link_updater.CSSURLUpdater
+\begin_inset Quotes erd
+\end_inset
+
+ />
 \end_layout
 
 \begin_layout Plain Layout
@@ -4163,8 +4249,8 @@ matches()
  There are 5 different conditions you can set.
  The last two should be used with care, because they are a lot slower than
  the first three.
- Especially the last one can be very slow, because it requires a call back
- to the kernel, to access the file system.
+ Especially the last one can be very slow, because it must access the file
+ system.
 \begin_inset Newline newline
 \end_inset
 
@@ -4846,7 +4932,7 @@ reference "lst:Processors-YUICompressor"
 
 \begin_layout Standard
 Processors are allowed to make any change they want to the file's contents.
- They are also allowed to change the basename of the input file, but they're
+ They are also allowed to change the base name of the input file, but they're
  not allowed to change its path.
  This measure was taken to reduce the amount of data that will need to be
  stored to know which file is stored where exactly.
@@ -4855,6 +4941,19 @@ Processors are allowed to make any change they want to the file's contents.
 by convention
 \emph default
 , because in Python it's impossible to truly enforce anything.
+ If you do change the path, the file will sync just fine, but it will be
+ impossible to delete the old version of a modified file, unless it results
+ in the exact same path and base name each time it runs through the processor
+ chain.
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+Processor
+\family default
+ class accepts a parent logger which subclasses can optionally use to perform
+ logging.
 \end_layout
 
 \begin_layout Standard
@@ -5027,6 +5126,52 @@ ProcessorChains
 ProcessorChain
 \family default
  also supports logging and accepts a parent logger.
+\end_layout
+
+\begin_layout Standard
+There are two special exceptions Processor subclasses can throw:
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+RequestToRequeueException
+\family default
+: when raised, the 
+\family typewriter
+ProcessorChain
+\family default
+ will stop processing this file and will pretend the processing failed.
+ This effectively means that the file will be reprocesse later.
+ A sample use case is the 
+\family typewriter
+CSSURLUpdater
+\family default
+ class
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:daemon:modules:link_updater.py"
+
+\end_inset
+
+, in which the URLs of a CSS file must be updated to point to the corresponding
+ URLs of the files on the CDN.
+ But if not all of these files have been synced, that's impossible.
+ So it must be retried later.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+DocumentRootAndBasePathRequiredException
+\family default
+: when raised, the 
+\family typewriter
+ProcessorChain
+\family default
+ will stop applying the processor that raised this exception to this file,
+ because the source to which this file belongs, did not have these attributes
+ set and therefor it cannot be applied.
 \end_layout
 
 \begin_layout Standard
@@ -5298,6 +5443,175 @@ KeepMetadataAndFilename
 Max
 \family default
 , but keeps JPEG metadata and the original filename (no GIF optimization)
+\end_layout
+
+\begin_layout Subsubsection*
+link_updater.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:daemon:modules:link_updater.py"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thanks to this processor module, it is possible to serve CSS files from
+ a CDN while updating the URLs in the CSS file to reference the new URLs
+ of these files, that is, the URLs of the synced files.
+ It provides a sole processor class: 
+\family typewriter
+CSSURLUpdater
+\family default
+.
+ This processor class should 
+\emph on
+only 
+\emph default
+be used when 
+\emph on
+either
+\emph default
+ of these conditions are true:
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+PDF rendering is very messy here – all the TypeWriter URLs confuse LaTeX
+ … find a work-around
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+The base path of the URLs changes and relative URLs that are relative to
+ the document root.
+\begin_inset Newline newline
+\end_inset
+
+For example, 
+\family typewriter
+http://example.com/static/css/style.css
+\family default
+ becomes
+\family typewriter
+ http://cdn.com/example.com/static/css/style.css 
+\family default
+and its referenced file 
+\family typewriter
+http://example.com/static/images/background.png
+\family default
+ becomes 
+\family typewriter
+http://cdn.com/example.com/static/images/background.png
+\family default
+ after syncing.
+ If 
+\family typewriter
+style.css
+\family default
+ referenced 
+\family typewriter
+background.png
+\family default
+ through the relative URL 
+\family typewriter
+/static/images/background.png
+\family default
+, then it must use 
+\family typewriter
+CSSURLUpdater
+\family default
+.
+ Otherwise this relative URL would become invalid.
+\end_layout
+
+\begin_layout Itemize
+The base names of the referenced files changes.
+\begin_inset Newline newline
+\end_inset
+
+For example,
+\family typewriter
+ http://example.com/static/css/style.css
+\family default
+ becomes 
+\family typewriter
+http://cdn.com/example.com/static/css/style_1242440815.css
+\family default
+ and its referenced file
+\family typewriter
+ http://example.com/static/images/background.png
+\family default
+ becomes 
+\family typewriter
+http://cdn.com/static/images/background_1242440827.png
+\family default
+ after syncing.
+ Then it must always use 
+\family typewriter
+CSSURLUpdater
+\family default
+.
+ Otherwise the URL would become invalid, as the file's base name has changed.
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+CSSURLUpdater
+\family default
+ uses the cssutils
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cssutils"
+
+\end_inset
+
+ Python module to parse CSS files.
+ This unfortunately also negatively impacts its performance, because it
+ validates the CSS file while tokenizing it.
+ But as this will become open source, others will surely improve this.
+ A possibility is to use regular expressions instead to filter out the URLs.
+\end_layout
+
+\begin_layout Standard
+All 
+\family typewriter
+CSSURLUpdater
+\family default
+ does is resolving relative URLs (relative to the CSS file or relative to
+ the document root) to absolute paths on the file system , then looking
+ up the corresponding URLs on the CDN and placing those instead in the CSS
+ file.
+ If one of the referenced files cannot be found on the file system, this
+ URL remains unchanged.
+ If one of the referenced files has not yet been synced to the CDN, then
+ a 
+\family typewriter
+RequestToRequeueException
+\family default
+ exception will be raised (see section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:daemon:modules:processor.py"
+
+\end_inset
+
+) so that another attempt will be made later, when hopefully all referenced
+ files have been synced.
+\begin_inset Newline newline
+\end_inset
+
+For details, see the daemon's documentation.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -5650,7 +5964,7 @@ key "django-storages"
 \end_layout
 
 \begin_deeper
-\begin_layout Itemize
+\begin_layout Enumerate
 
 \family typewriter
 DatabaseStorage
@@ -5659,7 +5973,7 @@ DatabaseStorage
  PostgreSQL, SQLite and Oracle)
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 
 \family typewriter
 MogileFSStorage
@@ -5678,7 +5992,31 @@ key "MogileFS"
  is an open source distributed file system
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
+
+\family typewriter
+CouchDBStorage
+\family default
+; Apache
+\begin_inset space ~
+\end_inset
+
+CouchDB
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "CouchDB"
+
+\end_inset
+
+ is a distributed, fault-tolerant and schema-free document-oriented database
+ accessible via a RESTful HTTP/JSON API.
+\end_layout
+
+\begin_layout Enumerate
 
 \family typewriter
 S3Storage
@@ -5686,7 +6024,7 @@ S3Storage
 ; uses the official Amazon S3 Python module
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 
 \family typewriter
 S3BotoStorage
@@ -5727,7 +6065,7 @@ key "Amazon CloudFront"
 
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Enumerate
 
 \family typewriter
 FTPStorage
@@ -5753,10 +6091,10 @@ key "ftplib"
 \end_deeper
 \begin_layout Standard
 For the last two, transporters are available.
- The first two are not so widely used and thus not yet implemented, although
+ The first three are not so widely used and thus not yet implemented, although
  it'd be very easy to support them, exactly because all that is necessary,
- is to write two thin wrappers.
- The third is not very meaningful to use, since the fourth is better (better
+ is to write thin wrappers.
+ The fourth is not very meaningful to use, since the fifth is better (better
  maintained and better performing).
 \end_layout
 
@@ -5962,6 +6300,16 @@ The maintainer was very receptive to these patches and replied a mere 23
 \begin_layout Quote
 davidbgk@wimleers Impressive patches, I'll merge your work asap.
  Thanks for contributing! Interesing bachelor thesis :)
+\end_layout
+
+\begin_layout Standard
+The patches were submitted on May 14, 2009.
+ The first and third patch were committed on May 17, 2009.
+ The second patch needs a bit more work (more configurable, less hard coded,
+ which it already was though).
+ The fact that another new storage system was also added (Apache CouchDB)
+ seems to indicate that I made a good choice: this project seems to be pretty
+ active and is gaining attention.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -6494,7 +6842,12 @@ retry
 \end_layout
 
 \begin_layout Enumerate
-sleep 0.1 second
+allow retry (move files from the 'failed files' persistent list to the 'pipeline
+' persistent queue)
+\end_layout
+
+\begin_layout Enumerate
+sleep 0.2 seconds
 \end_layout
 
 \end_deeper
@@ -6935,6 +7288,26 @@ peek()
 \end_layout
 
 \begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+allow retry
+\begin_inset Quotes erd
+\end_inset
+
+ method allows failed files (in the 'failed files' persistent list) to be
+ retried, by adding them back to the pipeline queue.
+ This happens whenever the pipeline queue is getting empty, or every 30
+ seconds.
+ This ensures processors that use the 
+\family typewriter
+RequestToRequeueException
+\family default
+ exception can retry.
+\end_layout
+
+\begin_layout Standard
 The only truly weak link is unavoidable: if the daemon crashes somewhere
  between having performed the callback from 
 \family typewriter
@@ -6963,11 +7336,26 @@ All tests were performed on the local network, i.e.
  transporters, and since they worked, the results should apply to those
  as well.
  It doesn't and shouldn't matter which transporter is being used.
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+needsupdating
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 At all times, the memory usage remained below 17 MB on Mac OS X and below
- 7 MB on Linux.
+ 7 MB on Linux (unless the update_linker processor module was used, in which
+ case it leaks memory like a madman – the 
+\family typewriter
+cssutils
+\family default
+ Python module is to blame).
  A backlag of more than 10,000 files was no problem.
  Synchronizing 10 GB of files was no problem.
  I also tried alot of variations in the configuration and all of them worked
@@ -6988,14 +7376,6 @@ Files should be moved from the discover queue to the pipeline queue in a
  application before files are moved to the pipeline queue.
  In fact, the discover queue could be eliminitated altogether thanks to
  this.
-\end_layout
-
-\begin_layout Itemize
-Files that must be retried should be retried immediately at least once:
- sometimes, there are random connection errors.
- After that, they should be retried every X minutes, with a maximum of Y
- tries.
- X and Y should be configurable.
 \end_layout
 
 \begin_layout Itemize
@@ -7065,6 +7445,25 @@ Store characteristics of the operations, such as TTS (Time-To-Sync), so
  needs.
 \end_layout
 
+\begin_layout Itemize
+Allow server-specific processor chains (i.e.
+ run the processor chain once for each server the file will be synced to).
+ This allows you to have CSS files that contain URLs rewritten to that specific
+ server.
+ Right now, you can only have 
+\emph on
+one 
+\emph default
+processor chain and therefor the CSS file will always reference the same
+ URLs, which may refer to another server.
+\end_layout
+
+\begin_layout Itemize
+Cache the latest configuration file and compare with the new one.
+ If changes occurred to any of the rules, it should detect them on its own
+ and do the necessary resyncing.
+\end_layout
+
 \begin_layout Standard
 \begin_inset Newpage pagebreak
 \end_inset
@@ -7106,6 +7505,10 @@ Python
 
 \begin_layout Itemize
 SQL
+\end_layout
+
+\begin_layout Itemize
+regular expressions
 \end_layout
 
 \end_deeper
@@ -7242,6 +7645,17 @@ django-storages
 \begin_inset CommandInset citation
 LatexCommand cite
 key "django-storages"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+cssutils 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cssutils"
 
 \end_inset
 
@@ -9031,6 +9445,31 @@ http://www.lcdf.org/gifsicle/
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "cssutils"
+
+\end_inset
+
+
+\emph on
+cssutils
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://cthedot.de/cssutils/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "YUI Compressor"
 
 \end_inset
@@ -9375,6 +9814,31 @@ status collapsed
 \begin_layout Plain Layout
 
 http://www.danga.com/mogilefs/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "CouchDB"
+
+\end_inset
+
+
+\emph on
+Apache CouchDB
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://couchdb.apache.org/
 \end_layout
 
 \end_inset
