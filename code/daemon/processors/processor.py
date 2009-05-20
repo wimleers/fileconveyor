@@ -163,7 +163,7 @@ class ProcessorChain(threading.Thread):
                 except DocumentRootAndBasePathRequiredException, e:
                     self.logger.warning("The processor '%s' has skipped processing the file '%s' because the document root and/or base path are not set for the source associated with the file." % (processor_classname, self.input_file))
                 except Exception, e:
-                    self.logger.error("The processsor '%s' has failed while processing the file '%s'. Message: %s." % (processor_classname, self.input_file, e))
+                    self.logger.error("The processsor '%s' has failed while processing the file '%s'. Exception class: %s. Message: %s." % (processor_classname, self.input_file, e.__class__, e))
                     self.error_callback(self.input_file)
                     return
                 else:
