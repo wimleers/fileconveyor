@@ -465,9 +465,9 @@ class Arbitrator(threading.Thread):
             # Start the processor chain.
             document_root = None
             base_path     = None
-            if not self.config.sources[rule["source"]].has_key("document_root"):
+            if self.config.sources[rule["source"]].has_key("document_root"):
                 document_root = self.config.sources[rule["source"]]["document_root"],
-            if not self.config.sources[rule["source"]].has_key("base_path"):
+            if self.config.sources[rule["source"]].has_key("base_path"):
                 base_path = self.config.sources[rule["source"]]["base_path"]
             processor_chain = self.processor_chain_factory.make_chain_for(input_file,
                                                                           rule["processorChain"],
