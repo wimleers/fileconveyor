@@ -10,7 +10,7 @@
   <servers>
     <server name="origin pull cdn" transporter="symlink_or_copy">
       <location>/htdocs/static.example.com</location>
-      <url>http://localhost/static.example.com</url>
+      <url>http://localhost/static.example.com/</url>
     </server>
     <server name="ftp push cdn" transporter="ftp" maxConnections="5">
       <host>localhost</host>
@@ -35,7 +35,7 @@
         <processor name="unique_filename.Mtime" />
       </processorChain>
       <destinations>
-        <destination server="origin pull cdn" />
+        <destination server="origin pull cdn" path="static" />
         <destination server="ftp push cdn" path="static" />
       </destinations>
     </rule>
