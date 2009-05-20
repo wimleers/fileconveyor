@@ -65,7 +65,11 @@ class PathScanner(object):
         Returns (path, filename, mtime, is_dir) tuples.
         """
 
-        filenames = os.listdir(path)
+        try:
+            filenames = os.listdir(path)
+        except os.error:
+            return
+
         for filename in filenames:
             try:
                 st = os.stat(os.path.join(path, filename))
