@@ -7,7 +7,6 @@ __license__ = "GPL"
 from processor import *
 import os
 import os.path
-from cssutils import log as cssutils_log
 from cssutils import CSSParser
 from cssutils.css import CSSStyleSheet
 from cssutils import getUrls
@@ -36,8 +35,7 @@ class CSSURLUpdater(Processor):
 
         # We don't rename the file, so we can use the default output file.
 
-        cssutils_log.setLog(logging.getLogger(".".join([self.parent_logger, "CSSURLUpdater"])))
-        parser = CSSParser()
+        parser = CSSParser(log=None, loglevel=logging.critical)
         sheet = parser.parseFile(self.input_file)
 
         # Step 1: ensure the file has URLs. If it doesn't, we can stop the
