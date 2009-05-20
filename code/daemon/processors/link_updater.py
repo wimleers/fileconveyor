@@ -7,7 +7,12 @@ __license__ = "GPL"
 from processor import *
 import os
 import os.path
-import cssutils
+from cssutils import log as cssutils_log
+from cssutils import CSSParser
+from cssutils.css import CSSStyleSheet
+from cssutils import getUrls
+from cssutils import replaceUrls
+
 import logging
 import sys
 import sqlite3
@@ -31,28 +36,28 @@ class CSSURLUpdater(Processor):
 
         # We don't rename the file, so we can use the default output file.
 
-        cssutils.log.setLog(logging.getLogger(".".join([self.parent_logger, "CSSURLUpdater"])))
-        parser = cssutils.CSSParser()
+        cssutils_log.setLog(logging.getLogger(".".join([self.parent_logger, "CSSURLUpdater"])))
+        parser = CSSParser()
         sheet = parser.parseFile(self.input_file)
 
         # Step 1: ensure the file has URLs. If it doesn't, we can stop the
         # processing.
         url_count = 0
-        for url in cssutils.getUrls(sheet):
+        for url in getUrls(sheet):
             url_count +=1
             break
         if url_count == 0:
             return self.input_file
 
         # Step 2: resolve the relative URLs to absolute paths.
-        cssutils.replaceUrls(sheet, self.resolveToAbsolutePath)
+        replaceUrls(sheet, self.resolveToAbsolutePath)
 
         # Step 3: verify that each of these files has been synced.
         synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
         self.dbcon = sqlite3.connect(synced_files_db)
         self.dbcur = self.dbcon.cursor()
         all_synced = True
-        for urlstring in cssutils.getUrls(sheet):
+        for urlstring in getUrls(sheet):
             # Skip absolute URLs.
             if urlstring.startswith("http://") or urlstring.startswith("https://"):
                 continue
@@ -72,7 +77,7 @@ class CSSURLUpdater(Processor):
                 cdn_url = result[0]
 
         # Step 4: resolve the absolute paths to CDN URLs.
-        cssutils.replaceUrls(sheet, self.resolveToCDNURL)
+        replaceUrls(sheet, self.resolveToCDNURL)
 
         # Step 5: write the updated CSS to the output file.
         f = open(self.output_file, 'w')
