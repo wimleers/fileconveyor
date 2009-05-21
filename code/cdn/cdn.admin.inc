@@ -26,8 +26,8 @@ function cdn_admin_settings_form() {
     ),
     '#options' => array(
       CDN_DISABLED => t('Disabled'),
+      CDN_DEBUG    => t('Debug mode'),
       CDN_ENABLED  => t('Enabled'),
-      CDN_DEBUG    => t('Debug'),
     ),
     '#default_value' => variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED),
   );
