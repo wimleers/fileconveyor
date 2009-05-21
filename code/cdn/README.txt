@@ -28,6 +28,14 @@ Hasselt University [3].
 [2] http://uhasselt.be/
 
 
+Supported CDNs
+--------------
+- Basic mode: any Origin Pull CDN.
+- Advanced mode: any Origin Pull CDN and any push CDN that supports FTP.
+  Support for other transfer protocols is welcomed and encouraged: your
+  patches are welcome! Amazon S3 and Amazon CloudFront are also supported.
+
+
 Installation
 ------------
 1) Apply the Drupal core patch (patches/drupal.patch). Instructions can be
@@ -58,5 +66,5 @@ Author
 ------
 Wim Leers ~ http://wimleers.com/
 
-This application was written as part of the bachelor thesis of Wim Leers at
+This module was written as part of the bachelor thesis of Wim Leers at
 Hasselt University.
