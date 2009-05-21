@@ -18,6 +18,13 @@ Transporters are simple threaded abstractions around Django storage systems.
 For a detailed description of the innards of the daemon, see my bachelor
 thesis text (find it via http://wimleers.com/tags/bachelor-thesis).
 
+This application was written as part of the bachelor thesis [1] of Wim Leers
+at Hasselt University [2].
+
+
+[1] http://wimleers.com/tags/bachelor-thesis
+[2] http://uhasselt.be/
+
 
 <BLINK>IMPORTANT WARNING</BLINK>
 --------------------------------
@@ -462,5 +469,5 @@ Author
 ------
 Wim Leers ~ http://wimleers.com/
 
-Written as part of a bachelor thesis at the School for Information Technology
-of the Transnational University of Limburg.
+This application was written as part of the bachelor thesis of Wim Leers at
+Hasselt University.

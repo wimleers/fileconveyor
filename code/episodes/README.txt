@@ -33,8 +33,8 @@ The goal of this framework is to become an industry standard. And it's likely
 that it'll manage to do just that, because the author and driving force behind
 it is Steve Souders himself. Drupal is the first CMF/CMS to support it.
 
-Written as part of the bachelor thesis [2] of Wim Leers at the university of
-Hasselt, Belgium [3].
+This module was written as part of the bachelor thesis [2] of Wim Leers at
+Hasselt University [3].
 
 [1] http://stevesouders.com/episodes/
 [2] http://wimleers.com/tags/bachelor-thesis
@@ -50,9 +50,9 @@ Dependencies
 Installation
 ------------
 1) Place this module directory in your "modules" folder (this will usually be
-"sites/all/modules/"). Don't install your module in Drupal core's "modules"
-folder, since that will cause problems and is bad practice in general. If
-"sites/all/modules" doesn't exist yet, just create it.
+   "sites/all/modules/"). Don't install your module in Drupal core's "modules"
+   folder, since that will cause problems and is bad practice in general. If
+   "sites/all/modules" doesn't exist yet, just create it.
 
 2) Enable the module.
 
@@ -129,5 +129,5 @@ Author
 ------
 Wim Leers ~ http://wimleers.com/
 
-Written as part of a bachelor thesis at the School for Information Technology
-of the Transnational University of Limburg.
+This application was written as part of the bachelor thesis of Wim Leers at
+Hasselt University.
