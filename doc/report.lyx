@@ -593,6 +593,93 @@ ns are commonplace).
 \end_layout
 
 \begin_layout Section
+The State of Drupal's page loading performance
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:The-State-of-Drupal"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So you might expect that Drupal has already invested heavily in improving
+ its page loading performance.
+ Unfortunately, that's not true.
+ Hopefully this bachelor thesis will help to gain some developer attention.
+\end_layout
+
+\begin_layout Standard
+Because of this, the article I wrote more than a year ago is still completely
+ applicable.
+ It doesn't make much sense to just rephrase the article here in my thesis
+ text, so instead I'd like to forward you to that article
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "drupal-performance-article"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+I've repeated the remaining problems here for the sake of clarity:
+\end_layout
+
+\begin_layout Itemize
+Static files (CSS, JavaScript, images) should be served with proper HTTP
+ headers so that the browser can cache them and reduce the number of HTTP
+ requests for each page load.
+ Especially the Expires header is important here.
+\end_layout
+
+\begin_layout Itemize
+To allow for CDN integration in Drupal, the ability to alter file URLs dynamical
+ly is needed, but this isn't supported yet.
+\end_layout
+
+\begin_layout Itemize
+CSS and JS files should be served GZIPped when the browser supports it.
+\end_layout
+
+\begin_layout Itemize
+JavaScript files should be at the bottom (just before the closing 
+\family typewriter
+</body>
+\family default
+ tag) whenever possible.
+\end_layout
+
+\begin_layout Itemize
+JavaScript files should be minified.
+\end_layout
+
+\begin_layout Itemize
+Drupal should provide a mechanism to render the same content in multiple
+ formats: (X)HTML (for the regular browser), partial HTML or JSON (for AHAH),
+ XML (for AJAX) and so on.
+ You should be able to set transformations, including cacheability and GZIPabili
+ty per format.
+\end_layout
+
+\begin_layout Itemize
+CSS sprites should be generated automatically.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
 Key Properties of a CDN
 \begin_inset CommandInset label
 LatexCommand label
@@ -2368,37 +2455,6 @@ reference "sec:Episodes.module"
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
-The State of Drupal's page loading performance
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:The-State-of-Drupal"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-what to do with this?
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -5570,17 +5626,18 @@ MD5
 
 \begin_layout Standard
 This processor is useful if you want to ensure that files have unique filenames,
- so that they can be given far future Expires headers
-\begin_inset Note Note
-status open
+ so that they can be given far future Expires headers (see section
+\begin_inset space ~
+\end_inset
 
-\begin_layout Plain Layout
-link to the beginning of the text?
-\end_layout
+
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sec:The-State-of-Drupal"
 
 \end_inset
 
-.
+).
 \end_layout
 
 \begin_layout Subsubsection*
@@ -9002,6 +9059,31 @@ status collapsed
 \begin_layout Plain Layout
 
 http://drupal.org/project/usage/drupal
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "drupal-performance-article"
+
+\end_inset
+
+
+\emph on
+Improving Drupal's page loading performance
+\emph default
+, Wim Leers, January 2008, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://wimleers.com/article/improving-drupals-page-loading-performance
 \end_layout
 
 \end_inset
