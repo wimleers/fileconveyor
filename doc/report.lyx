@@ -2467,7 +2467,7 @@ actual
 You could also choose to not enable the Episodes Server module and use an
  external web service to generate reports, but for now, none of these services
  exist yet.
- That's a gap that will probably be filled in the next few years by the
+ That's a void that will probably be filled in the next few years by the
  business world.
 \end_layout
 
@@ -3154,7 +3154,7 @@ Screenshots
 placement H
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
@@ -6574,14 +6574,14 @@ Putting it all together: arbitrator.py
 \end_layout
 
 \begin_layout Subsubsection
-The Big Picture
+The big picture
 \end_layout
 
 \begin_layout Standard
 The arbitrator is what links together all Python modules I've described
  in the previous section.
  Here's a hierarchical overview, so you get a better understanding of The
- Big Picture:
+ big picture:
 \end_layout
 
 \begin_layout Standard
@@ -6607,7 +6607,7 @@ status collapsed
 \begin_inset Caption
 
 \begin_layout Plain Layout
-The Big Picture
+The big picture
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:daemonThe-Big-Picture"
@@ -6671,7 +6671,7 @@ Transporter
 \end_layout
 
 \begin_layout Standard
-Now that you have an insight in the Big Picture, let's see how exactly 
+Now that you have an insight in the big picture, let's see how exactly 
 \family typewriter
 Arbitrator
 \family default
@@ -6934,6 +6934,9 @@ reference "fig:daemon:flowchart-pipeline"
 \end_inset
 
  while reading.
+ Note that this figure doesn't contain every detail: it is intended to help
+ you gain some insight into how the daemon works, not how every detail is
+ implemented.
 \end_layout
 
 \begin_layout Standard
@@ -7336,16 +7339,6 @@ All tests were performed on the local network, i.e.
  transporters, and since they worked, the results should apply to those
  as well.
  It doesn't and shouldn't matter which transporter is being used.
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-needsupdating
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
@@ -7482,6 +7475,749 @@ name "sec:CDN-integration"
 
 \end_layout
 
+\begin_layout Standard
+It should be obvious by now that we still need a module to integrate Drupal
+ with a CDN, as Drupal doesn't provide such functionality on its own – if
+ it did, then this bachelor thesis would be titled differently.
+ This is the end of the long journey towards supporting the simplest and
+ the most complex CDN or static file server setups one can make.
+ Fortunately, this is all fairly trivial, except for maybe the necessary
+ Drupal core patch.
+\end_layout
+
+\begin_layout Subsection
+Goals
+\end_layout
+
+\begin_layout Standard
+The daemon I wrote is not necessary for Origin Pull CDNs.
+ So this module should support those through a simple UI.
+ On the other hand, we must also make it easy to use the daemon in a Drupal
+ site.
+ Let's call the former 
+\emph on
+basic mode
+\emph default
+ and the latter
+\emph on
+ advanced mode
+\emph default
+, thereby indicating that the latter is more complex to set up (i.e.
+ it requires you to set up the daemon).
+ So, let's look at the goals:
+\end_layout
+
+\begin_layout Itemize
+shared functionality
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+ability to show per-page statistics: number of files on the page, number
+ of files served from the CDN
+\end_layout
+
+\begin_layout Itemize
+status report shows if CDN integration is active and displays as an warning
+ if it is disabled or in debug mode (to stress the importance of having
+ it enabled)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+basic mode
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+enter the CDN URL and it'll be used in file URLs automatically
+\end_layout
+
+\begin_layout Itemize
+ability to only use the CDN for files with certain extensions
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+advanced mode
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+enter the absolute path to the synced files database and then file URLs
+ will be looked up from there automatically
+\end_layout
+
+\begin_layout Itemize
+status report: check if daemon is running, if not, display the report as
+ an error
+\end_layout
+
+\begin_layout Itemize
+status report: number of synced files, number of files in the pipeline,
+ number of files waiting to enter the pipeline
+\end_layout
+
+\begin_layout Itemize
+per-page statistics: show from which destination the file is being served
+\end_layout
+
+\begin_layout Itemize
+per-page statistics: show the total and average time spent on querying the
+ synces files database
+\end_layout
+
+\begin_layout Itemize
+ability to decide from which destination a file will be served (if multiple
+ destinations for a file are available) based on user properties (user role,
+ language, location) or whatever other property
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Drupal core patch
+\end_layout
+
+\begin_layout Standard
+I had the chance to speak to Andrew 
+\begin_inset Quotes eld
+\end_inset
+
+drewish
+\begin_inset Quotes erd
+\end_inset
+
+ Morton at DrupalCon DC about this.
+ He is the one who managed to get his proposed Drupal File API patches committed
+ to the current development version of Drupal (which will become Drupal
+ 7).
+ So he definitely is the person to go to for all things concerning files
+ in Drupal right now.
+ I explained to him the need for a unified file URL generation/alteration
+ mechanism and he immediately understood and agreed.
+\end_layout
+
+\begin_layout Standard
+My patch will be against Drupal 6, but the file URL generation mechanism
+ is identical in Drupal 7.
+ So, my patch should be easy to port to Drupal 7.
+\end_layout
+
+\begin_layout Standard
+Drupal already has one function to generate file URLs: 
+\family typewriter
+file_create_url($path)
+\family default
+.
+ Unfortunately, this function is only designed to work for files that have
+ been uploaded by users or are generated by modules (e.g.
+ transformations of images).
+ And now the bad news: there is no function through which the URLs for the
+ other files (the ones that aren't uploaded but are shipped with Drupal
+ core and modules and themes) are generated.
+ To be honest, the current method for generating these URLs is very ugly,
+ although very simple: prepend the base path to the relative file path.
+ So if you want to serve the file 
+\family typewriter
+misc/jquery.js
+\family default
+ (which is part of Drupal core), then you would write the following code
+ to generate an URL for it:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize}"
+inline true
+status open
+
+\begin_layout Plain Layout
+
+$url = base_path() .
+ 'misc/jquery.js';
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Andrew and I agreed that since eventually both kinds of files are typically
+ served from the same server(s), it only makes sense to generate their URLs
+ through one function.
+ So the sensible thing to do was to also route the non-uploaded files through
+ the 
+\family typewriter
+file_create_url()
+\family default
+ function to generate their URLs.
+ And then there would be a function that a module could implement, 
+\family typewriter
+custom_file_url_rewrite($path)
+\family default
+ which would then allow file URLs to be altered.
+\end_layout
+
+\begin_layout Standard
+So, I wrote a Drupal core patch exactly according to these specifications,
+ and it works great.
+ However, we must fall back to the old mechanisms in case the 
+\family typewriter
+custom_file_url_rewrite()
+\family default
+ function returned 
+\family typewriter
+FALSE
+\family default
+ (meaning that the CDN can't or shouldn't serve the file).
+ But since there is a distinction between uploaded/generated files and shipping
+ files, we must first determine which kind of file it is.
+ This can be done by looking at the path that was given to 
+\family typewriter
+file_create_url()
+\family default
+: if it begins with the path of the directory that the Drupal administrator
+ chose to use for uploaded and generated files, then it is an uploaded/generated
+ file.
+ After this distinction has been made, the original procedures are applied
+ and we're done.
+\end_layout
+
+\begin_layout Subsection
+Implementation
+\end_layout
+
+\begin_layout Itemize
+A simple configuration UI was created using the Forms API
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal Forms API"
+
+\end_inset
+
+.
+ Advanced mode cannot be started if the daemon isn't configured properly
+ yet (by ensuring the synced files database exists).
+\end_layout
+
+\begin_layout Itemize
+The per-page statistics are rendered through Drupal's 
+\family typewriter
+hook_exit()
+\family default
+, which is called just before the end of each page request.
+ It is therefor able to render after the rest of the page is rendered, which
+ of course implies that all file URLs have been created, so it's safe to
+ calculate the statistics.
+\end_layout
+
+\begin_layout Itemize
+A 
+\family typewriter
+hook_requirements()
+\family default
+ implementation was created, which allows me to add information about the
+ CDN integration module to Drupal's status report page.
+\end_layout
+
+\begin_layout Itemize
+The aforementioned 
+\family typewriter
+custom_file_url_rewrite()
+\family default
+ function was implemented, which rewrites the URL based on the mode.
+ In basic mode, the CDN URL is automatically inserted into file URLs and
+ in advanced mode, the synces files database is queried.
+ This is an SQLite database, which the Drupal 6 database abstraction layer
+ does not support.
+ Drupal 7's database abstraction layer does support SQLite, but is still
+ in development (and will be for at least 6 more months).
+ Fortunately, there's also PDO
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "PDO"
+
+\end_inset
+
+, which makes this sufficiently easy.
+\end_layout
+
+\begin_layout Standard
+That's all there is to tell about this module.
+ It's very simple: all complexity is now embedded in the daemon.
+ As it should be.
+\end_layout
+
+\begin_layout Subsection
+Comparison with the old CDN integration module
+\end_layout
+
+\begin_layout Standard
+In January 2008, I wrote the initial version of the CDN integration module.
+ It was for Drupal 5 instead of Drupal 6 though and it didn't support Origin
+ Pull CDNs, instead, it only supported push CDNs that were accessible over
+ FTP.
+ The synchronization happened from within Drupal, on each cron run.
+ Which means it relied on manual file system scanning (i.e.
+ polling) to detect changes and was prevented by design to perform concurrent
+ syncs, since PHP cannot do that.
+ To top it off, it didn't store anything in the database, but in a serialized
+ array, which had to be unserialized on every page to retrieve the URLs.
+ It should be obvious that this was significantly slower and absolutely
+ unscalable and definitely unusable on any 
+\emph on
+real
+\emph default
+ web sites out there.
+\end_layout
+
+\begin_layout Standard
+It had its algorithms right though.
+ You could consider it a very faint preview of what the end result looks
+ like right now.
+\end_layout
+
+\begin_layout Subsection
+Screenshots
+\end_layout
+
+\begin_layout Subsubsection*
+The configuration UI
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/admin-settings-cdn.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CDN integration module settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CDN-integration-module-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/admin-settings-cdn-basic.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CDN integration module basic mode settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CDN-integration-module-basic-mode-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/admin-settings-cdn-advanced.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CDN integration module advanced mode settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CDN-integration-module-advanced-mode-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/admin-settings-cdn-other.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CDN integration module other settings form.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CDN-integration-module-other-settings-form"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+The status report
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/status report/basic/enabled.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Status report (basic mode, enabled).
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:status-report-basic-enabled"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/status report/basic/debug.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Status report (basic mode, debug mode).
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:status-report-basic-debug-mode"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/status report/disabled.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Status report (disabled).
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:status-report-basic-disabled"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/status report/advanced/not running.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Status report (advanced mode, enabled, daemon not running).
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:status-report-advanced-enabled-not-running"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/status report/advanced/running.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Status report (advanced mode, enabled, daemon running).
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:status-report-advanced-enabled-running"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+The per-page statistics
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/cdn/per-page statistics.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Per-page statistics.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CDN-integration-module-stats"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Used technologies
 \end_layout
@@ -7505,10 +8241,6 @@ Python
 
 \begin_layout Itemize
 SQL
-\end_layout
-
-\begin_layout Itemize
-regular expressions
 \end_layout
 
 \end_deeper
@@ -7637,7 +8369,14 @@ key "pysqlite"
 
 \end_inset
 
- module)
+ module and the PHP PDO 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "PDO"
+
+\end_inset
+
+ database abstraction layer)
 \end_layout
 
 \begin_layout Itemize
@@ -9991,6 +10730,31 @@ status collapsed
 \begin_layout Plain Layout
 
 http://en.wikipedia.org/wiki/Currying
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "PDO"
+
+\end_inset
+
+
+\emph on
+PDO
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://php.net/pdo
 \end_layout
 
 \end_inset
