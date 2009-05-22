@@ -198,8 +198,8 @@ function cdn_requirements($phase) {
 
       // Set the basic info: disabled/debug/enabled.
       if ($status == CDN_DISABLED) {
-        $requirements['cdn'] = array(
-          'description' => $t('CDN integration is enabled for no users.'),
+        $requirements['cdn'] += array(
+          'description' => $t('CDN integration is disabled for all users.'),
           'severity'    => REQUIREMENT_WARNING,
           'value'       => $t('Disabled'),
         );        
