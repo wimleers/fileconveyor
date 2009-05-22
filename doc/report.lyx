@@ -160,8 +160,36 @@ LatexCommand tableofcontents
 Abstract
 \end_layout
 
+\begin_layout Standard
+TODO
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Preface
+\end_layout
+
+\begin_layout Standard
+TODO
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -169,7 +197,17 @@ Nederlandstalige samenvatting
 \end_layout
 
 \begin_layout Standard
-Dit kan uiteraard pas als de rest af is.
+TODO
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2351,6 +2389,19 @@ name "sec:The-State-of-Drupal"
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+what to do with this?
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -2476,18 +2527,287 @@ The goal
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
+The goal is to measure the different episodes of loading a web page.
+ Let me clarify that via a timeline, while referencing the HTML in listing
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lst:sample-HTML"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize},float=h,language=HTML,numbers=left,numberstyle={\scriptsize},showstringspaces=false,tabsize=4"
+inline false
 status open
 
 \begin_layout Plain Layout
-Relatively brief textual explanation.
- Big visual explanation, with a timeline referencing parts of a zoomed in,
- annotated HTML file.
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+\end_layout
+
+\begin_layout Plain Layout
+
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+\end_layout
+
+\begin_layout Plain Layout
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+\end_layout
+
+\begin_layout Plain Layout
+
+  <head>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <title>Sample Drupal HTML</title>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <link rel="shortcut icon" href="/misc/favicon.ico" type="image/x-icon"
+ />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <link type="text/css" rel="stylesheet" media="all" href="main.css" />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <link type="text/css" rel="stylesheet" media="print" href="more.css"
+ />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <script type="text/javascript" src="main.js"></script>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <script type="text/javascript">
+\end_layout
+
+\begin_layout Plain Layout
+
+    <!--//--><![CDATA[//><!--
+\end_layout
+
+\begin_layout Plain Layout
+
+    jQuery.extend(Drupal.settings, { "basePath": "/drupal/", "more": true
+ });
+\end_layout
+
+\begin_layout Plain Layout
+
+    //--><!]]>
+\end_layout
+
+\begin_layout Plain Layout
+
+    </script>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <!--[if lt IE 7]>
+\end_layout
+
+\begin_layout Plain Layout
+
+      <link type="text/css" rel="stylesheet" media="all" href="fix-ie.css
+ />
+\end_layout
+
+\begin_layout Plain Layout
+
+    <![endif]-->
+\end_layout
+
+\begin_layout Plain Layout
+
+  </head>
+\end_layout
+
+\begin_layout Plain Layout
+
+  <body>
+\end_layout
+
+\begin_layout Plain Layout
+
+    <!--
+\end_layout
+
+\begin_layout Plain Layout
+
+      lots
+\end_layout
+
+\begin_layout Plain Layout
+
+      of
+\end_layout
+
+\begin_layout Plain Layout
+
+      HTML
+\end_layout
+
+\begin_layout Plain Layout
+
+      here
+\end_layout
+
+\begin_layout Plain Layout
+
+    -->
+\end_layout
+
+\begin_layout Plain Layout
+
+    <script type="text/javascript" src="more.js"></script>
+\end_layout
+
+\begin_layout Plain Layout
+
+  </body>
+\end_layout
+
+\begin_layout Plain Layout
+
+</html>
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Sample Drupal HTML file.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:sample-HTML"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The main measurement points are:
+\end_layout
+
+\begin_layout Itemize
+starttime: time of requesting the web page (when the 
+\family typewriter
+unbeforeunload
+\family default
+ event fires, the time is stored in a cookie); not in the HTML file
+\end_layout
+
+\begin_layout Itemize
+firstbyte: time of arrival of the first byte of the HTML file (the JavaScript
+ to measure this time should be as early in the HTML as possible for highest
+ possible accuracy); line 1 of the HTML file
+\end_layout
+
+\begin_layout Itemize
+domready: when the entire HTML document is loaded, but 
+\emph on
+just
+\emph default
+ the HTML, 
+\emph on
+not
+\emph default
+ the referenced files
+\end_layout
+
+\begin_layout Itemize
+pageready: when the 
+\family typewriter
+onload
+\family default
+ event fires, this happens when also all referenced files are loaded
+\end_layout
+
+\begin_layout Itemize
+totaltime: when everything, also the possible lazy-loaded content, is loaded
+ (i.e.
+ pageready + the time to lazy-load content)
+\end_layout
+
+\begin_layout Standard
+Which make for these basic episodes:
+\end_layout
+
+\begin_layout Itemize
+backend episode = firstbyte - starttime
+\end_layout
+
+\begin_layout Itemize
+frontend episode = pageready - firstbyte
+\end_layout
+
+\begin_layout Itemize
+domready episode = domready - firstbyte, this episode is contained within
+ the frontend episode
+\end_layout
+
+\begin_layout Itemize
+totaltime episode = totaltime - starttime, this episode contains the backend
+ and frontend episodes
+\end_layout
+
+\begin_layout Standard
+These are just the basic time measurements and episodes.
+ It's possible to also measure the time it took to load the CSS (lines 8-9)
+ and JS files in the header (line 10) and in the footer (line 27), for example.
+ It's possible to measure just about anything you want.
+\end_layout
+
+\begin_layout Standard
+For a visual example of all the above, see figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:Results-of-Episodes-module-in-Firebug"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -3154,7 +3474,7 @@ Screenshots
 placement H
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \noindent
@@ -3377,6 +3697,12 @@ Wow.
 
 \begin_layout Quotation
 Wow, this is awesome.
+\end_layout
+
+\begin_layout Standard
+So, at least he thinks that this was a worthwile job and if he thinks that,
+ then it will probably be worthwhile/helpful for the Drupal community as
+ well.
 \end_layout
 
 \begin_layout Standard
@@ -8526,16 +8852,54 @@ Apache HTTP Server
 \end_layout
 
 \end_deeper
-\begin_layout Section
-Test cases
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
 \end_layout
 
-\begin_layout Subsection
-DriverPacks.net
+\begin_layout Section
+Feedback from businesses
+\end_layout
+
+\begin_layout Standard
+TODO
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Conclusion
+\end_layout
+
+\begin_layout Standard
+TODO
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
