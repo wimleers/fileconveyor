@@ -6,6 +6,9 @@ setup steps depending on the operating system you're running though.
 Each processor may also require additional setup. See below for the
 installation instructions of the included processors.
 
+Make sure you've got Python 2.5 installed. If you've got a different version
+installed, you can install Python 2.5 next to it.
+
 
 
 
