@@ -63,8 +63,8 @@ class Filter(object):
         present_conditions = Set(conditions.keys())
 
         # Ensure all required conditions are set.
-        if not (conditions.has_key("paths") or conditions.has_key("extensions")):
-            raise MissingConditionError("You must at least set a paths or extensions condition.")
+        if len(conditions) == 0:
+            raise MissingConditionError("You must set at least one condition.")
 
         # Ensure only valid conditions are set.
         if len(present_conditions.difference(self.__class__.valid_conditions)):

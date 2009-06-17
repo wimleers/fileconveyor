@@ -20,9 +20,12 @@ class TestConditions(unittest.TestCase):
         self.assertRaises(MissingConditionError, self.filter.set_conditions, {})
 
     def testMinimumConditions(self):
-        """Filter should fail when some settings are missing"""
+        """Filter should work with at least one condition"""
         self.assertTrue(self.filter.set_conditions, {"paths" : "foo/bar:baz"})
         self.assertTrue(self.filter.set_conditions, {"extensions" : "gif:png"})
+        self.assertTrue(self.filter.set_conditions, {"ignoredDirs" : "CVS:.svn"})
+        self.assertTrue(self.filter.set_conditions, {"size" : {"treshold" : 1000000}})
+        self.assertTrue(self.filter.set_conditions, {"pattern" : "foo/bar"})
 
     def testInvalidConditions(self):
         """Filter should fail when there is an invalid setting"""
