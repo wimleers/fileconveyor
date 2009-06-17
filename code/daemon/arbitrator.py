@@ -256,7 +256,7 @@ class Arbitrator(threading.Thread):
         # Initialize the FSMonitor.
         fsmonitor_class = get_fsmonitor()
         self.logger.info("Setup: using the %s FSMonitor class." % (fsmonitor_class))
-        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True)
+        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True, self.config.ignored_dirs.split(":"), "fsmonitor.db")
         self.logger.warning("Setup: initialized FSMonitor.")
 
         # Monitor all sources' scan paths.
