@@ -21,6 +21,7 @@ define('CDN_MODE_BASIC', 'basic');
 define('CDN_MODE_ADVANCED', 'advanced');
 define('CDN_STATUS_VARIABLE', 'cdn_status');
 define('CDN_STATS_VARIABLE', 'cdn_stats');
+define('CDN_DRUPAL_ROOT_VARIABLE', 'cdn_drupal_root');
 
 // Variables for basic mode.
 define('CDN_BASIC_URL_VARIABLE', 'cdn_basic_url');
@@ -248,7 +249,7 @@ function cdn_requirements($phase) {
           if ($synced_files_db !== FALSE) {
             $daemon_pid_file = str_replace(CDN_DAEMON_SYNCED_FILES_DB, CDN_DAEMON_PID_FILE, $synced_files_db);
             $persistent_data_db = str_replace(CDN_DAEMON_SYNCED_FILES_DB, CDN_DAEMON_PERSISTENT_DATA_DB, $synced_files_db);
-            $drupal_root_path = realpath('.') . '%';
+            $drupal_root_path = variable_get(CDN_DRUPAL_ROOT_VARIABLE, realpath('.'));
 
             $synced_files_db_exists      = file_exists($synced_files_db);
             $synced_files_db_readable    = @fopen($synced_files_db, 'r');
@@ -258,9 +259,10 @@ function cdn_requirements($phase) {
             
             $db = _cdn_advanced_get_db_connection();
             if ($db !== FALSE) {
+              $input_file_mask = $drupal_root_path .'%';
               $sql = "SELECT COUNT(*) FROM synced_files WHERE input_file LIKE :input_file";
               $stmt = $db->prepare($sql);
-              $stmt->bindParam(':input_file', $drupal_root_path, PDO::PARAM_STR);
+              $stmt->bindParam(':input_file', $input_file_mask, PDO::PARAM_STR);
               $stmt->execute();
               $result = $stmt->fetchAll();
               $synced_file_count = $result[0][0];

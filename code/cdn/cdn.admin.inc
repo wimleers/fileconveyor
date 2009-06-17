@@ -51,6 +51,21 @@ function cdn_admin_settings_form() {
     '#default_value' => variable_get(CDN_MODE_VARIABLE, CDN_MODE_BASIC),
   );
 
+  $form[CDN_STATS_VARIABLE] = array(
+    '#type' => 'radios',
+    '#title' => t('Show statistics for the current page'),
+    '#description' => t(
+      'Shows the CDN integration statistics of the current page, to users with
+      the %access-per-page-statistics permission.',
+      array('%access-per-page-statistics' => 'access per-page statistics')
+    ),
+    '#options' => array(
+      CDN_DISABLED => t('Disabled'),
+      CDN_ENABLED  => t('Enabled'),
+    ),
+    '#default_value' => variable_get(CDN_STATS_VARIABLE, CDN_DISABLED),
+  );
+
   return system_settings_form($form);
 }
 
@@ -115,19 +130,18 @@ function cdn_admin_advanced_settings_form() {
  * Form definition; other settings.
  */
 function cdn_admin_other_settings_form() {
-  $form[CDN_STATS_VARIABLE] = array(
-    '#type' => 'radios',
-    '#title' => t('Show statistics for the current page'),
+  $form[CDN_DRUPAL_ROOT_VARIABLE] = array(
+    '#type' => 'textfield',
+    '#title' => t('Drupal root directory'),
     '#description' => t(
-      'Shows the CDN integration statistics of the current page, to users with
-      the %access-per-page-statistics permission.',
-      array('%access-per-page-statistics' => 'access per-page statistics')
+      'In 99% of the cases the default value is sufficient and correct. In
+      some advanced setups that make use of symbolic links however, it is
+      possible that the Drupal root directory is incorrectly detected. In
+      those cases, you should enter it here.<br />
+      <strong>This setting only affects the status report, it does not affect
+      the CDN integration itself in any way.</strong>'
     ),
-    '#options' => array(
-      CDN_DISABLED => t('Disabled'),
-      CDN_ENABLED  => t('Enabled'),
-    ),
-    '#default_value' => variable_get(CDN_STATS_VARIABLE, CDN_DISABLED),
+    '#default_value' => variable_get(CDN_DRUPAL_ROOT_VARIABLE, realpath('.')),
   );
 
   return system_settings_form($form);
