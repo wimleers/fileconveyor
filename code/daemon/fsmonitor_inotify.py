@@ -34,8 +34,8 @@ class FSMonitorInotify(FSMonitor):
     }
 
 
-    def __init__(self, callback, persistent=False, dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, persistent, dbfile)
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
+        FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile)
         self.wm = None
         self.notifier = None
 
@@ -149,21 +149,33 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         self.fsmonitor_ref = fsmonitor
 
     def process_IN_CREATE(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.CREATED)
 
     def process_IN_DELETE(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DELETED)
 
     def process_IN_MODIFY(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_ATTRIB(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_MOVE_SELF(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MONITORED_DIR_MOVED)
 
     def process_IN_Q_OVERFLOW(self, event):
+        if __is_in_ignored_directory(event.path):
+            return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DROPPED_EVENTS)
 
     def process_default(self, event):

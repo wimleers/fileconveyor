@@ -72,7 +72,7 @@ class FSMonitor(threading.Thread):
     }
 
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, dbfile="fsmonitor.db"):
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
         self.persistent                      = persistent
         self.trigger_events_for_initial_scan = trigger_events_for_initial_scan
         self.monitored_paths                 = {}
@@ -80,6 +80,7 @@ class FSMonitor(threading.Thread):
         self.dbcon                           = None
         self.dbcur                           = None
         self.pathscanner                     = None
+        self.ignored_dirs                    = ignored_dirs
         self.callback                        = callback
         self.lock                            = threading.Lock()
         self.add_queue                       = Queue.Queue()
@@ -149,7 +150,7 @@ class FSMonitor(threading.Thread):
             self.dbcur = self.dbcon.cursor()
         # PathScanner.
         if self.persistent == True and self.dbcur is not None:
-            self.pathscanner = PathScanner(self.dbcon, "pathscanner")
+            self.pathscanner = PathScanner(self.dbcon, self.ignored_dirs, "pathscanner")
 
 
     def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, event_mask=None):
@@ -165,6 +166,15 @@ class FSMonitor(threading.Thread):
         if event_mask & FSMonitor.DELETED:
             for filename in result["deleted"]:
                 self.trigger_event(monitored_path, os.path.join(event_path, filename), self.DELETED)
+
+
+    def __is_in_ignored_directory(self, path):
+        """checks if the given path is in an ignored directory"""
+        dirs = os.path.split(path)
+        for dir in dirs:
+            if dir in self.ignored_dirs:
+                return True
+        return False
 
 
 class MonitoredPath(object):

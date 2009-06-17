@@ -25,8 +25,8 @@ class FSMonitorPolling(FSMonitor):
     interval = 10
 
 
-    def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, True, dbfile)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile)
 
 
     def __add_dir(self, path, event_mask):

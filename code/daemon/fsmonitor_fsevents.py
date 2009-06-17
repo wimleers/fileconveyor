@@ -52,8 +52,8 @@ class FSMonitorFSEvents(FSMonitor):
     flags = kFSEventStreamCreateFlagWatchRoot
 
 
-    def __init__(self, callback, persistent=True, dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, True, dbfile)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile)
         self.latest_event_id = None
         self.auto_release_pool = None
 
@@ -204,6 +204,9 @@ class FSMonitorFSEvents(FSMonitor):
             # Strip trailing slash
             if event_path[-1] == '/':
                 event_path = event_path[:-1]
+
+            if __is_in_ignored_directory(event_path):
+                return
 
             # Trigger the appropriate events.
             if eventFlags[i] & kFSEventStreamEventFlagUserDropped:
