@@ -205,7 +205,7 @@ class FSMonitorFSEvents(FSMonitor):
             if event_path[-1] == '/':
                 event_path = event_path[:-1]
 
-            if __is_in_ignored_directory(event_path):
+            if FSMonitor.__is_in_ignored_directory(self, event_path):
                 return
 
             # Trigger the appropriate events.
