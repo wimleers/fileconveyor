@@ -260,12 +260,12 @@ function cdn_requirements($phase) {
             $db = _cdn_advanced_get_db_connection();
             if ($db !== FALSE) {
               $input_file_mask = $drupal_root_path .'%';
-              $sql = "SELECT COUNT(*) FROM synced_files WHERE input_file LIKE :input_file";
+              $sql = "SELECT COUNT(*) AS count, server FROM synced_files WHERE input_file LIKE :input_file GROUP BY server";
               $stmt = $db->prepare($sql);
               $stmt->bindParam(':input_file', $input_file_mask, PDO::PARAM_STR);
               $stmt->execute();
               $result = $stmt->fetchAll();
-              $synced_file_count = $result[0][0];
+              $synced_file_stats = $result;
             }
 
             if ($persistent_data_db_exists && $persistent_data_db_readable) {
@@ -291,7 +291,14 @@ function cdn_requirements($phase) {
 
             $items[] = ($synced_files_db_exists) ? t('The synced files database exists.') : t("The synced files database doesn't exist.");
             $items[] = ($synced_files_db_readable) ? t('The synced files database is readable.') : t("The synced files database isn't readable.");
-            $items[] = ($synced_files_db_readable) ? t('!synced-file-count files have been synced.', array('!synced-file-count' => $synced_file_count)) : t("Number of synced files is unknown.");
+            if ($synced_files_db_readable) {
+              foreach ($synced_file_stats as $row) {
+                $items[] = t('!synced-file-count files have been synced to the %server server.', array('!synced-file-count' => $row['count'], '%server' => $row['server']));
+              }
+            }
+            else {
+              $items[] = t("Number of synced files is unknown.");
+            }
             $items[] = ($daemon_pid_file_exists) ? t('The daemon is currently running.') : '<strong>' . t('The daemon is currently not running.') . '</strong>';
             if (isset($pipeline_queue_count)) {
               $items[] = t("!pipeline-queue-count files are waiting to be synced.", array('!pipeline-queue-count' => $pipeline_queue_count));
