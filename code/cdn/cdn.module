@@ -437,6 +437,11 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
   static $total_time;
   static $synced_files;
   static $unsynced_files;
+  static $drupal_root_path;
+
+  if (!isset($drupal_root_path)) {
+    $drupal_root_path = dirname('.');
+  }
 
   if (!isset($file_count)) {
     $file_count = 0;
@@ -457,9 +462,10 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
       $cdn_file_count++;
 
       $synced_files[] = array(
-        'file'    => $file,
-        'cdn_url' => $file_cdn_url,
-        'server'  => ($server === FALSE) ? '' : $server,
+        'file'          => $file,
+        'absolute path' => realpath($drupal_root_path . '/' . $file),
+        'cdn_url'       => $file_cdn_url,
+        'server'        => ($server === FALSE) ? '' : $server,
       );
 
       // $server is only set in advanced mode.

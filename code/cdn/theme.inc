@@ -62,7 +62,7 @@ function theme_cdn_page_stats($file_count, $cdn_file_count, $synced_files_per_se
       $cdn_url = $synced_file['cdn_url'];
       $server  = $synced_file['server'];
       $text = ($mode == CDN_MODE_BASIC) ? '!file' : '!file (server: !server)';
-      $synced_items[] = array(l(t($text, array('!file' => $file, '!server' => $server)), $cdn_url));
+      $synced_items[] = array(l(t($text, array('!file' => $file, '!server' => $server)), $cdn_url, array('attributes' => array('title' => $synced_file['absolute path']))));
     }
     $items[] = 'The files that are synchronized to the CDN:' . theme('item_list', $synced_items, NULL, 'ol');
   }
