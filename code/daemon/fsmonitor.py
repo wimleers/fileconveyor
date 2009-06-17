@@ -168,7 +168,7 @@ class FSMonitor(threading.Thread):
                 self.trigger_event(monitored_path, os.path.join(event_path, filename), self.DELETED)
 
 
-    def __is_in_ignored_directory(self, path):
+    def is_in_ignored_directory(self, path):
         """checks if the given path is in an ignored directory"""
         dirs = os.path.split(path)
         for dir in dirs:

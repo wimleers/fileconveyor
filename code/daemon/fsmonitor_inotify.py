@@ -149,32 +149,32 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         self.fsmonitor_ref = fsmonitor
 
     def process_IN_CREATE(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.CREATED)
 
     def process_IN_DELETE(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DELETED)
 
     def process_IN_MODIFY(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_ATTRIB(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_MOVE_SELF(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MONITORED_DIR_MOVED)
 
     def process_IN_Q_OVERFLOW(self, event):
-        if FSMonitor.__is_in_ignored_directory(self, event.path):
+        if FSMonitor.is_in_ignored_directory(self, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DROPPED_EVENTS)
 
