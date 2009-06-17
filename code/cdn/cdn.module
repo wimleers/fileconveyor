@@ -365,12 +365,6 @@ function cdn_basic_get_url($path) {
  *   The path to get the URL for.
  */
 function cdn_advanced_get_url($path) {
-  static $drupal_root_path;
-
-  if (!isset($drupal_root_path)) {
-    $drupal_root_path = dirname('.');
-  }
-
   $db = _cdn_advanced_get_db_connection();
 
   // In case no connection to the database could be made, pretend the file was
@@ -379,22 +373,36 @@ function cdn_advanced_get_url($path) {
     return array(FALSE, FALSE);
   }
 
-  // Calculate the input file. We need a call to realpath() to resolve
-  // symbolic links.
-  $input_file = realpath($drupal_root_path . '/' . $path);
+  // Get the real path to the file (resolves symbolic links).
+  $input_file = realpath('./' . $path);
 
   // Retrieve the URLs of the file on the CDN.
   $sql = "SELECT url, server FROM synced_files WHERE input_file = :input_file";
   $stmt = $db->prepare($sql);
   $stmt->bindParam(':input_file', $input_file, PDO::PARAM_STR);
   $stmt->execute();
-  $urls = $stmt->fetchAll();
+  $servers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-  // TODO: build in mechanisms to allow the file to be served from a specific
-  // server (that can be either a CDN or a static file server), based on the
-  // user's properties (location, membership, …).
-  // For now, we just use the first URL.
-  return (count($urls)) ? array($urls[0]['url'], $urls[0]['server']) : array(FALSE, FALSE);
+  // The file is not available from any server. 
+  if (count($servers) == 0) {
+    $url    = FALSE;
+    $server = FALSE;
+  }
+  // If the file is available from multiple servers, then allow a special
+  // function to pic the desired server. The decision can be made on any
+  // desired criteria: user's location, user's role, current date …
+  else if (count($servers) > 1 && function_exists('cdn_advanced_pick_server')) {
+    $picked_server = cdn_advanced_pick_server($servers);
+    $url    = $picked_server['url'];
+    $server = $picked_server['server'];
+  }
+  // The file is available from at least one server, simply pick the first.
+  else {
+    $url    = $servers[0]['url'];
+    $server = $servers[0]['server'];
+  }
+
+  return array($url, $server);
 }
 
 

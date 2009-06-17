@@ -54,12 +54,50 @@ Installation
    You can install it by performing an svn checkout from
      svn://wimleers.com/school/bachelor-thesis/code/daemon
    Then follow the instructions in the included INSTALL.txt and README.txt.
-   Use the config.xml file that is included in this module.
+   Use the config.xml file that is included in this module and modify it to
+   comply with your setup and to suit your needs.
 
 6) Go to admin/reports/status. The CDN integration module will report its
    status here. If you've enabled advanced mode and have set up the daemon,
    you will see some basic stats here as well, and you can check here to see
    if the daemon is currently running.
+
+
+When using multiple servers: picking a specific one based on some criteria
+--------------------------------------------------------------------------
+For this purpose, you can implement the cdn_advanced_pick_server() function:
+  /**
+   * Implementation of cdn_advanced_pick_server().
+   */
+  function cdn_advanced_pick_server($servers) {
+    // The data that you get - one nested array per server from which the file
+    // can be served:
+    //   $servers[0] = array('url' => 'http://cdn1.com/image.jpg', 'server' => 'cdn1.com')
+    //   $servers[1] = array('url' => 'http://cdn2.net/image.jpg', 'server' => 'cdn2.net')
+
+    $which = your_logic_to_pick_a_server();
+
+    // Return one of the nested arrays.
+    return $servers[$which];
+  }
+
+So to get the default behavior (pick the first server found), one would write:
+  /**
+   * Implementation of cdn_advanced_pick_server().
+   */
+  function cdn_advanced_pick_server($servers) {
+    return $servers[0];
+  }
+
+
+Supporting the CDN integration module in your modules
+-----------------------------------------------------
+It's very easy to support the CDN integration module in your module. Simply
+create a variable function, e.g.:
+  $file_create_url = (module_exists('cdn')) ? 'file_create_url' : 'url';
+
+Then create all file URLs using this variable function. E.g.
+  $file_url = $file_create_url(drupal_get_path('module', 'episodes') .'/lib/episodes.js')
 
 
 Author

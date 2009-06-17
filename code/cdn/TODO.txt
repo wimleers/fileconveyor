@@ -5,6 +5,4 @@ Basic mode
 
 Advanced mode
 -------------
-- Build in mechanisms to allow the file to be served from a specific server
-  (that can be either a CDN or a static file server), based on the user's
-  properties (location, membership, …). For now, we just use the first URL.
+- None! :)
