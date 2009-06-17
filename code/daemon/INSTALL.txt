@@ -22,9 +22,12 @@ Linux is fully supported and requires additional setup.
 On Linux, it is necessary to install pyinotify if you're running kernel 2.6.13
 or higher. This will allow you to take advantage of inotify to detect changes
 on the file system as opposed to polling.
+You must install version 0.8.0 or better (it has only been tested with 0.9.6
+but the API has remained the same according to the documentation).
 On Debian/Ubuntu, you can run
   sudo aptitude install python-pyinotify
-to install pyinotify. On other distributions, follow these instructions:
+to install pyinotify. But please ensure this version is new enough. On other
+distributions, follow these instructions:
   http://trac.dbzteam.org/pyinotify/wiki/InstallPyinotify
 
 
