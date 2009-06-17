@@ -24,11 +24,12 @@ class SourceDoesNotExist(ConfigError): pass
 
 class Config(object):
     def __init__(self, parent_logger):
-        self.sources = {}
-        self.servers = {}
-        self.rules   = {}
-        self.logger  = logging.getLogger(".".join([parent_logger, "Config"]))
-        self.errors  = 0
+        self.ignored_dirs = []
+        self.sources      = {}
+        self.servers      = {}
+        self.rules        = {}
+        self.logger       = logging.getLogger(".".join([parent_logger, "Config"]))
+        self.errors       = 0
 
         self.source_name_regex = re.compile('^[a-zA-Z0-9-_]*$')
 
@@ -51,6 +52,22 @@ class Config(object):
 
     def __parse_sources(self, root):
         sources = root.find("sources")
+
+        # Globally ignored directories.
+        self.ignored_dirs = sources.get("ignoredDirs", "")
+
+        # Validate the globally ignored directories by trying to create a
+        # Filter object for it.
+        try:
+            conditions = {"ignoredDirs" : self.ignored_dirs}
+            f = Filter(conditions)
+        except FilterError, e:
+            message = e.message
+            if message == "":
+                message = "none"
+            self.logger.error("Invalid ignoredDirs attribute for the sources node: %s (details: \"%s\")." % (e.__class__.__name__, message))
+            self.errors += 1
+
         for source in sources:
             name          = source.get("name")
             scan_path     = source.get("scanPath")
@@ -200,7 +217,8 @@ if __name__ == '__main__':
 
     # Use the Config class.
     config = Config("test")
-    config.load("config.sample.xml")
+    config.load("config.xml")
+    print "ignoredDirs", config.ignored_dirs
     print "sources", config.sources
     print "servers", config.servers
     print "rules",   config.rules
