@@ -153,10 +153,21 @@ function cdn_theme() {
   );
 }
 
-/*
+/**
  * Implementation of hook_exit().
  */
 function cdn_exit($destination = NULL) {
+  // Try not to break non-HTML pages.
+  if (function_exists('drupal_get_headers')) {
+    $headers = drupal_get_headers();
+    $formats = array('xml', 'javascript', 'json', 'plain', 'image', 'application', 'csv', 'x-comma-separated-values');
+    foreach ($formats as $format) {
+      if (strstr($headers, $format)) {
+        return;
+      }
+    }
+  }
+
   if (!$destination
       && variable_get(CDN_STATUS_VARIABLE, CDN_DISABLED) != CDN_DISABLED
       && variable_get(CDN_STATS_VARIABLE, FALSE)
