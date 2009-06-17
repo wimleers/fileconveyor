@@ -337,7 +337,7 @@ function cdn_advanced_get_url($path) {
   static $drupal_root_path;
 
   if (!isset($drupal_root_path)) {
-    $drupal_root_path = realpath('.');
+    $drupal_root_path = dirname('.');
   }
 
   $db = _cdn_advanced_get_db_connection();
@@ -348,8 +348,11 @@ function cdn_advanced_get_url($path) {
     return array(FALSE, FALSE);
   }
 
+  // Calculate the input file. We need a call to realpath() to resolve
+  // symbolic links.
+  $input_file = realpath($drupal_root_path . '/' . $path);
+
   // Retrieve the URLs of the file on the CDN.
-  $input_file = $drupal_root_path . '/' . $path;
   $sql = "SELECT url, server FROM synced_files WHERE input_file = :input_file";
   $stmt = $db->prepare($sql);
   $stmt->bindParam(':input_file', $input_file, PDO::PARAM_STR);
