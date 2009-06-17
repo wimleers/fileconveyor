@@ -26,11 +26,11 @@ class FSMonitorInotify(FSMonitor):
 
 
     EVENTMAPPING = {
-        FSMonitor.CREATED : pyinotify.IN_CREATE,
-        FSMonitor.MODIFIED : pyinotify.IN_MODIFY | pyinotify.IN_ATTRIB,
-        FSMonitor.DELETED : pyinotify.IN_DELETE,
-        FSMonitor.MONITORED_DIR_MOVED : pyinotify.IN_MOVE_SELF,
-        FSMonitor.DROPPED_EVENTS : pyinotify.IN_Q_OVERFLOW,
+        FSMonitor.CREATED             : pyinotify.EventsCodes.IN_CREATE,
+        FSMonitor.MODIFIED            : pyinotify.EventsCodes.IN_MODIFY | pyinotify.EventsCodes.IN_ATTRIB,
+        FSMonitor.DELETED             : pyinotify.EventsCodes.IN_DELETE,
+        FSMonitor.MONITORED_DIR_MOVED : pyinotify.EventsCodes.IN_MOVE_SELF,
+        FSMonitor.DROPPED_EVENTS      : pyinotify.EventsCodes.IN_Q_OVERFLOW,
     }
 
 
