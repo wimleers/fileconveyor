@@ -33,12 +33,13 @@ from sets import Set
 
 class PathScanner(object):
     """scan paths for changes, persistent storage using SQLite"""
-    def __init__(self, dbcon, table="pathscanner", commit_interval=50):
-        self.dbcon = dbcon
-        self.dbcur = dbcon.cursor()
-        self.table = table
+    def __init__(self, dbcon, ignored_dirs=[], table="pathscanner", commit_interval=50):
+        self.dbcon                  = dbcon
+        self.dbcur                  = dbcon.cursor()
+        self.ignored_dirs           = ignored_dirs
+        self.table                  = table
         self.uncommitted_statements = 0
-        self.commit_interval = commit_interval
+        self.commit_interval        = commit_interval
         self.__prepare_db()
 
 
@@ -72,9 +73,20 @@ class PathScanner(object):
 
         for filename in filenames:
             try:
-                st = os.stat(os.path.join(path, filename))
+                path_to_file = os.path.join(path, filename)
+                st = os.stat(path_to_file)
                 mtime = st[stat.ST_MTIME]
-                is_dir = stat.S_ISDIR(st.st_mode)
+                if stat.S_ISDIR(st.st_mode):
+                    # If this is one of the ignored directories, skip it.
+                    if filename in self.ignored_dirs:
+                        continue
+                    # This is not an ignored directory, but if it's a symlink,
+                    # we will prevent walking the directory tree below it by
+                    # pretending it's just a file.
+                    else:
+                        is_dir = not os.path.islink(path_to_file)
+                else:
+                    is_dir = False
                 row = (path, filename, mtime, is_dir)
             except os.error:
                 continue
@@ -129,7 +141,6 @@ class PathScanner(object):
             self.__db_batched_commit()
         # Commit the remaining rows.
         self.__db_batched_commit(True)
-
 
 
     def delete_files(self, files):
@@ -220,13 +231,7 @@ class PathScanner(object):
         yield (path, result)
 
         # Also scan each subdirectory.
-        filenames = os.listdir(path)
-        for filename in filenames:
-            try:
-                st = os.stat(os.path.join(path, filename))
-                is_dir = stat.S_ISDIR(st.st_mode)
-            except os.error:
-                continue
+        for path, filename, mtime, is_dir in self.__listdir(path):
             if is_dir:
                 for subpath, subresult in self.scan_tree(os.path.join(path, filename)):
                     yield (subpath, subresult)
@@ -292,7 +297,8 @@ if __name__ == "__main__":
     # Sample usage
     path = "/Users/wimleers/Downloads"
     db = sqlite3.connect("pathscanner.db")
-    scanner = PathScanner(db)
+    ignored_dirs = ["CVS", ".svn"]
+    scanner = PathScanner(db, ignored_dirs)
     # Force a rescan
     #scanner.purge_path(path)
     scanner.initial_scan(path)
