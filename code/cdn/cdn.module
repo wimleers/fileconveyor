@@ -239,37 +239,42 @@ function cdn_requirements($phase) {
             $persistent_data_db = str_replace(CDN_DAEMON_SYNCED_FILES_DB, CDN_DAEMON_PERSISTENT_DATA_DB, $synced_files_db);
             $drupal_root_path = realpath('.') . '%';
 
-            $synced_files_db_exists = file_exists($synced_files_db);
-            $synced_files_db_readable = @fopen($synced_files_db, 'r');
-            $daemon_pid_file_exists = file_exists($daemon_pid_file);
+            $synced_files_db_exists      = file_exists($synced_files_db);
+            $synced_files_db_readable    = @fopen($synced_files_db, 'r');
+            $persistent_data_db_exists   = file_exists($persistent_data_db);
+            $persistent_data_db_readable = @fopen($persistent_data_db, 'r');
+            $daemon_pid_file_exists      = file_exists($daemon_pid_file);
             
             $db = _cdn_advanced_get_db_connection();
-            $sql = "SELECT COUNT(*) FROM synced_files WHERE input_file LIKE :input_file";
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':input_file', $drupal_root_path, PDO::PARAM_STR);
-            $stmt->execute();
-            $result = $stmt->fetchAll();
-            $synced_file_count = $result[0][0];
-
-            try {
-              $db = new PDO('sqlite:' . $persistent_data_db);
-            } catch(PDOException $e) {
-              $items[] = t("Could not connect to persistent data database.");
-            }
             if ($db !== FALSE) {
-              $sql = "SELECT COUNT(*) FROM pipeline_queue";
+              $sql = "SELECT COUNT(*) FROM synced_files WHERE input_file LIKE :input_file";
               $stmt = $db->prepare($sql);
+              $stmt->bindParam(':input_file', $drupal_root_path, PDO::PARAM_STR);
               $stmt->execute();
               $result = $stmt->fetchAll();
-              $pipeline_queue_count = $result[0][0];
-
-              $sql = "SELECT COUNT(*) FROM pipeline_list";
-              $stmt = $db->prepare($sql);
-              $stmt->execute();
-              $result = $stmt->fetchAll();
-              $pipeline_list_count = $result[0][0];
+              $synced_file_count = $result[0][0];
             }
 
+            if ($persistent_data_db_exists && $persistent_data_db_readable) {
+              try {
+                $db = new PDO('sqlite:' . $persistent_data_db);
+              } catch(PDOException $e) {
+                $items[] = t("Could not connect to persistent data database.");
+              }
+              if ($db !== FALSE) {
+                $sql = "SELECT COUNT(*) FROM pipeline_queue";
+                $stmt = $db->prepare($sql);
+                $stmt->execute();
+                $result = $stmt->fetchAll();
+                $pipeline_queue_count = $result[0][0];
+
+                $sql = "SELECT COUNT(*) FROM pipeline_list";
+                $stmt = $db->prepare($sql);
+                $stmt->execute();
+                $result = $stmt->fetchAll();
+                $pipeline_list_count = $result[0][0];
+              }
+            }
 
             $items[] = ($synced_files_db_exists) ? t('The synced files database exists.') : t("The synced files database doesn't exist.");
             $items[] = ($synced_files_db_readable) ? t('The synced files database is readable.') : t("The synced files database isn't readable.");
