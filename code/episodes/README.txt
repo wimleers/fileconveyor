@@ -47,6 +47,11 @@ Dependencies
 - Hierarchical Select Flat List
 
 
+CDN integration
+---------------
+CDN integration is supported.
+
+
 Installation
 ------------
 1) Place this module directory in your "modules" folder (this will usually be

@@ -82,6 +82,7 @@ function episodes_menu() {
 function episodes_init() {
   if (episodes_is_enabled($path)) {  
     $path = drupal_get_path('module', 'episodes');
+    $file_create_url = (module_exists('cdn')) ? 'file_create_url' : 'url';
 
     // Cheat a little bit: use drupal_set_html_head() to add the episodes.js
     // file as early as possible in the <HEAD> tag. And before that, add some
@@ -92,12 +93,12 @@ function episodes_init() {
     $js_code = array(
       'var EPISODES = EPISODES || {};',
       'EPISODES.frontendStartTime=Number(new Date());',
-      'EPISODES.compatScriptUrl="' . url("$path/lib/episodes-compat.js") . '";',
+      'EPISODES.compatScriptUrl="' . $file_create_url("$path/lib/episodes-compat.js") . '";',
       'EPISODES.logging="' . $logging .'";',
       'EPISODES.beaconUrl="' . variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon'))  . '";',
     );
     drupal_set_html_head('<script type="text/javascript">' . implode('', $js_code) . '</script>');
-    drupal_set_html_head('<script type="text/javascript" src="' . url("$path/lib/episodes.js") . '"></script>');
+    drupal_set_html_head('<script type="text/javascript" src="' . $file_create_url("$path/lib/episodes.js") . '"></script>');
 
     // Add the drupal.episodes.js file, which provides automagic integration
     // for Drupal behaviors with Episodes.
