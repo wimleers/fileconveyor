@@ -34,7 +34,7 @@ class Processor(object):
         self.parent_logger      = parent_logger
 
         # Get the parts of the input file.
-        (path, basename, name, extension) = self.get_path_parts(self.input_file)
+        (path, basename, name, extension) = self.get_path_parts(self.original_file)
 
         # The file will end up in the working directory, in its relative path.
         # It doesn't hurt to have empty directory trees, so create this
@@ -160,7 +160,15 @@ class ProcessorChain(threading.Thread):
 
             # Run the processor.
             old_output_file = self.output_file
-            processor = processor_class(self.output_file, self.input_file, self.document_root, self.base_path, self.process_for_server, self.parent_logger_for_processor, self.working_dir)
+            processor = processor_class(            
+                input_file         = self.output_file,
+                original_file      = self.input_file,
+                document_root      = self.document_root,
+                base_path          = self.base_path,
+                process_for_server = self.process_for_server,
+                parent_logger      = self.parent_logger_for_processor,
+                working_dir        = self.working_dir,
+            )
             if processor.validate_settings():
                 self.logger.debug("Running the processor '%s' on the file '%s'." % (processor_classname, self.output_file))
                 try:

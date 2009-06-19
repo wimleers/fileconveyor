@@ -30,8 +30,8 @@ class Base(Processor):
 
 
     def run(self):
-        # Get the parts of the input file.
-        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
+        # Get the parts of the original file.
+        (path, basename, name, extension) = self.get_path_parts(self.original_file)
 
         format = self.identify_format(self.input_file)
 
@@ -107,6 +107,7 @@ class Max(Base):
                       original_file,
                       document_root,
                       base_path,
+                      process_for_server,
                       parent_logger,
                       working_dir,
                       copy_metadata=COPY_METADATA_NONE, # Don't keep metadata
@@ -123,6 +124,7 @@ class KeepMetadata(Base):
                       original_file,
                       document_root,
                       base_path,
+                      process_for_server,
                       parent_logger,
                       working_dir,
                       copy_metadata=COPY_METADATA_ALL,  # Do keep metadata
@@ -139,6 +141,7 @@ class KeepFilename(Base):
                       original_file,
                       document_root,
                       base_path,
+                      process_for_server,
                       parent_logger,
                       working_dir,
                       copy_metadata=COPY_METADATA_NONE,   # Don't keep metadata
@@ -155,6 +158,7 @@ class KeepMetadataAndFilename(Base):
                       original_file,
                       document_root,
                       base_path,
+                      process_for_server,
                       parent_logger,
                       working_dir,
                       copy_metadata=COPY_METADATA_ALL,    # Do keep metadata

@@ -24,8 +24,8 @@ class Base(Processor):
 
 
     def run(self):
-        # Get the parts of the input file.
-        (path, basename, name, extension) = self.get_path_parts(self.input_file)
+        # Get the parts of the original file.
+        (path, basename, name, extension) = self.get_path_parts(self.original_file)
 
         # Update the file's base name.
         new_filename = basename

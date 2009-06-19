@@ -19,7 +19,7 @@ class Mtime(Processor):
 
     def run(self):
         # Get the parts of the input file.
-        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
+        (path, basename, name, extension) = self.get_path_parts(self.original_file)
 
         # Calculate the mtime on the original file, not the input file.
         mtime = os.stat(self.original_file)[stat.ST_MTIME]
@@ -42,7 +42,7 @@ class MD5(Processor):
 
     def run(self):
         # Get the parts of the input file.
-        (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
+        (path, basename, name, extension) = self.get_path_parts(self.original_file)
 
         # Calculate the MD5 hash on the original file, not the input file.
         md5 = self.md5(self.original_file)
