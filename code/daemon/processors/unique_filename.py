@@ -21,8 +21,10 @@ class Mtime(Processor):
         # Get the parts of the input file.
         (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
+        # Calculate the mtime on the original file, not the input file.
+        mtime = os.stat(self.original_file)[stat.ST_MTIME]
+
         # Set the output file base name.
-        mtime = os.stat(self.input_file)[stat.ST_MTIME]
         self.set_output_file_basename(name + "_" + str(mtime) + extension)
 
         # Copy the input file to the output file.
@@ -42,8 +44,10 @@ class MD5(Processor):
         # Get the parts of the input file.
         (path, basename, name, extension) = Processor.get_path_parts(self, self.input_file)
 
-        # Calculate the output file path.
-        md5 = self.md5(self.input_file)
+        # Calculate the MD5 hash on the original file, not the input file.
+        md5 = self.md5(self.original_file)
+
+        # Set the output file base name.
         self.set_output_file_basename(name + "_" + md5 + extension)
 
         # Copy the input file to the output file.
