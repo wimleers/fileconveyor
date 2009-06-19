@@ -96,10 +96,24 @@ class CSSURLUpdater(Processor):
 
         # Resolve paths that are relative to the document root.
         if urlstring.startswith(self.base_path):
-            # Strip the leading slash.
-            relative_path = urlstring[1:]
+            base_path_exists = os.path.exists(os.path.join(self.document_root, self.base_path))
+
+            if not base_path_exists:
+                # Strip the entire base path: this is a logical base path,
+                # that is, it only exists in the URL (through a symbolic link)
+                # and are not present in the path to the actual file.
+                relative_path = urlstring[len(self.base_path):]
+            else:
+                # Strip the leading slash.
+                relative_path = urlstring[1:]
+
             # Prepend the document root.
-            return os.path.join(self.document_root, relative_path)
+            absolute_path = os.path.join(self.document_root, relative_path)
+
+            # Resolve any symbolic links in the absolute path.
+            absolute_path = os.path.realpath(absolute_path)
+
+            return absolute_path
 
         # Resolve paths that are relative to the CSS file's path.
         return urljoin(self.original_file, urlstring)
