@@ -47,6 +47,10 @@ class PersistentQueue(object):
         self.dbcon.commit()
 
 
+    def __contains__(self, item):
+        return self.dbcur.execute("SELECT COUNT(item) FROM %s WHERE item=?" % (self.table), (cPickle.dumps(item), )).fetchone()[0]
+
+
     def qsize(self):
         return self.size
 
