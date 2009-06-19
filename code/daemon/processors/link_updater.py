@@ -130,8 +130,3 @@ class CSSURLUpdater(Processor):
         # Get the CDN URL for the given absolute file path.
         self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=?", (urlstring, ))
         return self.dbcur.fetchone()[0]
-
-
-if __name__ == "__main__":
-    p = CSSURLUpdater("test.css")
-    print p.run()

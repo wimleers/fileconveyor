@@ -41,10 +41,3 @@ class YUICompressor(Processor):
             raise ProcessorError(stderr)
 
         return self.output_file
-
-
-if __name__ == "__main__":
-    p = YUICompressor("test.css")
-    print p.run()
-    p = YUICompressor("test.js")
-    print p.run()

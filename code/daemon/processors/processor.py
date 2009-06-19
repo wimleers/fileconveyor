@@ -189,29 +189,3 @@ class ProcessorChainFactory(object):
 
     def make_chain_for(self, input_file, processors, document_root, base_path, callback, error_callback):
         return ProcessorChain(copy.copy(processors), input_file, document_root, base_path, callback, error_callback, self.parent_logger, self.working_dir)
-
-
-if __name__ == '__main__':
-    import time
-    import logging.handlers
-
-    def callbackfunc(input_file, output_file):
-        print "CALLBACK FIRED, input_file='%s', output_file='%s'" % (input_file, output_file)
-
-    # Set up logging.
-    logger = logging.getLogger("test")
-    logger.setLevel(logging.DEBUG)
-    handler = logging.handlers.RotatingFileHandler("processor.log")
-    logger.addHandler(handler)
-
-    # Use a ProcessorChainFactory.
-    processors = [
-        "image_optimizer.KeepFilename",
-        "unique_filename.Mtime"
-    ]
-    factory = ProcessorChainFactory(processors, callbackfunc, "test")
-    chain = factory.make_chain_for("test.jpg")
-    chain.run()
-    chain = factory.make_chain_for("test.png")
-    chain.run()
-    
