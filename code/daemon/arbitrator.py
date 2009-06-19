@@ -66,6 +66,7 @@ class Arbitrator(threading.Thread):
 
 
     DELETE_OLD_FILE = 0xFFFFFFFF
+    PROCESSED_FOR_ANY_SERVER = None
 
 
     def __init__(self, configfile="config.xml"):
@@ -204,7 +205,7 @@ class Arbitrator(threading.Thread):
                         "processorChain" : rule["processorChain"],
                         "destinations"   : rule["destinations"],
                     })
-                    self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], name))
+                    self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], source["name"]))
 
         # Initialize the the persistent 'pipeline' queue, the persistent
         # 'files in pipeline' and 'failed files' lists and the 'discover',
@@ -419,19 +420,54 @@ class Arbitrator(threading.Thread):
                         fake_output_file = os.path.join(os.path.dirname(input_file), transport_file_basename)
                         # Queue the transport (deletion).
                         for server in servers:
-                            self.transport_queue[server].put((input_file, event, rule, fake_output_file))
+                            self.transport_queue[server].put((input_file, event, rule, Arbitrator.PROCESSED_FOR_ANY_SERVER, fake_output_file))
                             self.logger.info("Filtering: queued transporter to server '%s' for file '%s' to delete it ('%s' rule)." % (server, input_file, rule["label"]))
                     else:
                         # If a processor chain is configured, queue the file
                         # to be processed. Otherwise, immediately queue the
                         # file to be transported 
                         if not rule["processorChain"] is None:
-                            self.process_queue.put((input_file, event, rule))
-                            self.logger.info("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
+                            # Check if there is at least one processor that
+                            # will create output that is different per server.
+                            per_server = False
+                            for processor_classname in rule["processorChain"]:
+                                # Get a reference to this processor class.
+                                (modulename, classname) = processor_classname.split(".")
+                                module = __import__(modulename, globals(), locals(), [classname])
+                                processor_class = getattr(module, classname)
+                                if getattr(processor_class, 'different_per_server', False) == True:
+                                    # This processor would create different
+                                    # output per server, but will it also
+                                    # process this file?
+                                    if processor_class.would_process_input_file(input_file):
+                                        per_server = True
+                                        break
+
+                            if per_server:
+                                for server in servers:
+                                    # If the event for the file is creation
+                                    # and the file has been synced to this
+                                    # server already, don't process it again
+                                    # (which will lead to it being resynced
+                                    # and reinserted into the database, which
+                                    # will cause a IntegrityError).
+                                    if event == FSMonitor.CREATED:
+                                        self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
+                                        file_is_synced = self.dbcur.fetchone()[0] == 1
+                                    if event == FSMonitor.CREATED and file_is_synced:
+                                        self.logger.info("Filtering: not processing '%s' for server '%s', because it has been synced already to this server (rule: '%s')." % (input_file, server, rule["label"]))
+                                        self.remaining_transporters[input_file + str(event) + repr(rule)].remove(server)
+                                    else:
+                                        self.process_queue.put((input_file, event, rule, server))
+                                        self.logger.info("Filter queue -> process queue: '%s' for server '%s' (rule: '%s')." % (input_file, server, rule["label"]))
+                                        
+                            else:
+                                self.process_queue.put((input_file, event, rule, Arbitrator.PROCESSED_FOR_ANY_SERVER))
+                                self.logger.info("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
                         else:
                             output_file = input_file
                             for server in servers:
-                                self.transport_queue[server].put((input_file, event, rule, output_file))
+                                self.transport_queue[server].put((input_file, event, rule, Arbitrator.PROCESSED_FOR_ANY_SERVER, output_file))
                                 self.logger.info("Filter queue -> transport queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
                     self.lock.release()
 
@@ -451,7 +487,7 @@ class Arbitrator(threading.Thread):
         while processed< QUEUE_PROCESS_BATCH_SIZE and self.process_queue.qsize() > 0 and self.processorchains_running < MAX_SIMULTANEOUS_PROCESSORCHAINS:
             # Process queue -> ProcessorChain -> processor_chain_callback -> transport/db queue.
             self.lock.acquire()
-            (input_file, event, rule) = self.process_queue.get()
+            (input_file, event, rule, processed_for_server) = self.process_queue.get()
             self.lock.release()
 
             # Create curried callbacks so we can pass additional data to the
@@ -460,7 +496,8 @@ class Arbitrator(threading.Thread):
             # callback functions).
             curried_callback = curry(self.processor_chain_callback,
                                      event=event,
-                                     rule=rule
+                                     rule=rule,
+                                     processed_for_server=processed_for_server
                                      )
             curried_error_callback = curry(self.processor_chain_error_callback,
                                            event=event
@@ -477,6 +514,7 @@ class Arbitrator(threading.Thread):
                                                                           rule["processorChain"],
                                                                           document_root,
                                                                           base_path,
+                                                                          processed_for_server,
                                                                           curried_callback,
                                                                           curried_error_callback
                                                                           )
@@ -485,7 +523,10 @@ class Arbitrator(threading.Thread):
 
             # Log.
             processor_chain_string = "->".join(rule["processorChain"])
-            self.logger.debug("Process queue: started the '%s' processor chain for the file '%s'." % (processor_chain_string, input_file))
+            if processed_for_server == Arbitrator.PROCESSED_FOR_ANY_SERVER:
+                self.logger.debug("Process queue: started the '%s' processor chain for the file '%s'." % (processor_chain_string, input_file))
+            else:
+                self.logger.debug("Process queue: started the '%s' processor chain for the file '%s' for the server '%s'." % (processor_chain_string, input_file, processed_for_server))
             processed += 1
 
 
@@ -498,7 +539,7 @@ class Arbitrator(threading.Thread):
                 # item from the queue, because there may be no transporter
                 # available, in which case the file should remain queued.
                 self.lock.acquire()
-                (input_file, event, rule, output_file) = self.transport_queue[server].peek()
+                (input_file, event, rule, processed_for_server, output_file) = self.transport_queue[server].peek()
                 self.lock.release()
 
                 # Derive the action from the event.
@@ -527,7 +568,7 @@ class Arbitrator(threading.Thread):
                     # A transporter is available!
                     # Transport queue -> Transporter -> transporter_callback -> db queue.
                     self.lock.acquire()
-                    (input_file, event, rule, output_file) = self.transport_queue[server].get()
+                    (input_file, event, rule, processed_for_server, output_file) = self.transport_queue[server].get()
                     self.lock.release()
 
                     # Create curried callbacks so we can pass additional data
@@ -538,6 +579,7 @@ class Arbitrator(threading.Thread):
                                              input_file=input_file,
                                              event=event,
                                              rule=rule,
+                                             processed_for_server=processed_for_server,
                                              server=server
                                              )
                     curried_error_callback = curry(self.transporter_error_callback,
@@ -577,7 +619,7 @@ class Arbitrator(threading.Thread):
         while processed < QUEUE_PROCESS_BATCH_SIZE and self.db_queue.qsize() > 0:
             # DB queue -> database.
             self.lock.acquire()
-            (input_file, event, rule, output_file, transported_file, url, server) = self.db_queue.get()
+            (input_file, event, rule, processed_for_server, output_file, transported_file, url, server) = self.db_queue.get()
             self.lock.release()
 
             # Commit the result to the database.            
@@ -675,13 +717,25 @@ class Arbitrator(threading.Thread):
             # And remove from files in pipeline.
             self.lock.acquire()
             (input_file, event) = self.retry_queue.get()
-            self.failed_files.append((input_file, event))
+            # It's possible that the file is already in the failed_files
+            # persistent list or in the pipeline queue (if it is being retried
+            # already) if it is being processed per server and now a second
+            # (or third or ...) processor is requesting a retry.
+            if (input_file, event) not in self.failed_files and (input_file, event) not in self.pipeline_queue:
+                self.failed_files.append((input_file, event))
+                already_in_failed_files = False
+            else:
+                already_in_failed_files = True
             self.files_in_pipeline.remove((input_file, event))
             self.lock.release()
 
             # Log.
-            self.logger.warning("Retry queue -> 'failed_files' persistent list: '%s'. Retrying later." % (input_file))
+            if not already_in_failed_files:
+                self.logger.warning("Retry queue -> 'failed_files' persistent list: '%s'. Retrying later." % (input_file))
+            else:
+                self.logger.warning("Retry queue -> 'failed_files' persistent list: '%s'. File already being retried later." % (input_file))
             processed += 1
+
 
     def __allow_retry(self):
         num_failed_files = len(self.failed_files)
@@ -818,26 +872,36 @@ class Arbitrator(threading.Thread):
             self.lock.release()
 
 
-    def processor_chain_callback(self, input_file, output_file, event, rule):
+    def processor_chain_callback(self, input_file, output_file, event, rule, processed_for_server):
         if CALLBACKS_CONSOLE_OUTPUT:
             print """PROCESSOR CHAIN CALLBACK FIRED:
                     input_file='%s'
                     (curried): event=%d
                     (curried): rule='%s'
-                    output_file='%s'""" % (input_file, event, rule["label"], output_file)
+                    (curried): processed_for_server='%s'
+                    output_file='%s'""" % (input_file, event, rule["label"], processed_for_server, output_file)
 
         # Decrease number of running processor chains.
         self.lock.acquire()
         self.processorchains_running -= 1
         self.lock.release()
 
-        for server in rule["destinations"].keys():
+        # If the input file was not processed for a specific server, then it
+        # should be synced to all destinations. Else, it should only be synced
+        # to the server it was processed for.
+        if processed_for_server == Arbitrator.PROCESSED_FOR_ANY_SERVER:
+            for server in rule["destinations"].keys():
+                # Add to transport queue.
+                self.lock.acquire()
+                self.transport_queue[server].put((input_file, event, rule, processed_for_server, output_file))
+                self.lock.release()
+            self.logger.info("Process queue -> transport queue: '%s'." % (input_file))
+        else:
             # Add to transport queue.
             self.lock.acquire()
-            self.transport_queue[server].put((input_file, event, rule, output_file))
+            self.transport_queue[processed_for_server].put((input_file, event, rule, processed_for_server, output_file))
             self.lock.release()
-
-        self.logger.info("Process queue -> transport queue: '%s'." % (input_file))
+            self.logger.info("Process queue -> transport queue: '%s' (processed for server '%s')." % (input_file, processed_for_server))
 
 
     def processor_chain_error_callback(self, input_file, event):
@@ -853,7 +917,7 @@ class Arbitrator(threading.Thread):
         self.lock.release()
 
 
-    def transporter_callback(self, src, dst, url, action, input_file, event, rule, server):
+    def transporter_callback(self, src, dst, url, action, input_file, event, rule, processed_for_server, server):
         # Map Transporter's variable names to ours.
         output_file      = src
         transported_file = dst
@@ -863,17 +927,18 @@ class Arbitrator(threading.Thread):
                     (curried): input_file='%s'
                     (curried): event=%d
                     (curried): rule='%s'
+                    (curried): processed_for_server='%s'
                     output_file='%s'
                     transported_file='%s'
                     url='%s'
-                    server='%s'""" % (input_file, event, rule["label"], output_file, transported_file, url, server)
+                    server='%s'""" % (input_file, event, rule["label"], processed_for_server, output_file, transported_file, url, server)
 
         # Add to db queue.
         self.lock.acquire()
-        self.db_queue.put((input_file, event, rule, output_file, transported_file, url, server))
+        self.db_queue.put((input_file, event, rule, processed_for_server, output_file, transported_file, url, server))
         self.lock.release()
 
-        self.logger.info("Transport queue -> DB queue: '%s'." % (input_file))
+        self.logger.info("Transport queue -> DB queue: '%s' (server: '%s')." % (input_file, server))
 
 
     def transporter_error_callback(self, src, dst, action, input_file, event):

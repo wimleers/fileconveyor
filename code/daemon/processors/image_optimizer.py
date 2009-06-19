@@ -22,8 +22,8 @@ class Base(Processor):
     valid_extensions = (".gif", ".png", ".jpg", ".jpeg")
 
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
-        Processor.__init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir)
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp", copy_metadata=COPY_METADATA_NONE, filename_mutable=FILENAME_MUTABLE):
+        Processor.__init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir)
         self.copy_metadata    = copy_metadata
         self.filename_mutable = filename_mutable
         self.devnull = open(os.devnull, 'w')
@@ -101,7 +101,7 @@ class Base(Processor):
 class Max(Base):
     """optimizes image files losslessly (GIF, PNG, JPEG, animated GIF)"""
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
                       original_file,
@@ -117,7 +117,7 @@ class Max(Base):
 class KeepMetadata(Base):
     """same as Max, but keeps JPEG metadata"""
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
                       original_file,
@@ -133,7 +133,7 @@ class KeepMetadata(Base):
 class KeepFilename(Base):
     """same as Max, but keeps the original filename (no GIF optimization)"""
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
                       original_file,
@@ -149,7 +149,7 @@ class KeepFilename(Base):
 class KeepMetadataAndFilename(Base):
     """same as Max, but keeps JPEG metadata and the original filename (no GIF optimization)"""
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp"):
         Base.__init__(self,
                       input_file,
                       original_file,

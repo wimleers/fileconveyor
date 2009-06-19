@@ -17,8 +17,8 @@ class Base(Processor):
     valid_extensions = () # Any extension is valid.
 
 
-    def __init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir="/tmp", search=[], replace=[]):
-        Processor.__init__(self, input_file, original_file, document_root, base_path, parent_logger, working_dir)
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp", search=[], replace=[]):
+        Processor.__init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir)
         self.search  = search
         self.replace = replace
 

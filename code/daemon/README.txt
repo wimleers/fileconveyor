@@ -204,6 +204,9 @@ processor module:
    update an image file or font file that is referenced by CSS files, you
    should modify the CSS files as well. Just modifying the mtime (by using the
    touch command) is sufficient.
+ - it requires the referenced files to be synced to the same server the CSS
+   file is being synced to. This implies that all the references files must
+   also be synced to the same server, or the file will never get synced!
 
 Available processors:
 1) CSSURLUpdater

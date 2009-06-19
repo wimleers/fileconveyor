@@ -23,6 +23,7 @@ class CSSURLUpdater(Processor):
     """replaces URLs in .css files with their counterparts on the CDN"""
 
 
+    different_per_server = True
     valid_extensions = (".css")
 
 
@@ -70,7 +71,7 @@ class CSSURLUpdater(Processor):
             result = self.dbcur.fetchone()
 
             if result == None:
-                raise RequestToRequeueException("The file '%s' has not yet been synced." % (urlstring))
+                raise RequestToRequeueException("The file '%s' has not yet been synced to the server '%s'" % (urlstring, self.process_for_server))
             else:
                 cdn_url = result[0]
 
@@ -128,5 +129,5 @@ class CSSURLUpdater(Processor):
             return urlstring
 
         # Get the CDN URL for the given absolute file path.
-        self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=?", (urlstring, ))
+        self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=? AND server=?", (urlstring, self.process_for_server))
         return self.dbcur.fetchone()[0]

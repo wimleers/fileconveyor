@@ -23,6 +23,15 @@ class Mtime(Processor):
     """gives the file a unique filename based on its mtime"""
 
 
+    # This variable is used by the arbitrator to detect if this file should be
+    # processed on a per-server basis or if the same file can be processed
+    # once and then synced to all servers. The default is False and does not
+    # have to be set explicitly as was done here for demonstrative purposes.
+    # Set it to True to enable per-server processing.
+
+    different_per_server = False
+
+
     # This variable is picked up automatically by the Processor base class and
     # is used to validate the input file. The empty tuple can be used to allow
     # any extension, otherwise use tuples like (".css", ".js").

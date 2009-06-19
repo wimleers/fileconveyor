@@ -100,8 +100,7 @@ class Config(object):
             if not document_root is None and not base_path is None:
                 site_path = os.path.join(document_root, base_path[1:])
                 if not os.path.exists(site_path):
-                    self.logger.error("The %s site path (the base path within the document root, '%s') does not exist." % (name, site_path))
-                    self.errors += 1
+                    self.logger.warning("The %s site path (the base path within the document root, '%s') does not exist. It is assumed that this is a logical base path then, due to usage of symbolic links." % (name, site_path))
 
 
     def __parse_servers(self, root):
