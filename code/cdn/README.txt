@@ -69,24 +69,24 @@ For this purpose, you can implement the cdn_advanced_pick_server() function:
   /**
    * Implementation of cdn_advanced_pick_server().
    */
-  function cdn_advanced_pick_server($servers) {
+  function cdn_advanced_pick_server($servers_for_file) {
     // The data that you get - one nested array per server from which the file
     // can be served:
-    //   $servers[0] = array('url' => 'http://cdn1.com/image.jpg', 'server' => 'cdn1.com')
-    //   $servers[1] = array('url' => 'http://cdn2.net/image.jpg', 'server' => 'cdn2.net')
+    //   $servers_for_file[0] = array('url' => 'http://cdn1.com/image.jpg', 'server' => 'cdn1.com')
+    //   $servers_for_file[1] = array('url' => 'http://cdn2.net/image.jpg', 'server' => 'cdn2.net')
 
     $which = your_logic_to_pick_a_server();
 
     // Return one of the nested arrays.
-    return $servers[$which];
+    return $servers_for_file[$which];
   }
 
 So to get the default behavior (pick the first server found), one would write:
   /**
    * Implementation of cdn_advanced_pick_server().
    */
-  function cdn_advanced_pick_server($servers) {
-    return $servers[0];
+  function cdn_advanced_pick_server($servers_for_file) {
+    return $servers_for_file[0];
   }
 
 
