@@ -625,8 +625,11 @@ class Arbitrator(threading.Thread):
             remove_server_from_remaining_transporters = True
             transported_file_basename = os.path.basename(output_file)
             if event == FSMonitor.CREATED:
-                self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
-                self.dbcon.commit()
+                try:
+                    self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
+                    self.dbcon.commit()
+                except IntegrityError, e:
+                    self.logger.critical("Database integrity error: %s." % (e))
             elif event == FSMonitor.MODIFIED:
                 self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
                 if self.dbcur.fetchone()[0] > 0:
