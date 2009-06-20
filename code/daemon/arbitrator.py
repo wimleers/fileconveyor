@@ -460,7 +460,6 @@ class Arbitrator(threading.Thread):
                                     else:
                                         self.process_queue.put((input_file, event, rule, server))
                                         self.logger.info("Filter queue -> process queue: '%s' for server '%s' (rule: '%s')." % (input_file, server, rule["label"]))
-                                        
                             else:
                                 self.process_queue.put((input_file, event, rule, Arbitrator.PROCESSED_FOR_ANY_SERVER))
                                 self.logger.info("Filter queue -> process queue: '%s' (rule: '%s')." % (input_file, rule["label"]))
@@ -666,7 +665,7 @@ class Arbitrator(threading.Thread):
                         # 'files_in_pipeline' persistent list.
                         pseudo_event = Arbitrator.DELETE_OLD_FILE
                         # Queue the transport (deletion), but jump the queue!.
-                        self.transport_queue[server].jump((input_file, pseudo_event, rule, fake_output_file))
+                        self.transport_queue[server].jump((input_file, pseudo_event, rule, Arbitrator.PROCESSED_FOR_ANY_SERVER, fake_output_file))
                         self.logger.info("DB queue -> transport queue (jumped): '%s' to delete its old transported file '%s' on server '%s'." % (input_file, old_transport_file_basename, server))
                 else:
                     self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
