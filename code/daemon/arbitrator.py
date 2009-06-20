@@ -628,7 +628,7 @@ class Arbitrator(threading.Thread):
                 try:
                     self.dbcur.execute("INSERT INTO synced_files VALUES(?, ?, ?, ?)", (input_file, transported_file_basename, url, server))
                     self.dbcon.commit()
-                except IntegrityError, e:
+                except sqlite3.IntegrityError, e:
                     self.logger.critical("Database integrity error: %s." % (e))
             elif event == FSMonitor.MODIFIED:
                 self.dbcur.execute("SELECT COUNT(*) FROM synced_files WHERE input_file=? AND server=?", (input_file, server))
