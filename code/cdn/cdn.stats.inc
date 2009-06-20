@@ -25,6 +25,7 @@
  *   Only if no parameters were passed: the collected statistics.
  */
 function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = FALSE, $time = FALSE) {
+  static $files;
   static $file_count;
   static $cdn_file_count;
   static $synced_files_per_server_count;
@@ -38,6 +39,7 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
   }
 
   if (!isset($file_count)) {
+    $files = array();
     $file_count = 0;
     $cdn_file_count = 0;
     $synced_files_per_server_count = array();
@@ -48,7 +50,8 @@ function _cdn_devel_page_stats($file = FALSE, $file_cdn_url = FALSE, $server = F
 
   // If the function is called with parameters set, save the statistics. If no
   // parameters are passed, return the collected statistics.
-  if ($file) {
+  if ($file && !array_key_exists($file, $files)) {
+    $files[$file] = TRUE;
     $file_count++;
     $total_time += $time;
 
