@@ -97,7 +97,7 @@ create a variable function, e.g.:
   $file_create_url = (module_exists('cdn')) ? 'file_create_url' : 'url';
 
 Then create all file URLs using this variable function. E.g.
-  $file_url = $file_create_url(drupal_get_path('module', 'episodes') .'/lib/episodes.js')
+  $file_url = $file_create_url(drupal_get_path('module', 'episodes') .'/lib/episodes.js');
 
 
 Author
