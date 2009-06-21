@@ -145,6 +145,12 @@ EPISODES.findStartTime = function() {
 					startTime = aSubCookies[j].substring(2);
 				}
 				else if ( 0 === aSubCookies[j].indexOf("r=") ) {
+				  // Some browsers return the semi-colon at the end of each stored
+				  // value. Remove it before we perform referrer matching to make it
+				  // work reliably.
+          if (aSubCookies[j][aSubCookies[j].length - 1] == ';') {
+            aSubCookies[j] = aSubCookies[j].substring(0, aSubCookies[j].length - 1);
+          }
 					var startPage = aSubCookies[j].substring(2, aSubCookies[j].length);
 					bReferrerMatch = ( escape(document.referrer) == startPage );
 				}
