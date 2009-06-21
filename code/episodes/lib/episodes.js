@@ -18,9 +18,9 @@ var EPISODES = EPISODES || {};
 EPISODES.init = function() {
 	EPISODES.done = false;
 	EPISODES.domready = false;
-    EPISODES.marks = {};
-    EPISODES.measures = {};
-    EPISODES.starts = {};
+	EPISODES.marks = {};
+	EPISODES.measures = {};
+	EPISODES.starts = {};
 	EPISODES.addEventListener("message", EPISODES.handleEpisodeMessage, false);
 	EPISODES.bindDomReady();
 	EPISODES.findStartTime();
@@ -39,7 +39,9 @@ EPISODES.init = function() {
 };
 
 EPISODES.isCompatible = function() {
-	return ( "undefined" != typeof(window.postMessage) );
+  // In IE8, window.postMessage occasionally doesn't work. So, unfortunately
+  // we have to mark all IE browsers as incompatible.
+	return ( window.navigator.userAgent.indexOf("MSIE") === -1 && "undefined" != typeof(window.postMessage) );
 };
 
 // Load the compatibility module if necessary. 
