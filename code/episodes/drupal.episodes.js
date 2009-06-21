@@ -78,7 +78,7 @@ Drupal.Episodes.done = function() {
 
 
 // Call Drupal.Episodes.done() when the "load" event is triggered.
-EPISODES.addEventListener("load", function() { Drupal.Episodes.done(); }, false);
+$(window).load(function() { Drupal.Episodes.done(); });
 
 // Start executing lazy load callbacks as soon as the DOM is ready.
 $(document).ready(function() { Drupal.Episodes.executeLazyLoadCallbacks(); });
