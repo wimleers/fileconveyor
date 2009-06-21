@@ -37,7 +37,7 @@ if ( window.addEventListener ) {
 			// need to send this to our custom event
 			EPISODES.postMessageCustomEvent.subscribe( function(type, args) { listener.call(undefined, args[0]); } );
 		}
-	}
+	};
 }
 else if ( window.attachEvent ) {
 	// Make window.attachEvent recognize the "message" event type.
@@ -50,7 +50,7 @@ else if ( window.attachEvent ) {
 			// need to send this to our custom event
 			EPISODES.postMessageCustomEvent.subscribe( function(type, args) { listener.call(undefined, args[0]); } );
 		}
-	}
+	};
 }
 
 EPISODES.init();
