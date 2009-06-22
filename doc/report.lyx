@@ -193,7 +193,7 @@ TODO
 \end_layout
 
 \begin_layout Section
-Nederlandstalige samenvatting
+Dutch summary/Nederlandstalige samenvatting
 \end_layout
 
 \begin_layout Standard
@@ -251,7 +251,7 @@ base
 \begin_inset space ~
 \end_inset
 
-path The relative path in a URL that defined the root of a web site.
+path The relative path in a URL that defines the root of a web site.
  E.g.
  if the site 
 \family typewriter
@@ -289,7 +289,7 @@ CDN A content delivery network (CDN) is a collection of web servers distributed
 
 \begin_layout Description
 component A component of a web page, this can be a CSS style sheet, a JavaScript
- file, an image, a font, a movie file, etc.
+ file, an image, a font, a movie file, et cetera.
 \end_layout
 
 \begin_layout Description
@@ -346,7 +346,7 @@ performance The time the server needs to render a web page.
 \end_layout
 
 \begin_layout Description
-PoP A Point of Presence is an access point to the internet; where multiple
+PoP A Point of Presence is an access point to the internet where multiple
  Internet Service Providers connect with each other.
 \end_layout
 
@@ -384,18 +384,18 @@ name "sec:Definition"
 \end_layout
 
 \begin_layout Standard
-When a end user loads a web page, the time perceived by him until the page
+When an end user loads a web page, the time perceived by him until the page
  has loaded entirely is called the 
 \emph on
 end user response time
 \emph default
 .
- Unlike what you might think, the majority of this time isn't spent at the
- server, generating the page! The generating (back-end) and transport of
- the HTML document (front-end) is typically only 10-20% of the end user
+ Unlike what you might think, the majority of this time is not spent at
+ the server, generating the page! The generating (back-end) and transport
+ of the HTML document (front-end) is typically only 10-20% of the end user
  response time.
  The other 80-90% of the time is spent on loading the components (CSS stylesheet
-s, JavaScript, images, movies, etc.) in the page (front-end only).
+s, JavaScript, images, movies, et cetera) in the page (front-end only).
  Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -454,10 +454,10 @@ name "fig:End-user-response-time"
 \end_layout
 
 \begin_layout Standard
-It should be obvious now that it's far more effective to focus on front-end
- performance than it is to focus on back-end performance, because it's got
- a greater potential.
- It's also easier to optimize than the back-end.
+It should be obvious now that it is far more effective to focus on front-end
+ performance than it is to focus on back-end performance, because it has
+ got a greater potential.
+ it is also easier to optimize than the back-end.
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -484,8 +484,8 @@ Users care about performance!
 \end_layout
 
 \begin_layout Standard
-Your web site's visitors won't be timing the page loads themselves, but
- they will browse elsewhere when you're forcing them to wait too long.
+Your web site's visitors will not be timing the page loads themselves, but
+ they will browse elsewhere when you are forcing them to wait too long.
  Fast web sites are rewarded, slow web sites are punished.
  Fast web sites get more visitors, have happier visitors and their visitors
  return more often.
@@ -544,7 +544,7 @@ key "Google maps load time impact"
 \end_layout
 
 \begin_layout Standard
-It's clear that even the smallest delays can have disastrous and wondrous
+it is clear that even the smallest delays can have disastrous and wondrous
  effects.
  
 \end_layout
@@ -552,21 +552,21 @@ It's clear that even the smallest delays can have disastrous and wondrous
 \begin_layout Standard
 Now, why is this important to Drupal – because this bachelor thesis is about
  improving Drupal's page loading performance in particular? Because then
- the Drupal Experience is better: a faster web site results in happier users
+ the Drupal experience is better: a faster web site results in happier users
  and developers.
- If your site is a commercial one – either through ads or a store, then
- it also impacts your revenue.
+ If your site is a commercial one, either through ads or a store, then it
+ also impacts your revenue.
  More generally, a faster Drupal would affect many:
 \end_layout
 
 \begin_layout Itemize
-Drupal is increasinly used for big, high-traffic web sites, thus a faster
- Drupal would affect a lot of people
+Drupal is increasingly being used for big, high-traffic web sites, thus
+ a faster Drupal would affect a lot of people
 \end_layout
 
 \begin_layout Itemize
 Drupal is still growing in popularity (according to its usage statistics,
- which only includes web sites with the Update Status module enabled, there
+ which only include web sites with the Update Status module enabled, there
  are over 140,000 web sites as of February 22, 2009, see 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -579,9 +579,9 @@ key "Drupal usage statistics"
 
 \begin_layout Itemize
 Drupal is international, thanks to its i18n/L10n support, and thanks to
- that it's used for sites with very international audiences (whom face high
- network latencies) and developing countries (where low-speed internet connectio
-ns are commonplace).
+ that it is used for sites with very geographically dispersed audiences
+ (whom face high network latencies) and developing countries (where low-speed
+ internet connections are commonplace).
  A faster Drupal would make a big difference there as well.
 \end_layout
 
@@ -606,14 +606,14 @@ name "sec:The-State-of-Drupal"
 \begin_layout Standard
 So you might expect that Drupal has already invested heavily in improving
  its page loading performance.
- Unfortunately, that's not true.
+ Unfortunately, that is not true.
  Hopefully this bachelor thesis will help to gain some developer attention.
 \end_layout
 
 \begin_layout Standard
 Because of this, the article I wrote more than a year ago is still completely
  applicable.
- It doesn't make much sense to just rephrase the article here in my thesis
+ It does not make much sense to just rephrase the article here in my thesis
  text, so instead I'd like to forward you to that article
 \begin_inset space ~
 \end_inset
@@ -629,7 +629,7 @@ key "drupal-performance-article"
 \end_layout
 
 \begin_layout Standard
-I've repeated the remaining problems here for the sake of clarity:
+I will repeat the remaining problems here for the sake of clarity:
 \end_layout
 
 \begin_layout Itemize
@@ -640,8 +640,8 @@ Static files (CSS, JavaScript, images) should be served with proper HTTP
 \end_layout
 
 \begin_layout Itemize
-To allow for CDN integration in Drupal, the ability to alter file URLs dynamical
-ly is needed, but this isn't supported yet.
+To allow for CDN integration in Drupal, the ability to dynamically alter
+ file URLs is needed, but this is not supported yet.
 \end_layout
 
 \begin_layout Itemize
@@ -703,8 +703,8 @@ A content delivery network (CDN) is a collection of web servers distributed
 \end_layout
 
 \begin_layout Standard
-It's extremely hard to decide which CDN to use.
- In fact, by just looking at a CDN's performance, it's close to impossible
+It is extremely hard to decide which CDN to use.
+ In fact, by just looking at a CDN's performance, it is close to impossible
 \begin_inset space ~
 \end_inset
 
@@ -742,20 +742,24 @@ pull
 \emph on
 Origin Pull
 \emph default
- technique and will periodically pull the files from the origin (that's
+ technique and will periodically pull the files from the origin (that is
  your server).
  How often that is, depends on how you've configured headers (particularly
- the Expires headers).
+ the 
+\family typewriter
+Expires
+\family default
+ header).
  It of course also depends on the software driving the CDN – there is no
  standard in this field.
  It may also result in redundant traffic because files are being pulled
  from the origin server more often than they actually change, but this is
  a minor drawback in most situations.
- Push on the other hand, requires a fair amount of work on your side to
+ Push on the other hand requires a fair amount of work from your part to
  sync files to the CDN.
  But you gain flexibility because you can decide when files are synced,
  how often and if any preprocessing should happen.
- That's much harder to do with Origin Pull CDNs.
+ That is much harder to do with Origin Pull CDNs.
  See table 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -775,7 +779,7 @@ It should also be noted that some CDNs, if not most, support both Origin
 The last thing to consider is vendor lock-in.
  Some CDNs offer highly specialized features, such as video transcoding.
  If you then discover another CDN that is significantly cheaper, you cannot
- easily move, because you're depending on your current CDN's specific features.
+ easily move, because you are depending on your current CDN's specific features.
 \end_layout
 
 \begin_layout Standard
@@ -931,7 +935,7 @@ setup
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Pull versus Push CDNs comparison chart.
+Pull versus Push CDNs comparison table.
  
 \begin_inset CommandInset label
 LatexCommand label
@@ -974,15 +978,16 @@ Lord Kelvin
 \end_layout
 
 \begin_layout Standard
-The same applies to page loading performance: if you can't measure it, you
- can't know which parts have the biggest effect and thus deserve your focus.
+The same applies to page loading performance: if you cannot measure it,
+ you cannot know which parts have the biggest effect and thus deserve your
+ focus.
  So before doing any real work, we'll have to figure out which tools can
  help us analyzing page loading performance.
  
 \begin_inset Quotes eld
 \end_inset
 
-profiling
+Profiling
 \begin_inset Quotes erd
 \end_inset
 
@@ -1020,8 +1025,8 @@ usual goal of performance analysis is to determine which sections of a program
 \begin_layout Standard
 So we'll go through a list of tools: UA Profiler, Cuzillion, YSlow, Hammerhead,
  Apache JMeter, Gomez/Keynote/WebMetrics/Pingdom and Jiffy/Episodes.
- As you can tell, it's a pretty long list, so I'll pick the tools I'll use
- while improving Drupal's page loading performance based on two factors:
+ As you can tell, it is a pretty long list, so I'll pick the tools I'll
+ use while improving Drupal's page loading performance based on two factors:
 \end_layout
 
 \begin_layout Enumerate
@@ -1029,8 +1034,8 @@ How the tool could help improve Drupal core's page loading performance.
 \end_layout
 
 \begin_layout Enumerate
-How the tool could help Drupal site owners profile their site's page loading
- performance.
+How the tool could help Drupal site owners to profile their site's page
+ loading performance.
 \end_layout
 
 \begin_layout Subsection
@@ -1046,13 +1051,14 @@ key "UA Profiler"
 \end_inset
 
  is a crowd-sourced project for gathering browser performance characteristics
- (parallel connections, downloading scripts without blocking, caching, etc.).
+ (parallel connections, downloading scripts without blocking, caching, et
+ cetera).
  The tests run automatically when you navigate to the test page from any
- browser – this is why it's powered by crowdsourcing.
+ browser – this is why it is powered by crowdsourcing.
 \end_layout
 
 \begin_layout Standard
-It's a handy, informative tool to find out which browser supports which
+it is a handy, informative tool to find out which browser supports which
  features related to page loading performance.
 \end_layout
 
@@ -1088,13 +1094,13 @@ key "Cuzillion announcement"
 \begin_inset Quotes erd
 \end_inset
 
- indicates what it's about: there are a lot of possible combinations of
+ indicates what it is about: there are a lot of possible combinations of
  stylesheets, scripts and images.
  Plus they can be external or inline.
  And each combination has different effects.
  Finally, to further complicate the situation, all these combinations depend
  on the browser being used.
- It should be obvious that without Cuzillion, it's an insane job to figure
+ It should be obvious that without Cuzillion, it is an insane job to figure
  out how each browser behaves:
 \end_layout
 
@@ -1115,7 +1121,7 @@ existing
 \emph default
 web page.
  Instead, it allows you to analyze any combination of components.
- That means it's a 
+ That means it is a 
 \emph on
 learning tool
 \emph default
@@ -1162,7 +1168,7 @@ reference "fig:Cuzillion"
 
 ).
  This generates a unique URL.
- You can then copy this URL to all browsers you'd like to test.
+ You can then copy this URL to all browsers you would like to test.
 \end_layout
 
 \begin_layout Standard
@@ -1331,7 +1337,7 @@ key "YSlow"
 
 \end_inset
 
- also is a Firebug 
+ is a Firebug 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Firebug"
@@ -1368,7 +1374,7 @@ key "Exceptional Performance"
 
 \end_inset
 
-, as developed the Yahoo! performance team.
+, as developed by the Yahoo! performance team.
 \end_layout
 
 \begin_layout Standard
@@ -1377,7 +1383,7 @@ YSlow 1.0 can only evaluate these 13 rules and has a hardcoded grading algorithm
  these rules.
  It analyzes the content of your web page (and the headers that were sent
  with it).
- For example, it doesn't test the latency or speed of a CDN, it just checks
+ For example, it does not test the latency or speed of a CDN, it just checks
  if you are using one.
  As an example, because you have to tell YSlow (via Firefox' 
 \family typewriter
@@ -1409,7 +1415,7 @@ Configure ETags
 \begin_inset Quotes erd
 \end_inset
 
-) is only relevant if you're using a cluster of web servers.
+) is only relevant if you are using a cluster of web servers.
  For a more in-depth article on how to deal with YSlow's evaluation of your
  web sites, see 
 \begin_inset CommandInset citation
@@ -1433,8 +1439,8 @@ key "YSlow 2.0 early preview"
 \begin_layout Standard
 Since only YSlow 1.0 is available at the time of writing, I'll stick with
  that.
- It's a very powerful and helpful tool as it stands, it'll just get better.
- But remember the two caveats: it only verifies rules (it doesn't measure
+ it is a very powerful and helpful tool as it stands, it'll just get better.
+ But remember the two caveats: it only verifies rules (it does not measure
  real-world performance) and some of the rules may not be relevant for your
  web site.
 \end_layout
@@ -1610,8 +1616,8 @@ while
  It measures how long a page takes to load and it can load a page multiple
  times, to calculate the average and mean page load times.
  Of course, this is a lot less precise than real-world profiling, but it
- allows you to profile while you're working.
- It's far more effective to prevent page loading performance problems due
+ allows you to profile while you are working.
+ it is far more effective to prevent page loading performance problems due
  to changes in code, because you have the test results within seconds or
  minutes after you've made these changes!
 \end_layout
@@ -1637,14 +1643,14 @@ key "Fasterfox"
 hammer 
 \emph default
 the server, this is where the name comes from).
- And you'd still have to set up the separate testing conditions for each
- page load: empty cache, primed cache and for the latter there are again
- two possible situations: disk cache 
+ And you would still have to set up the separate testing conditions for
+ each page load: empty cache, primed cache and for the latter there are
+ again two possible situations: disk cache 
 \emph on
 and
 \emph default
  memory cache or just disk cache.
- Memory cache is of course faster than disk cache; that's also why that
+ Memory cache is of course faster than disk cache; that is also why that
  distinction is important.
  Finally, it supports exporting the resulting data into CSV format, so you
  could even create some tools to roughly track page loading performance
@@ -1652,7 +1658,7 @@ and
 \begin_inset Newline newline
 \end_inset
 
-See figure 
+A screenshot of Hammerhead is provided in figure 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "fig:Hammerhead"
@@ -1736,18 +1742,18 @@ However, it has several severe limitations:
 \end_layout
 
 \begin_layout Itemize
-Because it only measures from one location – the location from where it's
- run, it doesn't give a good big picture.
+Because it only measures from one location – the location from where it
+ is run, it does not give a good big picture.
 \end_layout
 
 \begin_layout Itemize
-It isn't an actual browser, so it doesn't download components referenced
+It is not an actual browser, so it does not download components referenced
  from CSS or JS files.
 \end_layout
 
 \begin_layout Itemize
-Also because it isn't an actual browser, it doesn't behave the same as browsers
- when it comes to parallel downloads.
+Also because it is not an actual browser, it does not behave the same as
+ browsers when it comes to parallel downloads.
 \end_layout
 
 \begin_layout Itemize
@@ -1758,14 +1764,14 @@ reference "sub:Hammerhead"
 
 \end_inset
 
-), so it's less likely that a developer will make JMeter part of his workflow.
+), so it is less likely that a developer will make JMeter part of his workflow.
 \end_layout
 
 \begin_layout Standard
-It can be very useful in case you're doing performance testing (How long
- does the back-end need to generate certain pages?), load testing (How many
+It can be very useful in case you are doing performance testing (How long
+ does the back-end need to generate certain pages?), load testing (how many
  concurrent users can the back-end/server setup handle?) and stress testing
- (How many concurrent users can it handle until errors ensue?)
+ (how many concurrent users can it handle until errors ensue?).
 \begin_inset Newline newline
 \end_inset
 
@@ -1848,10 +1854,10 @@ Limited number of measurement points
 
 \begin_layout Standard
 These services poll your site at regular or irregular intervals.
- This poses analysis problems: for example, if one your servers is very
+ This poses analysis problems: for example, if one of your servers is very
  slow just at that one moment that any of these services requests a page,
- you will be told that there's a major issue with your site.
- But that's not necessarily true: it might be a fluke.
+ you will be told that there is a major issue with your site.
+ But that is not necessarily true: it might be a fluke.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1868,11 +1874,11 @@ key "video of Velocity 2008 Jiffy presentation"
 
 .
  That implies their results aren't a representation of the real-world situation,
- which means you can't rely upon these metrics for making decisions: what
+ which means you cannot rely upon these metrics for making decisions: what
  if a commonly used real-world browser behaves completely differently? Even
  if the services would all use real-world browsers, they would never reflect
- real-world performance, because browser usage evolves over time and aren't
- the same for any two web sites.
+ real-world performance, because browser usage evolves over time and is
+ not the same for any two web sites.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1883,7 +1889,7 @@ Unsuited for Web 2.0
 The problem with these services is that they still assume the World Wide
  Web is the same as it was 10 years ago, where JavaScript was rather a scarcity
  than the abundancy it is today.
- They still intrerpret the 
+ They still interpret the 
 \family typewriter
 onload
 \family default
@@ -1985,7 +1991,7 @@ key "Keynote KITE"
 
 \end_inset
 
-, etc.).
+, et cetera).
  This approach has a long list of disadvantages: low accuracy, high switching
  costs, high maintenance costs, synthetic (no real-world measurements).
 \end_layout
@@ -2009,7 +2015,7 @@ key "Gomez Script Recorder"
 
 \end_inset
 
-, etc.).
+, et cetera).
  This is the preferred approach: it has lower maintenance costs and a higher
  accuracy because the code for timing is included in the other code and
  measures real user traffic.
@@ -2017,7 +2023,7 @@ key "Gomez Script Recorder"
 \end_inset
 
 If we would now work on a shared implementation of this approach, then we
- wouldn't have to reinvent the wheel every time and switching costs would
+ would not have to reinvent the wheel every time and switching costs would
  be much lower.
  See the Jiffy/Episodes later on.
 \end_layout
@@ -2027,10 +2033,10 @@ Paid & closed source
 \end_layout
 
 \begin_layout Standard
-You're dependent upon the 3rd party service to implement new instrumentations
- and analysises.
- There's a high cost for the implementation cost and a very high cost when
- switching to a different 3rd party service.
+You are dependent upon the 3rd party service to implement new instrumentations
+ and analyses.
+ There is a high cost for the implementation and a also a very high cost
+ when switching to a different 3rd party service.
 \end_layout
 
 \begin_layout Subsection
@@ -2063,14 +2069,15 @@ key "Velocity 2008 Jiffy presentation,video of Velocity 2008 Jiffy presentation,
 
 \end_inset
 
- is designed to give you real-world information on what's actually happening
+ is designed to give you real-world information on what is actually happening
  within browsers of users that are visiting your site.
  It shows you how long pages really take to load and how long events that
  happen while or after your page is loading really take.
- Especially when you don't control all the components of your web site (e.g.
+ Especially when you do not control all the components of your web site
+ (e.g.
  widgets of photo and music web sites, contextual ads or web analytics services)
-, it's important that you can monitor their performance.
- It overcomes to 4 major disadvantages that were listed previously:
+, it is important that you can monitor their performance.
+ It overcomes 4 major disadvantages that were listed previously:
 \end_layout
 
 \begin_layout Enumerate
@@ -2082,7 +2089,7 @@ every
 \end_layout
 
 \begin_layout Enumerate
-real-world browsers are used, becuase it's just JavaScript code that runs
+real-world browsers are used, becuase it is just JavaScript code that runs
  in the browser
 \end_layout
 
@@ -2192,9 +2199,9 @@ key "web site WhitePages"
  and has been running on that site.
  At more than 10 million page views per day, it should be clear that Jiffy
  can scale quite well.
- It's been released as an open source project, but at the time of writing,
+ It has been released as an open source project, but at the time of writing,
  the last commit was on July 25, 2008.
- So it's a dead project.
+ So it is a dead project.
 \end_layout
 
 \begin_layout Subsubsection
@@ -2224,7 +2231,7 @@ key "Episodes home page,Episodes white paper"
 Episodes' goal is to become an industry standard.
  This would imply that the aforementioned 3rd party services (Gomez/Keynote/WebM
 etrics/Pingdom) would take advantage of the the instrumentations implemented
- through Episodes in their anylises.
+ through Episodes in their analyses.
 \end_layout
 
 \begin_layout Enumerate
@@ -2260,8 +2267,8 @@ The goal is to make Episodes the industrywide solution for measuring web
  Tool developers and web metrics service providers get more accurate timing
  information by relying on instrumentation inserted by the developer of
  the web page.
- Browser developers gain insight into what's happening in the web page by
- relying on the context relayed by Episodes.
+ Browser developers gain insight into what is happening in the web page
+ by relying on the context relayed by Episodes.
 \end_layout
 
 \begin_layout Quotation
@@ -2293,7 +2300,7 @@ episodes-compat.js
 \family default
 .
  The latter is loaded on-the-fly when an older browser is being used that
- doesn't support 
+ does not support 
 \family typewriter
 window.postMessage()
 \family default
@@ -2398,7 +2405,7 @@ name "sub:ProfilingTools:Conclusion"
 \end_layout
 
 \begin_layout Standard
-There isn't a single, 
+There is not a single, 
 \begin_inset Quotes eld
 \end_inset
 
@@ -2415,11 +2422,11 @@ do-it-all
 However, for the scope of this thesis, there is one tool that jumps out:
  YSlow.
  It allows you to carefully analyze which things Drupal could be doing better.
- It's not necessarily meaningful in real-world situations, because it e.g.
- only checks if you're using a CDN, not how fast that CDN is.
- However, the fact that it tests whether a CDN is being used (or Expired
- headers, or gzipped components, or …) is enough to find out what can be
- improved, to maximize the potential performance.
+ It is not necessarily meaningful in real-world situations, because it e.g.
+ only checks if you are using a CDN, not how fast that CDN is.
+ But the fact that it tests whether a CDN is being used (or Expired headers,
+ or gzipped components, or …) is enough to find out what can be improved,
+ to maximize the potential performance.
 \begin_inset Newline newline
 \end_inset
 
@@ -2524,7 +2531,7 @@ Automatically turns each behavior (in
 \family typewriter
 Drupal.behaviors
 \family default
-) is automatically into its own episode.
+) into its own episode.
 \end_layout
 
 \begin_layout Itemize
@@ -2572,10 +2579,10 @@ actual
 
 \begin_layout Standard
 You could also choose to not enable the Episodes Server module and use an
- external web service to generate reports, but for now, none of these services
- exist yet.
- That's a void that will probably be filled in the next few years by the
- business world.
+ external web service to generate reports, but for now, no such services
+ yet exist.
+ This void will probably be filled in the next few years by the business
+ world.
 \end_layout
 
 \begin_layout Subsection
@@ -2785,7 +2792,7 @@ The main measurement points are:
 \begin_layout Itemize
 starttime: time of requesting the web page (when the 
 \family typewriter
-unbeforeunload
+onbeforeunload
 \family default
  event fires, the time is stored in a cookie); not in the HTML file
 \end_layout
@@ -2817,8 +2824,7 @@ onload
 \end_layout
 
 \begin_layout Itemize
-totaltime: when everything, also the possible lazy-loaded content, is loaded
- (i.e.
+totaltime: when everything, including lazily-loaded content, is loaded (i.e.
  pageready + the time to lazy-load content)
 \end_layout
 
@@ -2846,9 +2852,10 @@ totaltime episode = totaltime - starttime, this episode contains the backend
 
 \begin_layout Standard
 These are just the basic time measurements and episodes.
- It's possible to also measure the time it took to load the CSS (lines 8-9)
- and JS files in the header (line 10) and in the footer (line 27), for example.
- It's possible to measure just about anything you want.
+ It is possible to also measure the time it took to load the CSS (lines
+ 8-9) and JS files in the header (line 10) and in the footer (line 27),
+ for example.
+ It is possible to measure just about anything you want.
 \end_layout
 
 \begin_layout Standard
@@ -2889,12 +2896,12 @@ key "Episodes Example"
 
 \end_inset
 
- was in fact just a rough sample implementation, an implementation that
- indicates what it should look like.
- It contained several hardcoded URLs, didn't measure the sensible default
- episodes, contained a few bugs.
- In short, it was an excellent and solid start, but it needed some work
- to be truly reusable.
+ is in fact just a rough sample implementation, an implementation that indicates
+ what it should look like.
+ It contained sveral hardcoded URLs, does not measure the sensible default
+ episodes, contains a few bugs.
+ In short, it is an excellent and solid start, but it needs some work to
+ be truly reusable.
 \end_layout
 
 \begin_layout Standard
@@ -2909,7 +2916,7 @@ episodes.js
 
 \begin_layout Standard
 \begin_inset listings
-lstparams "basicstyle={\scriptsize},float,language=HTML,numbers=left,numberstyle={\scriptsize},tabsize=4"
+lstparams "basicstyle={\scriptsize},float=h,language=HTML,numbers=left,numberstyle={\scriptsize},tabsize=4"
 inline false
 status open
 
@@ -3009,18 +3016,18 @@ status open
 \end_layout
 
 \begin_layout Standard
-This way, you can set the variables to what you need them to be without
+This way, you can initialize the variables to the desired values without
  customizing 
 \family typewriter
 episodes.js
 \family default
 .
- Line 6 should be as early in the page as possible, because it's the most
+ Line 6 should be as early in the page as possible, because it is the most
  important reference timestamp.
 \end_layout
 
 \begin_layout Subsection
-Episodes module: integrating with Drupal
+Episodes module: integration with Drupal
 \end_layout
 
 \begin_layout Subsubsection
@@ -3028,8 +3035,8 @@ Implementation
 \end_layout
 
 \begin_layout Standard
-Here's a brief overview with the highlights of what had to be done to integrate
- Drupal with the Episodes framework.
+Here is a brief overview with the highlights of what had to be done to integrate
+ the Episodes framework with Drupal.
 \end_layout
 
 \begin_layout Itemize
@@ -3052,7 +3059,7 @@ hook_init()
 \family typewriter
 <head>
 \family default
- tag that's necessary to make Episodes work (see section 
+ tag that is necessary to make Episodes work (see section 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "sub:Episodes.module:reusable"
@@ -3104,7 +3111,7 @@ Drupal.attachBehaviors()
 \begin_inset Newline newline
 \end_inset
 
-Thanks to Drupal's existing abstraction and the override I've implemented,
+Thanks to Drupal's existing abstraction and the override I have implemented,
  all JavaScript code can be measured through Episodes without hacking Drupal
  core.
 \begin_inset Newline newline
@@ -3121,9 +3128,9 @@ reference "lst:Drupal.attachBehaviors()"
 \end_layout
 
 \begin_layout Itemize
-Some of the Drupal behaviors are too meaningless to measure, so it'd be
- nice to be able to mark some of the behaviors as ignored.
- That's also something I implemented.
+Some of the Drupal behaviors are too meaningless to measure, so it would
+ be nice to be able to mark some of the behaviors as ignored.
+ That is also something I implemented.
  Basically I do this by locating every directory in which one or more 
 \family typewriter
 *.js
@@ -3162,12 +3169,12 @@ css
 \family typewriter
 headerjs
 \family default
- episodes, it's necessary to make a couple of simple (copy-and-paste simple)
- changes to the 
+ episodes, it is necessary to make a couple of simple (copy-and-paste) changes
+ to the 
 \family typewriter
 page.tpl.php
 \family default
- of the Drupal theme(s) you're using.
+ of the Drupal theme(s) you are using.
  These changes are explained in the 
 \family typewriter
 README.txt
@@ -3177,7 +3184,7 @@ README.txt
 \emph on
 can
 \emph default
- be done – it's recommended, but not required.
+ be done – it is recommended, but not required.
 \end_layout
 
 \begin_layout Itemize
@@ -3436,9 +3443,9 @@ Implementation
 \end_layout
 
 \begin_layout Itemize
-First of all, the Apache HTTP server is a requirement, this application's
+First of all, the Apache HTTP server is a requirement as this application's
  logging component is used for generating the log files.
- Its logging component has been proven to be scalable, so there's no need
+ Its logging component has been proven to be scalable, so there is no need
  to roll our own.
 \begin_inset Newline newline
 \end_inset
@@ -3466,8 +3473,8 @@ httpd.conf
 \begin_layout Itemize
 The ingestor parses the Apache log file and moves the data to the database.
  I was able to borrow a couple of regular expressions from Jiffy's ingestor
- (which is written in Perl …) but I rewrote it completely to be clean and
- simple code, conform the Drupal coding guidelines.
+ (which is written in Perl …) but I completely rewrote it to obtain clean
+ and simple code, conform the Drupal coding guidelines.
  It detects the browser, browser version and operating system from the User
  Agent that was logged with the help of the Browser.php library 
 \begin_inset CommandInset citation
@@ -3492,7 +3499,7 @@ key "Google Chart API"
 \end_inset
 
 .
- You can see the result in figure 
+ You can see an example result in figure 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "fig:Episodes-Server-module-report"
@@ -3615,8 +3622,8 @@ Desired future features
 
 \begin_layout Standard
 Due to lack of time, the basic reports are … well … very basic.
- It'd be nice to have more charts and to be able to filter the data of the
- charts.
+ It would be nice to have more charts and to be able to filter the data
+ of the charts.
  In particular, these 3 filters would be very useful:
 \end_layout
 
@@ -3654,12 +3661,12 @@ Even just measuring the page execution time on the server cannot work because
 \emph on
 can
 \emph default
- accurately measure this time, but you can't 
+ accurately measure this time, but you cannot 
 \emph on
 relate
 \emph default
  it to the measurements in the browser.
- I implemented this using implementations Drupal's 
+ I implemented this using Drupal's 
 \family typewriter
 hook_boot()
 \family default
@@ -3679,7 +3686,7 @@ onbeforeunload
 \family typewriter
 backend
 \family default
- episode cannot be calculated, which in turn prevens the 
+ episode cannot be calculated, which in turn prevents the 
 \family typewriter
 pageready
 \family default
@@ -3716,13 +3723,13 @@ Episodes Server module
 Currently the same database as Drupal is being used.
  Is this scalable enough for analyzing the logs of web sites with millions
  of page views? No.
- Writing everything to a SQLite database wouldn't be better.
+ Writing everything to a SQLite database would not be better.
  The real solution is to use a different server to log to or even a web
  service.
  Better even is to log to a non-app server of your own and then send the
  logs to an external web service.
- Then you stay in control of all your data! (Avoiding vendor lock-in.) The
- main reason I opted for using the same database, is ease of development.
+ This way you stay in control of all your data! (Avoiding vendor lock-in.)
+ The main reason I opted for using the same database, is ease of development.
 \begin_inset Newline newline
 \end_inset
 
@@ -3756,9 +3763,8 @@ Wow, this is awesome.
 \end_layout
 
 \begin_layout Standard
-So, at least he thinks that this was a worthwile job and if he thinks that,
- then it will probably be worthwhile/helpful for the Drupal community as
- well.
+So, at least he thinks that this was a worthwhile job, which suggests that
+ it will probably be worthwhile/helpful for the Drupal community as well.
 \end_layout
 
 \begin_layout Standard
@@ -3798,7 +3804,7 @@ So now that we have the tools to accurately (or at least
 representatively
 \emph default
 ) measure the effects of using a CDN, we still have to start using a CDN.
- So, let's look at how we can make a web site use a CDN.
+ Next, we will examine how a web site can take advantage of a CDN.
 \end_layout
 
 \begin_layout Standard
@@ -3815,25 +3821,24 @@ reference "sec:Key-Properties-CDN"
 
 , there are two very different methods for populating CDNs.
  Supporting pull is easy, supporting push is a lot of work.
- But if we want to avoid vendor lock-in, it's necessary to be able to transparen
-tly switch between either pull or any of the transfer protocols for push.
+ But if we want to avoid vendor lock-in, it is necessary to be able to transpare
+ntly switch between pull and any of the transfer protocols for push.
 \end_layout
 
 \begin_layout Standard
-And to avoid vendor lock-in even further, it's necessary that we can do
- the preprocessing ourselves (be that video transcoding, image optimization
- or anything else).
+To further avoid vendor lock-in, it is necessary that we can do the preprocessin
+g ourselves (be that video transcoding, image optimization or anything else).
 \end_layout
 
 \begin_layout Standard
-That's why the meat of this thesis is about a daemon that makes it just
- as easy to use eith push or pull CDNs and that gives you full flexibility
+That is why the meat of this thesis is about a daemon that makes it just
+ as easy to use either push or pull CDNs and that gives you full flexibility
  in what kind of preprocessing you would like to perform.
  All you will have to do to integrate your web site with a CDN is:
 \end_layout
 
 \begin_layout Enumerate
-installing the daemon
+install the daemon
 \end_layout
 
 \begin_layout Enumerate
@@ -3863,7 +3868,8 @@ name "sub:daemon:Goals"
 As said before, the ability to use either push or pull CDNs is an absolute
  necessity, as is the ability to process files before they are synced to
  the CDN.
- However, there's more to it than just that, so here's a fill list of goals.
+ However, there is more to it than just that, so here is a full list of
+ goals.
 \end_layout
 
 \begin_layout Itemize
@@ -3884,9 +3890,9 @@ Processing before sync: image optimization, video transcoding …
 \end_layout
 
 \begin_layout Itemize
-Detect (& sync) new ﬁles instantly: through inotify on Linux, FSEvents on
- Mac OS X and the FindFirstChangeNotification AP or ReadDirectoryChanges
- API on Windows (there's also the FileSystemWatcher class for .NET)
+Detect (and sync) new ﬁles instantly: through inotify on Linux, FSEvents
+ on Mac OS X and the FindFirstChangeNotification API or ReadDirectoryChanges
+ API on Windows (there is also the FileSystemWatcher class for .NET)
 \end_layout
 
 \begin_layout Itemize
@@ -3923,8 +3929,9 @@ A couple of these goals need more explaining.
 
 \begin_layout Standard
 The transparency goal should speak for itself, but you may not yet have
- realized its impact: this is what will avoid high CDN provider switching
- costs, that is, it helps to avoid vendor lock-in.
+ realized its impact.
+ This is what will avoid high CDN provider switching costs, that is, it
+ helps to avoid vendor lock-in.
 \end_layout
 
 \begin_layout Standard
@@ -3942,20 +3949,20 @@ The ability to mix CDNs and static file servers makes it possible to either
  maximize the page loading performance or minimize the costs.
  Depending on your company's customerbase, you may either want to pay for
  a global CDN or a local one.
- If you're a global company, a global CDN makes sense.
- But if you're present only in a couple of countries, say the U.S.A., Japan
- and France, it doesn't make sense to pay for a global CDN.
- It's probably cheaper to pay for a North-American CDN and a couple of strategic
-ally placed static file servers in Japan and France to cover the rest of
- your customer base.
+ If you are a global company, a global CDN makes sense.
+ But if you are present only in a couple of countries, say the U.S.A., Japan
+ and France, it does not make sense to pay for a global CDN.
+ It is probably cheaper to pay for a North-American CDN and a couple of
+ strategically placed static file servers in Japan and France to cover the
+ rest of your customer base.
  Without this daemon, this is rather hard to set up.
  With it however, it becomes child's play: all you have to do, is configure
  multiple destinations.
- That's all there is to it.
+ That is all there is to it.
  It is then still up to you how you use these files, though.
  To decide from which server you will let your visitors download the files,
  you could look at the IP, or if your visitors must register, at the country
- they've set in their profile.
+ they have entered in their profile.
  This also allows for event-driven server allocation.
  For example if a big event is being hosted in Paris, you could temporarily
  hire another server in Paris to ensure low latency and high throughput.
@@ -3978,7 +3985,7 @@ Key component in creating your own CDN
 \end_layout
 
 \begin_layout Itemize
-Key component in a file synchronization tool for consumers
+Key component in a file synchronization tool for consumers 
 \end_layout
 
 \begin_layout Subsection
@@ -3997,8 +4004,8 @@ Since the configuration file is the interface and I had a good idea of the
  features I wanted to support, I started by writing a configuration file.
  That might be unorthodox, but in the end, this is the most important part
  of the daemon.
- If it's too hard to configure, nobody will use it.
- If it's easy to use, more people will be inclined to give it a try.
+ If it is too hard to configure, nobody will use it.
+ If it is easy to use, more people will be inclined to give it a try.
 \end_layout
 
 \begin_layout Standard
@@ -4014,7 +4021,7 @@ reference "lst:sample-config-file"
 \end_inset
 
 .
- Beneath the config root node, there are 3 child nodes, each for one of
+ Beneath the config root node, there are 3 child nodes, one for each of
  the 3 major sections:
 \end_layout
 
@@ -4023,7 +4030,7 @@ reference "lst:sample-config-file"
 \family typewriter
 sources
 \family default
-: indicate each data source, in which new, modified and deleted files will
+: indicate each data source in which new, modified and deleted files will
  be detected recursively.
  Each source has a name (that we will reference later in the configuration
  file) and of course a 
@@ -4081,7 +4088,7 @@ for
 \family typewriter
 label
 \family default
- attribute and can consist (but doesn't have to!) of three parts:
+ attribute and can consist (but does not have to!) of three parts:
 \end_layout
 
 \begin_deeper
@@ -4114,7 +4121,7 @@ size
  The text values of these nodes will be used to filter the files that have
  been created, modified or deleted within the source to which this rule
  applies.
- If it's a match, then the rule will be applied (and therefor the processor
+ If it is a match, then the rule will be applied (and therefor the processor
  chain and destination associated with it).
  Otherwise, this rule is ignored for that file.
  See the filter module (section
@@ -4145,7 +4152,7 @@ processor
 name
 \family default
  attribute) the procesor module and the specific processor class within
- that processor module that you'd like to use.
+ that processor module that you would like to use.
  They'll be chained in the order you specify here.
 \end_layout
 
@@ -4184,7 +4191,7 @@ path
 \begin_layout Standard
 Reading the above should make less sense than simply reading the configuration
  file.
- If that's the case for you too, then I succeeded.
+ If that is the case for you too, then I succeeded.
 \end_layout
 
 \begin_layout Standard
@@ -4799,8 +4806,8 @@ filename
 mtime
 \family default
  is set to -1.
- Modified files are detected by looking comparing the current mtime with
- the value stored in the 
+ Modified files are detected by comparing the current mtime with the value
+ stored in the 
 \family typewriter
 mtime
 \family default
@@ -4832,7 +4839,7 @@ initial_scan()
 \family typewriter
 scan()
 \family default
- to get the changes – doesn't work recursively
+ to get the changes – does not work recursively
 \end_layout
 
 \begin_layout Itemize
@@ -4874,12 +4881,12 @@ er knowledge of changes)
 \end_layout
 
 \begin_layout Standard
-This module doesn't have any tests yet, because it requires 
+This module does not have any tests yet, because it requires 
 \emph on
 a lot
 \emph default
  of mock functions to simulate system calls.
- It's been tested manually thoroughly though.
+ It has been tested manually thoroughly though.
 \end_layout
 
 \begin_layout Subsubsection
@@ -4894,7 +4901,7 @@ name "sub:daemon:modules:fsmonitor.py"
 \end_layout
 
 \begin_layout Standard
-This time around, there's more to it than it seems.
+This time around, there is more to it than it seems.
  
 \family typewriter
 fsmonitor.py
@@ -4932,8 +4939,8 @@ FSMonitorPolling
 \begin_inset Newline newline
 \end_inset
 
-Put these together, and you have a single, simple to use abstraction to
- use each operating system's file system monitor:
+Put these together and you have a single, easy to use abstraction for each
+ major operating system's file system monitor:
 \end_layout
 
 \begin_layout Itemize
@@ -4965,6 +4972,34 @@ Falls back to polling when neither one is present
 \begin_layout Standard
 Windows support is possible, but hasn't been implemented yet due to time
  constraints.
+ There are two APIs to choose between: FindFirstChangeNotification and ReadDirec
+toryChanges.
+ There is a third, the FileSystemWatcher class, but this is only usable
+ from within .NET, so it is not an option.
+ This was already mentioned in 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:daemon:Goals"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The ReadDirectoryChanges API is more similar to inotify in that it triggers
+ events on the file level.
+ The disadvantage is that this is a blocking API.
+ FindFirstChangeNotification is a non-blocking API, but is more similar
+ to FSEvents, in that it triggers events on the directory level.
+ A comprehensive, yet concise comparison is available at 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "MS fsmonitor APIs"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -5006,7 +5041,7 @@ DROPPED_EVENTS
 
 A persistent mode is also supported, in which all metadata is stored in
  a database.
- This allows you to even track changes when your program wasn't running.
+ This allows you to even track changes when your program was not running.
 \end_layout
 
 \begin_layout Standard
@@ -5025,14 +5060,14 @@ real
 
 inotify is the most complete in this regard: it supports a boatload of different
  events, on a file-level.
- But it only provides realtime events: it doesn't maintain a complete history
+ But it only provides realtime events: it does not maintain a complete history
  of events.
- And that's understandable: it's impossible to maintain a history of 
+ And that is understandable: it is impossible to maintain a history of 
 \emph on
 every
 \emph default
  file system event.
- Over time, there wouldn't be any space left to store actual data.
+ Over time, there would not be any space left to store actual data.
 \begin_inset Newline newline
 \end_inset
 
@@ -5056,13 +5091,13 @@ file moved
 \begin_inset Quotes erd
 \end_inset
 
- event: it'd be too resource-intensive to detect that, or at the very least
- it wouldn't scale.
+ event: it would be too resource-intensive to detect, or at the very least
+ it would not scale.
  On the plus side, FSEvents maintains a complete history of events.
 \end_layout
 
 \begin_layout Standard
-Implementations that don't support file-level events (FSEvents and polling)
+Implementations that do not support file-level events (FSEvents and polling)
  are persistent by design.
  Because the directory tree state must be maintained to be able to trigger
  the correct events, 
@@ -5106,9 +5141,9 @@ PathScanner
  – is started after the file system monitor starts listening for new events
  on a given path.
  That way, no new events are missed.
- This works equally well as using FSEvents' special support for this: it's
- just slower.
- But it's sufficient for now.
+ This works equally well as using FSEvents' special support for this; it
+ is just slower.
+ But it is sufficient for now.
 \end_layout
 
 \begin_layout Subsubsection
@@ -5143,13 +5178,13 @@ To prevent excessive file system access due to an overreliance on SQLite,
 \family typewriter
 PersistentQueue
 \family default
- are cached in-memory (a minimum and maximum treshold can be configured)
- , but for 
+ are cached in-memory (a minimum and maximum treshold can be configured),
+ but for 
 \family typewriter
 PersistentList
 \family default
- there is no such restriction: it's cached in-memory in its entirety.
- It's not designed for large datasets, but 
+ there is no such restriction: it is cached in-memory in its entirety.
+ It is not designed for large datasets, but 
 \family typewriter
 PersistentQeueue
 \family default
@@ -5165,18 +5200,25 @@ Why use SQLite in favor of Python's built-in
 \family typewriter
 shelve
 \family default
- module?
+ module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Python shelve"
+
+\end_inset
+
+?
 \begin_inset Quotes erd
 \end_inset
 
- Well, the answer is simple: aside of the benefit of the ability to have
+ Well, the answer is simple: aside from the benefit of the ability to have
  all persistent data in a single file, it must also scale to tens of thousands
  or even millions of files.
  
 \family typewriter
 shelve
 \family default
- isn't scalable because its data is loaded into memory in its entirety.
+ is not scalable because its data is loaded into memory in its entirety.
  This could easily result in hundreds of megabytes of memory usage.
  Such excessive memory usage should be avoided at all costs when the target
  environment is a (web) server.
@@ -5187,18 +5229,18 @@ Your next question would probably be:
 \begin_inset Quotes eld
 \end_inset
 
-How can you be sure the SQLite database won't get corrupt?
+How can you be sure the SQLite database will not get corrupt?
 \begin_inset Quotes erd
 \end_inset
 
- The answer is: we can't.
+ The answer is: we can not.
  But the same applies to Python's 
 \family typewriter
 shelve
 \family default
  module.
- However, the aforementioned advantages of SQLite give plenty of advantages
- over 
+ However, the aforementioned advantages of SQLite give plenty of reasons
+ to choose SQLite over 
 \family typewriter
 shelve
 \family default
@@ -5211,12 +5253,28 @@ key "SQLite testing"
 \end_inset
 
 .
- It's also used for very large datasets and by countless companies.
- So it's the best bet you can make.
+ It is also used for very large datasets (it works well for multi-gigabyte
+ databases but is not designed for terabyte-scale databases 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SQLite when to use"
+
+\end_inset
+
+) and by countless companies, amongst which Adobe, Apple, Google, Microsoft
+ and Sun 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SQLite well-known users"
+
+\end_inset
+
+.
+ So it is the best bet you can make.
 \end_layout
 
 \begin_layout Standard
-Finally, you'd probably ask 
+Finally, you would probably ask 
 \begin_inset Quotes eld
 \end_inset
 
@@ -5226,7 +5284,7 @@ Why not use MySQL or PostgreSQL or …?
 
 .
  Again the answer is brief: because SQLite requires no additional setup
- because it is 
+ since it is 
 \emph on
 serverless
 \emph default
@@ -5322,7 +5380,7 @@ Processors are allowed to make any change they want to the file's contents.
 \emph on
 by convention
 \emph default
-, because in Python it's impossible to truly enforce anything.
+, because in Python it is impossible to truly enforce anything.
  If you do change the path, the file will sync just fine, but it will be
  impossible to delete the old version of a modified file, unless it results
  in the exact same path and base name each time it runs through the processor
@@ -5382,7 +5440,7 @@ class YUICompressor(Processor):
 
 \begin_layout Plain Layout
 
-        # We don't rename the file, so we can use the default output file.
+        # We do not rename the file, so we can use the default output file.
 \end_layout
 
 \begin_layout Plain Layout
@@ -5524,21 +5582,15 @@ RequestToRequeueException
 ProcessorChain
 \family default
  will stop processing this file and will pretend the processing failed.
- This effectively means that the file will be reprocesse later.
+ This effectively means that the file will be reprocessed later.
  A sample use case is the 
 \family typewriter
 CSSURLUpdater
 \family default
- class
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:daemon:modules:link_updater.py"
-
-\end_inset
-
-, in which the URLs of a CSS file must be updated to point to the corresponding
- URLs of the files on the CDN.
- But if not all of these files have been synced, that's impossible.
+ class (described later on in this section), in which the URLs of a CSS
+ file must be updated to point to the corresponding URLs of the files on
+ the CDN.
+ But if not all of these files have been synced already, that is impossible.
  So it must be retried later.
 \end_layout
 
@@ -5594,7 +5646,7 @@ SpacesToDashes
 \end_layout
 
 \begin_layout Standard
-This one is not very useful, but it's a good simple example.
+This one is not very useful, but it is a good simple example.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -5661,8 +5713,8 @@ key "smush.it"
 
 .
  It optimizes images losslessly, i.e.
- it reduces the filesize without touch the quality.
- The research necessary wasn't performed by me, but by Stoyan Stefanov,
+ it reduces the filesize without touching the quality.
+ The research necessary was not performed by me, but by Stoyan Stefanov,
  a Yahoo! web developer working for the Exceptional Performance team, and
  was thoroughly laid out in a series of blog posts 
 \begin_inset CommandInset citation
@@ -5690,8 +5742,8 @@ convert
  PNG8 offers lossless image quality, as does GIF, but results in a smaller
  file size.
  PNG8 is also supported in all browsers, including IE6.
- It's the alpha channels of truecolor PNG (PNG24 & PNG32) that are not supported
- in IE6.
+ The alpha channels of truecolor PNG (PNG24 & PNG32) are not supported in
+ IE6.
 \end_layout
 
 \begin_layout Standard
@@ -5742,11 +5794,11 @@ key "imageopt-4"
 
 \end_inset
 
- have pointed out that you've got a 75% chance that the JPEG file is best
- saved as baseline when it's smaller than 10 KB.
- For JPEG files larger than 10 KB, it's 94% likely that progressive JPEG
+ have pointed out that there is a 75% chance that the JPEG file is best
+ saved as baseline when it is smaller than 10 KB.
+ For JPEG files larger than 10 KB, it is 94% likely that progressive JPEG
  will result in a better compression ratio.
- That's why the third optimization (making JPEG files progressive) is only
+ That is why the third optimization (making JPEG files progressive) is only
  applied when the file is larger than 10 KB.
  All these optimizations are applied using jpegtran 
 \begin_inset CommandInset citation
@@ -5760,7 +5812,7 @@ key "jpegtran"
 
 \begin_layout Standard
 Finally, animated GIF files can be optimized by stripping the pixels from
- each frame that don't change from the previous to the next frame.
+ each frame that do not change from the previous to the next frame.
  I use gifsicle 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -5774,9 +5826,9 @@ key "gifsicle"
 \begin_layout Standard
 One nuance you should know about: stripping metadata may also remove the
  copyright information, which may have legal consequences.
- So you better don't strip metadata when you've bought some of the photos
- you're hosting, which may be the case for e.g.
- a newspaper web site.
+ So you better do not strip metadata when you've bought some of the photos
+ you are hosting, which may be the situation for a newspaper web site, for
+ example.
 \end_layout
 
 \begin_layout Standard
@@ -5857,47 +5909,140 @@ be used when
 either
 \emph default
  of these conditions are true:
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-PDF rendering is very messy here – all the TypeWriter URLs confuse LaTeX
- … find a work-around
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Itemize
-The base path of the URLs changes and relative URLs that are relative to
- the document root.
+The base path of the URLs changes and the CSS file uses relative URLs that
+ are relative to the document root to reference images (or other media).
 \begin_inset Newline newline
 \end_inset
 
-For example, 
+For example:
+\family typewriter
+
+\begin_inset Newline newline
+\end_inset
+
+
+\family default
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
 http://example.com/static/css/style.css
-\family default
- becomes
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+becomes
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
- http://cdn.com/example.com/static/css/style.css 
-\family default
-and its referenced file 
+http://cdn.com/example.com/static/css/style.css
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+and its referenced file
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
 http://example.com/static/images/background.png
-\family default
- becomes 
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+becomes
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
 http://cdn.com/example.com/static/images/background.png
-\family default
- after syncing.
- If 
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+after syncing.
+ If the 
 \family typewriter
 style.css
 \family default
- referenced 
+ file on the original server references 
 \family typewriter
 background.png
 \family default
@@ -5905,12 +6050,14 @@ background.png
 \family typewriter
 /static/images/background.png
 \family default
-, then it must use 
+, then the 
 \family typewriter
 CSSURLUpdater
 \family default
-.
- Otherwise this relative URL would become invalid.
+ processor must be used to update the URL.
+ Otherwise this relative URL would become invalid, since the correct relative
+ URL for the CSS file on the CDN to reference has changed (because the base
+ path has changed).
 \end_layout
 
 \begin_layout Itemize
@@ -5918,23 +6065,139 @@ The base names of the referenced files changes.
 \begin_inset Newline newline
 \end_inset
 
-For example,
+For example
 \family typewriter
- http://example.com/static/css/style.css
+:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
+\family typewriter
+http://example.com/static/css/style.css
+\end_layout
+
+\end_inset
+
+
 \family default
- becomes 
+
+\begin_inset Newline newline
+\end_inset
+
+becomes
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
 http://cdn.com/example.com/static/css/style_1242440815.css
-\family default
- and its referenced file
+\end_layout
+
+\end_inset
+
+
 \family typewriter
- http://example.com/static/images/background.png
+
+\begin_inset Newline newline
+\end_inset
+
+
 \family default
- becomes 
+and its referenced file
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
+\family typewriter
+http://example.com/static/images/background.png
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\family default
+becomes
+\family typewriter
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Itemize
+
 \family typewriter
 http://cdn.com/static/images/background_1242440827.png
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
 \family default
- after syncing.
+after syncing.
  Then it must always use 
 \family typewriter
 CSSURLUpdater
@@ -5972,8 +6235,8 @@ All
 CSSURLUpdater
 \family default
  does is resolving relative URLs (relative to the CSS file or relative to
- the document root) to absolute paths on the file system , then looking
- up the corresponding URLs on the CDN and placing those instead in the CSS
+ the document root) to absolute paths on the file system, then looking up
+ the corresponding URLs on the CDN and placing those instead in the CSS
  file.
  If one of the referenced files cannot be found on the file system, this
  URL remains unchanged.
@@ -6041,8 +6304,8 @@ key "Rhino"
 
 \end_inset
 
- to tokenize the JavaScript source, so it's very safe: it won't strip out
- whitespace where that could potentially cause problems.
+ to tokenize the JavaScript source, so it is very safe: it will not strip
+ out whitespace where that could potentially cause problems.
  Thanks to this, it can also optimize more aggressively: it saves over 20%
  more than JSMIN
 \begin_inset space ~
@@ -6321,7 +6584,7 @@ Storage
 
 \begin_layout Enumerate
 Since Django is a pretty big open source project with many developers and
- is powering many web sites, it's fair to assume that the API is stable
+ is powering many web sites, it is fair to assume that the API is stable
  and solid.
  Reinventing the wheel is meaningless and will just introduce more bugs.
 \end_layout
@@ -6396,7 +6659,7 @@ key "CouchDB"
 \end_inset
 
  is a distributed, fault-tolerant and schema-free document-oriented database
- accessible via a RESTful HTTP/JSON API.
+ accessible via a RESTful HTTP/JSON API
 \end_layout
 
 \begin_layout Enumerate
@@ -6475,16 +6738,16 @@ key "ftplib"
 \begin_layout Standard
 For the last two, transporters are available.
  The first three are not so widely used and thus not yet implemented, although
- it'd be very easy to support them, exactly because all that is necessary,
+ it would be very easy to support them, exactly because all that is necessary,
  is to write thin wrappers.
  The fourth is not very meaningful to use, since the fifth is better (better
- maintained and better performing).
+ maintained and higher performance).
 \end_layout
 
 \begin_layout Standard
 So I clearly managed to make a big shortcut (for simplicity of the argument,
  I'm waving away the fact that I had to get this to work outside of Django
- itself) to achieve my goal: support CDNs that support FTP or origin pulling
+ itself) to achieve my goal: support CDNs that rely on FTP or origin pulling
  (see section 
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -6504,7 +6767,7 @@ However, supporting origin pull was trickier than would seem at first.
 \begin_inset Quotes eld
 \end_inset
 
-don't touch the original file
+do not touch the original file
 \begin_inset Quotes erd
 \end_inset
 
@@ -6522,7 +6785,7 @@ I had to be creative here.
  But what about files that are not modified? Or have just changed filenames
  (for unique URLs)? Copying these means storing the exact same data twice.
  The answer is fortunately very simple: symlinks.
- Although available only on UNIX, it's very much worth it: it reduces redundant
+ Although available only on UNIX, it is very much worth it: it reduces redundant
  data storage significantly.
  This was then implemented in a new custom storage system: 
 \family typewriter
@@ -6532,7 +6795,7 @@ SymlinkOrCopyStorage
 \end_layout
 
 \begin_layout Standard
-In total, I've contributed three patches to django-storages:
+In total, I have contributed three patches to django-storages:
 \end_layout
 
 \begin_layout Enumerate
@@ -6555,7 +6818,8 @@ key "django-storages FTPStorage patch"
 \begin_deeper
 \begin_layout Enumerate
 It enables the saving of large files by no longer reading all the chunks
- of the file in a single string, instead it uses 
+ of the file in a single string.
+ Instead it uses 
 \family typewriter
 ftplib.storbinary()
 \family default
@@ -6568,16 +6832,12 @@ It makes
 \family typewriter
 exists()
 \family default
- more reliable: it's been tested with 3 different FTP servers and so far
- it works without problems with the following FTP servers, whereas it didnt'
- work with any of them before:
+ more reliable: it has been tested with 2 different FTP servers and so far
+ it works without problems with the following FTP servers, whereas it did
+ not work with any of them before:
 \end_layout
 
 \begin_deeper
-\begin_layout Enumerate
-PureFTPd
-\end_layout
-
 \begin_layout Enumerate
 Xlight FTP Server 3.2 (used by SimpleCDN)
 \end_layout
@@ -6587,7 +6847,7 @@ Pure-FTPd (used by Rambla)
 \end_layout
 
 \begin_layout Standard
-This greatly improves the number of use cases where you can use the 
+This improves the number of use cases where you can use the 
 \family typewriter
 FTPStorage
 \family default
@@ -6622,8 +6882,8 @@ The
 \family typewriter
 Content-Type
 \family default
- header is set automatically via guessing based on the extension, this is
- done through mimetypes.guesstype.
+ header is set automatically via guessing based on the extension.
+ This is done through mimetypes.guesstype.
  Right now, no Content-Type is set, and therefor the default binary mimetype
  is set: application/octet- stream.
  This causes browsers to download files instead of displaying them.
@@ -6635,10 +6895,10 @@ The ACL now actually gets applied properly to the bucket and to each file
 \end_layout
 
 \begin_layout Enumerate
-Currently, URLs are generated with query-based authentication (meaning you'll
- get ridiculously long URLs) and HTTPS is used instead of HTTP, thereby
- preventing browsers from caching files.
- I've disabled query authentication and HTTPS, as this is the most common
+Currently, URLs are generated with query-based authentication (which implies
+ ridiculously long URLs will be generated) and HTTPS is used instead of
+ HTTP, thereby preventing browsers from caching files.
+ I have disabled query authentication and HTTPS, as this is the most common
  use case for serving files.
  This probably should be configurable, but that can be done in a revised
  patch or a follow-up patch.
@@ -6839,7 +7099,7 @@ Config
 Config
 \family default
  can load a configuration file (parse the XML) and validate it.
- Validation doesn't happen through an XML schema, but through 
+ Validation does not happen through an XML schema, but through 
 \begin_inset Quotes eld
 \end_inset
 
@@ -6870,7 +7130,7 @@ Config
 \end_layout
 
 \begin_layout Standard
-This module should be unit tested, but isn't – yet.
+This module should be unit tested, but is not – yet.
 \end_layout
 
 \begin_layout Subsubsection
@@ -6887,7 +7147,7 @@ name "sub:daemon:modules:daemon_thread_runner.py"
 \begin_layout Standard
 I needed to be able to run the application as a daemon.
  Great, but then how do you stop it? Through signals.
- That's also how for example the Apache HTTP server does it 
+ That is also how for example the Apache HTTP server does it 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Apache signals"
@@ -6921,7 +7181,7 @@ DaemonThreadRunner
 \family default
  object, the pid will be written to the specified pid file name, the object
  will be marked as a daemon thread and started.
- While it's running, the pid is written to the pid file every 60 seconds.
+ While it is running, the pid is written to the pid file every 60 seconds.
 \end_layout
 
 \begin_layout Standard
@@ -6947,8 +7207,8 @@ DaemonThreadRunner
 
 \begin_layout Standard
 This module is not unit tested, because it makes very little sense to do
- so (there's not much code).
- Having used it hundreds of times, it didn't fail once, so it's reliable
+ so (there is not much code).
+ Having used it hundreds of times, it did not fail once, so it is reliable
  enough.
 \end_layout
 
@@ -6961,9 +7221,9 @@ The big picture
 \end_layout
 
 \begin_layout Standard
-The arbitrator is what links together all Python modules I've described
+The arbitrator is what links together all Python modules I have described
  in the previous section.
- Here's a hierarchical overview, so you get a better understanding of The
+ Here is a hierarchical overview, so you get a better understanding of the
  big picture:
 \end_layout
 
@@ -7054,7 +7314,8 @@ Transporter
 \end_layout
 
 \begin_layout Standard
-Now that you have an insight in the big picture, let's see how exactly 
+Now that you have an insight in the big picture, let's examine how exactly
+ 
 \family typewriter
 Arbitrator
 \family default
@@ -7092,7 +7353,7 @@ verify the existence of all processors and transporters that are referenced
 
 \begin_layout Itemize
 connect to each server (as defined in the configuration file) to ensure
- it's working
+ it is working
 \end_layout
 
 \begin_layout Standard
@@ -7116,9 +7377,9 @@ setup
 
 \begin_deeper
 \begin_layout Enumerate
-create transporter pools (cfr.
- worker thread pools) for each server.
- These pools remain empty because they're filled
+create transporter pools (analogous to worker thread pools) for each server.
+ These pools remain empty until transporters are necessary, because transporters
+ are created whenever they are deemed necessary.
 \end_layout
 
 \begin_layout Enumerate
@@ -7253,15 +7514,15 @@ log some statistics
 
 \end_deeper
 \begin_layout Standard
-That's 
+That is 
 \emph on
 roughly
 \emph default
  the logic of the daemon.
- It should already make sense to you, but you're probably wondering what
+ It should already make some sense, but you are probably wondering what
  all the queues are for.
- And how they're being filled and emptied.
- So now it's time to learn about the daemon's 
+ And how they are being filled and emptied.
+ So now it is time to learn about the daemon's 
 \emph on
 pipeline
 \emph default
@@ -7292,7 +7553,7 @@ key "pipes-and-filters-1,pipes-and-filters-2,pipes-and-filters-3,pipes-and-filte
 
 \end_inset
 
-, is slightly underdocumented, but it's still a very useful design pattern.
+, is slightly underdocumented, but it is still a very useful design pattern.
  Its premise is to deliver an architecture to divide a large processing
  task into smaller, sequential steps (
 \begin_inset Quotes eld
@@ -7317,9 +7578,9 @@ reference "fig:daemon:flowchart-pipeline"
 \end_inset
 
  while reading.
- Note that this figure doesn't contain every detail: it is intended to help
- you gain some insight into how the daemon works, not how every detail is
- implemented.
+ Note that this figure does not contain every detail: it is intended to
+ help you gain some insight into how the daemon works, not how every detail
+ is implemented.
 \end_layout
 
 \begin_layout Standard
@@ -7366,13 +7627,13 @@ name "fig:daemon:flowchart-pipeline"
 
 \begin_layout Standard
 In my case, files are discovered and are then put into the pipeline queue.
- When they actually move into the pipeline (at which point they're added
+ When they actually move into the pipeline (at which point they are added
  to the 'files in pipeline' persistent list), they start by going into the
  filter queue, after being filtered they go into the process queue (possibly
  more than once), after being processed to the transport queue (again possibly
  more than once), after being transported to the db queue, after being stored
- in the database, they're removed from the 'files in pipeline' persistent
- list and we're done for this file.
+ in the database, they are removed from the 'files in pipeline' persistent
+ list and we are done for this file.
  Repeat for every discovered file.
  This is the 
 \emph on
@@ -7383,7 +7644,7 @@ core logic
 
 \begin_layout Standard
 So many queues are used because there are so many stages in the pipeline.
- There's a queue for each stage in the pipeline, plus some additional ones
+ There is a queue for each stage in the pipeline, plus some additional ones
  because the persistent datastructures use the pysqlite module, which only
  allows you to access the database from the same thread as the connection
  was created in.
@@ -7556,7 +7817,7 @@ Transporter
  on, I had to find an elegant method to transfer the additional metadata
  for this file, which is necessary to let the file continue through the
  pipeline.
- I've found this in the form of currying
+ I have found this in the form of currying
 \begin_inset space ~
 \end_inset
 
@@ -7709,7 +7970,7 @@ Performance tests
 \end_layout
 
 \begin_layout Standard
-I've performed fairly extensive tests in both Mac OS X and Linux.
+I have performed fairly extensive tests on both Mac OS X and Linux.
  The application behaved identically on both platforms, despite the fact
  that different file system monitors are being used in the background.
  The rest of this problemless cross-platform functioning is thanks to Python.
@@ -7721,7 +7982,7 @@ All tests were performed on the local network, i.e.
  Very small scale tests have been performed with the Amazon S3 and CloudFront
  transporters, and since they worked, the results should apply to those
  as well.
- It doesn't and shouldn't matter which transporter is being used.
+ It does not and should not matter which transporter is being used.
 \end_layout
 
 \begin_layout Standard
@@ -7735,7 +7996,7 @@ cssutils
  A backlag of more than 10,000 files was no problem.
  Synchronizing 10 GB of files was no problem.
  I also tried alot of variations in the configuration and all of them worked
- (well, sometimes it needed s.ome bugfixing of course).
+ (well, sometimes it needed some bugfixing of course).
  Further testing should happen in real-world environments.
  Even tests in which I forced processors or transporters to crash were completed
  succesfully: no files were lost and they would be synced again after restarting
@@ -7761,8 +8022,8 @@ Track progress of transporters and allow them to be be stopped while still
 
 \begin_layout Itemize
 Make processors more error resistent by allowing them to check the environment,
- so they can ensure 3rd party applications, such as YUI Compressor or jpegtran
- are installed.
+ so they can ensure third party applications, such as YUI Compressor or
+ jpegtran are installed.
 \end_layout
 
 \begin_layout Itemize
@@ -7797,7 +8058,7 @@ Desired future features
 
 \begin_layout Itemize
 Polling the daemon for its current status (number of files in the queue,
- files in the pipeline, processors running, transporters running, etc.)
+ files in the pipeline, processors running, transporters running, et cetera)
 \end_layout
 
 \begin_layout Itemize
@@ -7860,8 +8121,8 @@ name "sec:CDN-integration"
 
 \begin_layout Standard
 It should be obvious by now that we still need a module to integrate Drupal
- with a CDN, as Drupal doesn't provide such functionality on its own – if
- it did, then this bachelor thesis would be titled differently.
+ with a CDN, as Drupal does not provide such functionality on its own –
+ if it did, then this bachelor thesis would be titled differently.
  This is the end of the long journey towards supporting the simplest and
  the most complex CDN or static file server setups one can make.
  Fortunately, this is all fairly trivial, except for maybe the necessary
@@ -7875,19 +8136,22 @@ Goals
 \begin_layout Standard
 The daemon I wrote is not necessary for Origin Pull CDNs.
  So this module should support those through a simple UI.
- On the other hand, we must also make it easy to use the daemon in a Drupal
- site.
- Let's call the former 
+ On the other hand, it must also be easy to use the daemon for a Drupal
+ web site.
+ The former is called 
 \emph on
 basic mode
 \emph default
- and the latter
+ and the latter is called
 \emph on
  advanced mode
 \emph default
 , thereby indicating that the latter is more complex to set up (i.e.
  it requires you to set up the daemon).
- So, let's look at the goals:
+\begin_inset Newline newline
+\end_inset
+
+Here are the goals again, this time in more detail:
 \end_layout
 
 \begin_layout Itemize
@@ -7901,7 +8165,7 @@ ability to show per-page statistics: number of files on the page, number
 \end_layout
 
 \begin_layout Itemize
-status report shows if CDN integration is active and displays as an warning
+status report shows if CDN integration is active and displays as a warning
  if it is disabled or in debug mode (to stress the importance of having
  it enabled)
 \end_layout
@@ -7913,7 +8177,7 @@ basic mode
 
 \begin_deeper
 \begin_layout Itemize
-enter the CDN URL and it'll be used in file URLs automatically
+enter the CDN URL and it will be used in file URLs automatically
 \end_layout
 
 \begin_layout Itemize
@@ -7947,7 +8211,7 @@ per-page statistics: show from which destination the file is being served
 
 \begin_layout Itemize
 per-page statistics: show the total and average time spent on querying the
- synces files database
+ synced files database
 \end_layout
 
 \begin_layout Itemize
@@ -7970,7 +8234,8 @@ drewish
 \begin_inset Quotes erd
 \end_inset
 
- Morton at DrupalCon DC about this.
+ Morton at DrupalCon DC about the Drupal core patch that is necessary for
+ the CDN integration module for Drupal to become possible.
  He is the one who managed to get his proposed Drupal File API patches committed
  to the current development version of Drupal (which will become Drupal
  7).
@@ -7996,7 +8261,7 @@ file_create_url($path)
  been uploaded by users or are generated by modules (e.g.
  transformations of images).
  And now the bad news: there is no function through which the URLs for the
- other files (the ones that aren't uploaded but are shipped with Drupal
+ other files (the ones that are not uploaded but are shipped with Drupal
  core and modules and themes) are generated.
  To be honest, the current method for generating these URLs is very ugly,
  although very simple: prepend the base path to the relative file path.
@@ -8053,7 +8318,7 @@ custom_file_url_rewrite()
 \family typewriter
 FALSE
 \family default
- (meaning that the CDN can't or shouldn't serve the file).
+ (meaning that the CDN cannot or should not serve the file).
  But since there is a distinction between uploaded/generated files and shipping
  files, we must first determine which kind of file it is.
  This can be done by looking at the path that was given to 
@@ -8063,8 +8328,20 @@ file_create_url()
 : if it begins with the path of the directory that the Drupal administrator
  chose to use for uploaded and generated files, then it is an uploaded/generated
  file.
- After this distinction has been made, the original procedures are applied
- and we're done.
+ After this distinction has been made, the original procedures are applied.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Try to get this into core, write about the results here.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -8084,7 +8361,7 @@ key "Drupal Forms API"
 \end_inset
 
 .
- Advanced mode cannot be started if the daemon isn't configured properly
+ Advanced mode cannot be started if the daemon is not configured properly
  yet (by ensuring the synced files database exists).
 \end_layout
 
@@ -8095,7 +8372,7 @@ hook_exit()
 \family default
 , which is called just before the end of each page request.
  It is therefor able to render after the rest of the page is rendered, which
- of course implies that all file URLs have been created, so it's safe to
+ of course implies that all file URLs have been created, so it is safe to
  calculate the statistics.
 \end_layout
 
@@ -8120,7 +8397,7 @@ custom_file_url_rewrite()
  does not support.
  Drupal 7's database abstraction layer does support SQLite, but is still
  in development (and will be for at least 6 more months).
- Fortunately, there's also PDO
+ Fortunately, there is also PDO
 \begin_inset space ~
 \end_inset
 
@@ -8135,8 +8412,8 @@ key "PDO"
 \end_layout
 
 \begin_layout Standard
-That's all there is to tell about this module.
- It's very simple: all complexity is now embedded in the daemon.
+That is all there is to tell about this module.
+ It is very simple: all complexity is now embedded in the daemon.
  As it should be.
 \end_layout
 
@@ -8146,14 +8423,15 @@ Comparison with the old CDN integration module
 
 \begin_layout Standard
 In January 2008, I wrote the initial version of the CDN integration module.
- It was for Drupal 5 instead of Drupal 6 though and it didn't support Origin
- Pull CDNs, instead, it only supported push CDNs that were accessible over
- FTP.
+ It was written for Drupal 5 instead of Drupal 6 though and was pure PHP
+ code, and thus limited by PHP's constraints.
+ It did not support Origin Pull CDNs.
+ Instead, it only supported push CDNs that were accessible over FTP.
  The synchronization happened from within Drupal, on each cron run.
  Which means it relied on manual file system scanning (i.e.
  polling) to detect changes and was prevented by design to perform concurrent
  syncs, since PHP cannot do that.
- To top it off, it didn't store anything in the database, but in a serialized
+ To top it off, it did not store anything in the database, but in a serialized
  array, which had to be unserialized on every page to retrieve the URLs.
  It should be obvious that this was significantly slower and absolutely
  unscalable and definitely unusable on any 
@@ -8633,7 +8911,7 @@ Frameworks
 
 \begin_deeper
 \begin_layout Itemize
-Drupal (Forms API, Batch API, menu system, Schema API, etc.) 
+Drupal (Forms API, Batch API, menu system, Schema API, et cetera) 
 \end_layout
 
 \begin_layout Itemize
@@ -8786,7 +9064,7 @@ key "cssutils"
 
 \end_deeper
 \begin_layout Itemize
-Uses the following 3rd party applications
+Uses the following third party applications
 \end_layout
 
 \begin_deeper
@@ -10280,6 +10558,31 @@ http://arstechnica.com/apple/reviews/2007/10/mac-os-x-10-5.ars/7
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "MS fsmonitor APIs"
+
+\end_inset
+
+
+\emph on
+Watch a Directory for Changes
+\emph default
+, Tim Golden, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://timgolden.me.uk/python/win32_how_do_i/watch_directory_for_changes.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "PyObjC"
 
 \end_inset
@@ -10345,6 +10648,56 @@ status collapsed
 \begin_layout Plain Layout
 
 http://www.sqlite.org/testing.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "SQLite when to use"
+
+\end_inset
+
+
+\emph on
+Appropriate Uses For SQLite
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.sqlite.org/whentouse.html
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "SQLite well-known users"
+
+\end_inset
+
+
+\emph on
+Well-Known Users of SQLite
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.sqlite.org/famous.html
 \end_layout
 
 \end_inset
