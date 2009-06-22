@@ -690,7 +690,22 @@ class Arbitrator(threading.Thread):
             # Remove this server from the 'remaining transporters' list for
             # this input file/event/rule.
             if remove_server_from_remaining_transporters:
-                self.remaining_transporters[key].remove(server)
+                # TRICKY: This is wrapped in a try/except block because it's
+                # possible that for example multiple "CREATED" and "DELETED"
+                # events on the same file have been logged, which are then
+                # potentially being synced at the same time. It is then
+                # possible that one instance of the file syncing process has
+                # already synced to one server and another instance has done
+                # the same, but later. Because the key here is not universally
+                # unique, but merely on the input file, event and rule,
+                # collisions are possible.
+                # Yes, this is a design flaw in the current version. It cannot
+                # cause any problems though, merely duplicate work in highly
+                # active environments.
+                try:
+                    self.remaining_transporters[key].remove(server)
+                except ValueError, e:
+                    pass
 
             # Only remove the file from the pipeline if no transporters are
             # remaining.
