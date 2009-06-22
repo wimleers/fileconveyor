@@ -1,10 +1,10 @@
 Index: includes/common.inc
 ===================================================================
 RCS file: /cvs/drupal/drupal/includes/common.inc,v
-retrieving revision 1.756.2.47
-diff -u -F^f -r1.756.2.47 common.inc
---- includes/common.inc	25 Feb 2009 21:02:36 -0000	1.756.2.47
-+++ includes/common.inc	17 May 2009 20:28:05 -0000
+retrieving revision 1.756.2.52
+diff -u -F^f -r1.756.2.52 common.inc
+--- includes/common.inc	13 May 2009 19:11:04 -0000	1.756.2.52
++++ includes/common.inc	22 Jun 2009 20:01:32 -0000
 @@ -1830,15 +1830,15 @@ function drupal_get_css($css = NULL) {
              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
              // regardless of whether preprocessing is on or off.
@@ -54,10 +54,10 @@ diff -u -F^f -r1.756.2.47 common.inc
 Index: includes/file.inc
 ===================================================================
 RCS file: /cvs/drupal/drupal/includes/file.inc,v
-retrieving revision 1.121.2.5
-diff -u -F^f -r1.121.2.5 file.inc
---- includes/file.inc	20 Oct 2008 09:42:31 -0000	1.121.2.5
-+++ includes/file.inc	17 May 2009 20:28:06 -0000
+retrieving revision 1.121.2.6
+diff -u -F^f -r1.121.2.6 file.inc
+--- includes/file.inc	13 Apr 2009 19:07:16 -0000	1.121.2.6
++++ includes/file.inc	22 Jun 2009 20:01:34 -0000
 @@ -35,19 +35,52 @@
  /**
   * Create the download path to a file.
@@ -120,14 +120,30 @@ diff -u -F^f -r1.121.2.5 file.inc
    }
  }
  
+Index: includes/form.inc
+===================================================================
+RCS file: /cvs/drupal/drupal/includes/form.inc,v
+retrieving revision 1.265.2.24
+diff -u -F^f -r1.265.2.24 form.inc
+--- includes/form.inc	13 May 2009 18:22:29 -0000	1.265.2.24
++++ includes/form.inc	22 Jun 2009 20:01:37 -0000
+@@ -1980,7 +1980,7 @@ function theme_image_button($element) {
+     (!empty($element['#value']) ? ('value="'. check_plain($element['#value']) .'" ') : '') .
+     'id="'. $element['#id'] .'" '.
+     drupal_attributes($element['#attributes']) .
+-    ' src="'. base_path() . $element['#src'] .'" '.
++    ' src="'. file_create_url($element['#src']) .'" '.
+     (!empty($element['#title']) ? 'alt="'. check_plain($element['#title']) .'" title="'. check_plain($element['#title']) .'" ' : '' ) .
+     "/>\n";
+ }
 Index: includes/theme.inc
 ===================================================================
 RCS file: /cvs/drupal/drupal/includes/theme.inc,v
-retrieving revision 1.415.2.19
-diff -u -F^f -r1.415.2.19 theme.inc
---- includes/theme.inc	25 Feb 2009 21:02:16 -0000	1.415.2.19
-+++ includes/theme.inc	17 May 2009 20:28:08 -0000
-@@ -965,24 +965,24 @@ function theme_get_setting($setting_name
+retrieving revision 1.415.2.22
+diff -u -F^f -r1.415.2.22 theme.inc
+--- includes/theme.inc	13 May 2009 19:11:04 -0000	1.415.2.22
++++ includes/theme.inc	22 Jun 2009 20:01:40 -0000
+@@ -974,24 +974,24 @@ function theme_get_setting($setting_name
  
      if ($settings['toggle_logo']) {
        if ($settings['default_logo']) {
@@ -157,7 +173,7 @@ diff -u -F^f -r1.415.2.19 theme.inc
        }
        else {
          $settings['toggle_favicon'] = FALSE;
-@@ -1203,7 +1203,7 @@ function theme_links($links, $attributes
+@@ -1212,7 +1212,7 @@ function theme_links($links, $attributes
  function theme_image($path, $alt = '', $title = '', $attributes = NULL, $getsize = TRUE) {
    if (!$getsize || (is_file($path) && (list($width, $height, $type, $image_attributes) = @getimagesize($path)))) {
      $attributes = drupal_attributes($attributes);
@@ -172,7 +188,7 @@ RCS file: /cvs/drupal/drupal/themes/garland/template.php,v
 retrieving revision 1.16.2.1
 diff -u -F^f -r1.16.2.1 template.php
 --- themes/garland/template.php	25 Feb 2009 11:47:37 -0000	1.16.2.1
-+++ themes/garland/template.php	17 May 2009 20:28:19 -0000
++++ themes/garland/template.php	22 Jun 2009 20:01:44 -0000
 @@ -93,9 +93,9 @@ function phptemplate_node_submitted($nod
  function phptemplate_get_ie_styles() {
    global $language;
