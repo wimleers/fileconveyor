@@ -38,7 +38,7 @@ Supported CDNs
 
 Installation
 ------------
-1) Apply the Drupal core patch (patches/drupal.patch). Instructions can be
+1) Apply the Drupal core patch (patches/drupal6.patch). Instructions can be
    found at http://drupal.org/patch/apply.
 
 2) Place this module directory in your "modules" folder (this will usually be
