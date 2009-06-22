@@ -4,7 +4,7 @@ RCS file: /cvs/drupal/drupal/includes/common.inc,v
 retrieving revision 1.925
 diff -u -F^f -r1.925 common.inc
 --- includes/common.inc	18 Jun 2009 21:19:01 -0000	1.925
-+++ includes/common.inc	22 Jun 2009 21:10:19 -0000
++++ includes/common.inc	22 Jun 2009 22:32:29 -0000
 @@ -2456,15 +2456,15 @@ function drupal_get_css($css = NULL) {
              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
              // regardless of whether preprocessing is on or off.
@@ -57,7 +57,7 @@ RCS file: /cvs/drupal/drupal/includes/file.inc,v
 retrieving revision 1.171
 diff -u -F^f -r1.171 file.inc
 --- includes/file.inc	9 Jun 2009 21:33:12 -0000	1.171
-+++ includes/file.inc	22 Jun 2009 21:10:20 -0000
++++ includes/file.inc	22 Jun 2009 22:32:30 -0000
 @@ -79,20 +79,52 @@
  /**
   * Create the download path to a file.
@@ -127,7 +127,7 @@ RCS file: /cvs/drupal/drupal/includes/form.inc,v
 retrieving revision 1.343
 diff -u -F^f -r1.343 form.inc
 --- includes/form.inc	20 Jun 2009 15:17:38 -0000	1.343
-+++ includes/form.inc	22 Jun 2009 21:10:23 -0000
++++ includes/form.inc	22 Jun 2009 22:32:33 -0000
 @@ -2413,7 +2413,7 @@ function theme_image_button($element) {
      (!empty($element['#value']) ? ('value="' . check_plain($element['#value']) . '" ') : '') .
      'id="' . $element['#id'] . '" ' .
@@ -143,7 +143,7 @@ RCS file: /cvs/drupal/drupal/includes/theme.inc,v
 retrieving revision 1.496
 diff -u -F^f -r1.496 theme.inc
 --- includes/theme.inc	18 Jun 2009 21:19:02 -0000	1.496
-+++ includes/theme.inc	22 Jun 2009 21:10:24 -0000
++++ includes/theme.inc	22 Jun 2009 22:32:34 -0000
 @@ -1086,24 +1086,24 @@ function theme_get_setting($setting_name
  
      if ($settings['toggle_logo']) {
@@ -189,10 +189,13 @@ RCS file: /cvs/drupal/drupal/themes/garland/template.php,v
 retrieving revision 1.22
 diff -u -F^f -r1.22 template.php
 --- themes/garland/template.php	2 Jun 2009 03:57:22 -0000	1.22
-+++ themes/garland/template.php	22 Jun 2009 21:10:25 -0000
-@@ -93,7 +93,7 @@ function garland_get_ie_styles() {
++++ themes/garland/template.php	22 Jun 2009 22:32:35 -0000
+@@ -91,9 +91,9 @@ function garland_node_submitted($node) {
+ function garland_get_ie_styles() {
+   global $language;
  
-   $ie_styles = '<link type="text/css" rel="stylesheet" media="all" href="' . base_path() . path_to_theme() . '/fix-ie.css" />' . "\n";
+-  $ie_styles = '<link type="text/css" rel="stylesheet" media="all" href="' . base_path() . path_to_theme() . '/fix-ie.css" />' . "\n";
++  $ie_styles = '<link type="text/css" rel="stylesheet" media="all" href="' . file_create_url(path_to_theme() . '/fix-ie.css') . '" />' . "\n";
    if ($language->direction == LANGUAGE_RTL) {
 -    $ie_styles .= '      <style type="text/css" media="all">@import "' . base_path() . path_to_theme() . '/fix-ie-rtl.css";</style>' . "\n";
 +    $ie_styles .= '      <style type="text/css" media="all">@import "' . file_create_url(path_to_theme() . '/fix-ie-rtl.css') . '";</style>' . "\n";
