@@ -927,9 +927,10 @@ class Arbitrator(threading.Thread):
                     input_file='%s'
                     (curried): event=%d""" % (input_file, event)
 
-        # Add to retry queue.
+        # Add to retry queue and remove from the pipeline.
         self.lock.acquire()
         self.retry_queue.put((input_file, event))
+        self.files_in_pipeline.remove((input_file, event))
         self.processorchains_running -= 1
         self.lock.release()
 
