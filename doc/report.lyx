@@ -293,6 +293,19 @@ component A component of a web page, this can be a CSS style sheet, a JavaScript
 \end_layout
 
 \begin_layout Description
+CSS
+\begin_inset space ~
+\end_inset
+
+sprite An image that actually contains a grid of other images.
+ Through CSS, each image in the grid can then be accessed (and displayed
+ to the end user).
+ The benefit is that instead of having as many HTTP requests as there are
+ images in the grid, there is now a single HTTP request, reducing the number
+ of round trips and thereby increasing the perceived page loading speed.
+\end_layout
+
+\begin_layout Description
 document
 \begin_inset space ~
 \end_inset
@@ -923,93 +936,6 @@ Drupal is international, thanks to its internationalization and localization
 \end_layout
 
 \begin_layout Section
-The State of Drupal's page loading performance
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:The-State-of-Drupal"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-So you might expect that Drupal has already invested heavily in improving
- its page loading performance.
- Unfortunately, that is not true.
- Hopefully this bachelor thesis will help to gain some developer attention.
-\end_layout
-
-\begin_layout Standard
-Because of this, the article I wrote more than a year ago is still completely
- applicable.
- It does not make much sense to just rephrase the article here in my thesis
- text, so instead I'd like to forward you to that article
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset citation
-LatexCommand cite
-key "drupal-performance-article"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-I will repeat the remaining problems here for the sake of clarity:
-\end_layout
-
-\begin_layout Itemize
-Static files (CSS, JavaScript, images) should be served with proper HTTP
- headers so that the browser can cache them and reduce the number of HTTP
- requests for each page load.
- Especially the Expires header is important here.
-\end_layout
-
-\begin_layout Itemize
-To allow for CDN integration in Drupal, the ability to dynamically alter
- file URLs is needed, but this is not supported yet.
-\end_layout
-
-\begin_layout Itemize
-CSS and JS files should be served GZIPped when the browser supports it.
-\end_layout
-
-\begin_layout Itemize
-JavaScript files should be at the bottom (just before the closing 
-\family typewriter
-</body>
-\family default
- tag) whenever possible.
-\end_layout
-
-\begin_layout Itemize
-JavaScript files should be minified.
-\end_layout
-
-\begin_layout Itemize
-Drupal should provide a mechanism to render the same content in multiple
- formats: (X)HTML (for the regular browser), partial HTML or JSON (for AHAH),
- XML (for AJAX) and so on.
- You should be able to set transformations, including cacheability and GZIPabili
-ty per format.
-\end_layout
-
-\begin_layout Itemize
-CSS sprites should be generated automatically.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
 Key Properties of a CDN
 \begin_inset CommandInset label
 LatexCommand label
@@ -1021,7 +947,7 @@ name "sec:Key-Properties-CDN"
 \end_layout
 
 \begin_layout Standard
-I'll repeat the definition from the terminology section:
+I will repeat the definition from the terminology section:
 \end_layout
 
 \begin_layout Quotation
@@ -1049,10 +975,12 @@ key "cdn-comparing-1,cdn-comparing-2"
 \end_layout
 
 \begin_layout Standard
-So you must look at the featureset – instead of performance – when deciding.
+That is why CDNs achieve differentiation through their featuresets, not
+ through performance.
  Depending on your audience, the geographical spread (the number of PoPs
  around the world) may be very important to you.
- A 100% SLA is also nice to have.
+ A 100% SLA is also nice to have — this means that the CDN guarantees that
+ it will be online 100% of the time.
 \begin_inset Newline newline
 \end_inset
 
@@ -1067,7 +995,8 @@ pull
 \emph default
 .
  Pull requires virtually no work on your side: all you have to do, is rewrite
- the URLs to your files.
+ the URLs to your files: replace your own domain name with the CDN's domain
+ name.
  The CDN will then apply the 
 \emph on
 Origin Pull
@@ -1350,6 +1279,14 @@ usual goal of performance analysis is to determine which sections of a program
 \emph default
  — usually either to increase its speed or decrease its memory requirement
  (or sometimes both).
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "profiling"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1381,15 +1318,19 @@ key "UA Profiler"
 \end_inset
 
  is a crowd-sourced project for gathering browser performance characteristics
- (parallel connections, downloading scripts without blocking, caching, et
- cetera).
+ (on the number of parallel connections, downloading scripts without blocking,
+ caching, et cetera).
  The tests run automatically when you navigate to the test page from any
  browser – this is why it is powered by crowdsourcing.
 \end_layout
 
 \begin_layout Standard
-It is a handy, informative tool to find out which browser supports which
- features related to page loading performance.
+It is a handy 
+\emph on
+reference
+\emph default
+ to find out which browser supports which features related to page loading
+ performance.
 \end_layout
 
 \begin_layout Subsection
@@ -1511,7 +1452,8 @@ reference "fig:Cuzillion-Safari"
 \end_inset
 
 ), the loading of the first image seems to be deferred until the inline
- script has been executed.
+ script has been executed (the images are displayed when the light purple
+ bars become darkpurple).
  In Firefox (see figure 
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -1521,7 +1463,7 @@ reference "fig:Cuzillion-Firefox"
 
 ), the first image is immediately rendered and after a delay of 2 seconds
  – indeed the execution time of the inline script – the second image is
- rendered.
+ rendered (the images are displayed when the gray bars stop).
  Without going into details about this, it should be clear that Cuzillion
  is a simple, yet powerful tool to learn about browser behavior, which can
  in turn help to improve the page loading performance.
@@ -1674,22 +1616,23 @@ key "Firebug"
 
 \end_inset
 
- extension (see 
+ extension (see figure 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "fig:YSlow-example"
 
 \end_inset
 
-) that can be used to analyze page loading performance through 13 rules.
- These were part of the original 14 rules 
+) that can be used to analyze page loading performance through thirteen
+ rules.
+ These were part of the original fourteen rules 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "YSlow Rules"
 
 \end_inset
 
- – of which there are now 34 – of 
+ – of which there are now thirty-four – of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1708,7 +1651,8 @@ key "Exceptional Performance"
 \end_layout
 
 \begin_layout Standard
-YSlow 1.0 can only evaluate these 13 rules and has a hardcoded grading algorithm.
+YSlow 1.0 can only evaluate these thirteen rules and has a hardcoded grading
+ algorithm.
  You should also remember that YSlow just checks how well a web page implements
  these rules.
  It analyzes the content of your web page (and the headers that were sent
@@ -1736,7 +1680,7 @@ That, and the fact that some of the rules it analyzes are only relevant
 \emph on
 very
 \emph default
- big web site.
+ big web sites.
  For example, one of the rules (#13, 
 \begin_inset Quotes eld
 \end_inset
@@ -1974,8 +1918,9 @@ hammer
 \emph default
 the server, this is where the name comes from).
  And you would still have to set up the separate testing conditions for
- each page load: empty cache, primed cache and for the latter there are
- again two possible situations: disk cache 
+ each page load that Hammerhead already sets up for you: empty cache, primed
+ cache and for the latter there are again two possible situations: disk
+ cache 
 \emph on
 and
 \emph default
@@ -2087,9 +2032,9 @@ Also because it is not an actual browser, it does not behave the same as
 \end_layout
 
 \begin_layout Itemize
-It requires more setup than Hammerhead (see 
+It requires more setup than Hammerhead (see section 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sub:Hammerhead"
 
 \end_inset
@@ -2155,7 +2100,7 @@ key "Pingdom web site"
 
 \end_inset
 
- are examples of 3rd-party (paid) performance monitoring systems.
+ are examples of third-party (paid) performance monitoring systems.
 \end_layout
 
 \begin_layout Standard
@@ -2207,8 +2152,8 @@ key "video of Velocity 2008 Jiffy presentation"
  which means you cannot rely upon these metrics for making decisions: what
  if a commonly used real-world browser behaves completely differently? Even
  if the services would all use real-world browsers, they would never reflect
- real-world performance, because browser usage evolves over time and is
- not the same for any two web sites.
+ real-world performance, because each site has different visitors and therefor
+ also a different mix of browsers.
 \end_layout
 
 \begin_layout Subsubsection
@@ -2363,10 +2308,13 @@ Paid & closed source
 \end_layout
 
 \begin_layout Standard
-You are dependent upon the 3rd party service to implement new instrumentations
- and analyses.
+The end user is dependent upon the third party service to implement new
+ instrumentations and analyses.
+ It is typical for closed source applications to only implement the most
+ commonly asked feature and because of that, the end user may be left out
+ in the cold.
  There is a high cost for the implementation and a also a very high cost
- when switching to a different 3rd party service.
+ when switching to a different third party service.
 \end_layout
 
 \begin_layout Subsection
@@ -2407,7 +2355,7 @@ key "Velocity 2008 Jiffy presentation,video of Velocity 2008 Jiffy presentation,
  (e.g.
  widgets of photo and music web sites, contextual ads or web analytics services)
 , it is important that you can monitor their performance.
- It overcomes 4 major disadvantages that were listed previously:
+ It overcomes four major disadvantages that were listed previously:
 \end_layout
 
 \begin_layout Enumerate
@@ -2419,7 +2367,7 @@ every
 \end_layout
 
 \begin_layout Enumerate
-real-world browsers are used, becuase it is just JavaScript code that runs
+real-world browsers are used, because it is just JavaScript code that runs
  in the browser
 \end_layout
 
@@ -2442,11 +2390,12 @@ Jiffy consists of several components:
 \family typewriter
 Jiffy.js
 \family default
-: a library for instrumenting your pages and reporting measurements
+: a library for measuring your pages and reporting measurements
 \end_layout
 
 \begin_layout Itemize
-Apache configuration: to receive and log measurements
+Apache configuration: to receive and log measurements via a specific query
+ string syntax
 \end_layout
 
 \begin_layout Itemize
@@ -2559,8 +2508,8 @@ key "Episodes home page,Episodes white paper"
 
 \begin_layout Enumerate
 Episodes' goal is to become an industry standard.
- This would imply that the aforementioned 3rd party services (Gomez/Keynote/WebM
-etrics/Pingdom) would take advantage of the the instrumentations implemented
+ This would imply that the aforementioned third party services (Gomez/Keynote/We
+bMetrics/Pingdom) would take advantage of the the instrumentations implemented
  through Episodes in their analyses.
 \end_layout
 
@@ -2577,12 +2526,12 @@ addEventListener()
  (Note: the newest versions of browsers are necessary: Internet Explorer
  8, Firefox 3, WebKit Nightlies and Opera 9.5.
  An additional backwards compatibility JavaScript file must be downloaded
- for older browsers.)
+ for older browsers.
 \end_layout
 
 \begin_layout Standard
 Steve Souders outlines the goals and vision for Episodes succinctly in these
- two paragrahps:
+ two paragraphs:
 \end_layout
 
 \begin_layout Quotation
@@ -2635,13 +2584,13 @@ episodes-compat.js
 window.postMessage()
 \family default
 .
- These are operational but haven't had wide testing yet.
+ These files are operational but have not had wide testing yet.
 \end_layout
 
 \begin_layout Itemize
-It uses the same query string syntax as Jiffy uses, which means Jiffy's
- Apache configuration, ingestor and reporting toolset can be reused, at
- least partially.
+It uses the same query string syntax as Jiffy uses to perform logging, which
+ means Jiffy's Apache configuration, ingestor and reporting toolset can
+ be reused, at least partially.
 \end_layout
 
 \begin_layout Itemize
@@ -2709,16 +2658,16 @@ raison d'existence
  is to achieve a concensus on a JavaScript-based page loading instrumentation
  toolset.
  It aims to become an industry standard and is maintained by Steve Souders,
- who is currently on Google's payroll to work on all things page loading
- performance full-time (which suggests we might see integration with Google's
- Analytics 
+ who is currently on Google's payroll to work full-time on all things related
+ to page loading performance (which suggests we might see integration with
+ Google's Analytics 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Google Analytics"
 
 \end_inset
 
- service in the long term).
+ service in the future).
  Add in the fact that Jiffy hasn't been updated since its initial release,
  and it becomes clear that Episodes is the better long-term choice.
 \end_layout
@@ -2760,15 +2709,7 @@ However, for the scope of this thesis, there is one tool that jumps out:
 \begin_inset Newline newline
 \end_inset
 
-This kind of analysis is exactly what I'll perform in the next section:
- 
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "sec:The-State-of-Drupal"
-
-\end_inset
-
-.
+This kind of analysis is exactly what I'll perform in the next section.
 \end_layout
 
 \begin_layout Standard
@@ -2776,14 +2717,14 @@ There is one more tool that jumps out for real, practical use: Episodes.
  This tool, if properly integrated with Drupal, would be a key asset to
  Drupal, because it would enable web site owners to track the real-world
  page loading performance.
- It would allow contributed module developers to support Episodes.
+ It would allow module developers to support Episodes.
  This, in turn, would be a good indicator for a module's quality and would
  allow the web site owner/administrator/developer to carefully analyze each
  aspect of his Drupal web site.
 \begin_inset Newline newline
 \end_inset
 
-I will create this integration as part of my bachelor thesis, see section
+I have created this integration as part of my bachelor thesis, see section
  
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -2792,6 +2733,98 @@ reference "sec:Episodes.module"
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+The State of Drupal's page loading performance
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:The-State-of-Drupal"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So you might expect that Drupal has already invested heavily in improving
+ its page loading performance.
+ Unfortunately, that is not true.
+ Hopefully this bachelor thesis will help to gain some developer attention.
+\end_layout
+
+\begin_layout Standard
+Because of this, the article I wrote more than a year ago is still completely
+ applicable.
+ It does not make much sense to just rephrase the article here in my thesis
+ text, so instead I'd like to forward you to that article
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "drupal-performance-article"
+
+\end_inset
+
+ for the details.
+ The article analyzes Drupal based on the 14 rules defined in Steve Souder's
+ High Performance Web Sites book.
+\end_layout
+
+\begin_layout Standard
+The essence of the article is that Drupal does some things right already,
+ but many more not yet.
+ The things Drupal did wrong then — and still does wrong today because nothing
+ has changed in this area, yet:
+\end_layout
+
+\begin_layout Itemize
+Static files (CSS, JavaScript, images) should be served with proper HTTP
+ headers so that the browser can cache them and reduce the number of HTTP
+ requests for each page load.
+ Especially the Expires header is important here.
+\end_layout
+
+\begin_layout Itemize
+To allow for CDN integration in Drupal, the ability to dynamically alter
+ file URLs is needed, but this is not supported yet.
+\end_layout
+
+\begin_layout Itemize
+CSS and JS files should be served GZIPped when the browser supports it.
+\end_layout
+
+\begin_layout Itemize
+JavaScript files should be at the bottom (just before the closing 
+\family typewriter
+</body>
+\family default
+ tag) whenever possible.
+\end_layout
+
+\begin_layout Itemize
+JavaScript files should be minified.
+\end_layout
+
+\begin_layout Itemize
+Drupal should provide a mechanism to render the same content in multiple
+ formats: (X)HTML (for the regular browser), partial HTML or JSON (for AHAH),
+ XML (for AJAX) and so on.
+ You should be able to set transformations, including cacheability and GZIPabili
+ty per format.
+\end_layout
+
+\begin_layout Itemize
+CSS sprites should be generated automatically.
 \end_layout
 
 \begin_layout Standard
@@ -10009,7 +10042,7 @@ key "cdn-comparing-2"
 
 
 \emph on
-,How Is CDNs Network Performance For Streaming Measured?
+How Is CDNs Network Performance For Streaming Measured?
 \emph default
 , August 2007, 
 \begin_inset Flex URL
@@ -10019,6 +10052,31 @@ status collapsed
 
 http://blog.streamingmedia.com/the_business_of_online_vi/2007/08/cdns-network-pe.ht
 ml
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "profiling"
+
+\end_inset
+
+
+\emph on
+Performance Analysis
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://en.wikipedia.org/wiki/Performance_analysis
 \end_layout
 
 \end_inset
