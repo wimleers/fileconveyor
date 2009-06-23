@@ -322,6 +322,18 @@ key "Episodes home page"
 \end_layout
 
 \begin_layout Description
+internationalization The process of designing a software application so
+ that it can be adapted to various languages and regions without engineering
+ change.
+\end_layout
+
+\begin_layout Description
+localization The process of adapting internationalized software for a specific
+ region or language by adding locale-specific components and translating
+ text.
+\end_layout
+
+\begin_layout Description
 page
 \begin_inset space ~
 \end_inset
@@ -393,7 +405,14 @@ end user response time
  Unlike what you might think, the majority of this time is not spent at
  the server, generating the page! The generating (back-end) and transport
  of the HTML document (front-end) is typically only 10-20% of the end user
- response time.
+ response time 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "High Performance Web Sites Book"
+
+\end_inset
+
+.
  The other 80-90% of the time is spent on loading the components (CSS stylesheet
 s, JavaScript, images, movies, et cetera) in the page (front-end only).
  Figure 
@@ -457,7 +476,315 @@ name "fig:End-user-response-time"
 It should be obvious now that it is far more effective to focus on front-end
  performance than it is to focus on back-end performance, because it has
  got a greater potential.
- it is also easier to optimize than the back-end.
+ It is also easier to optimize than the back-end.
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Drupal 
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Drupal"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Drupal 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal"
+
+\end_inset
+
+ is a content management system (CMS), although it has become more of a
+ content management framework (CMF).
+ The difference between the two is that the former is a system with predefined
+ rules, or with relatively little flexibility.
+ The latter is — as the name already indicates — a framework which still
+ needs to be configured to suit your needs and therefor offers more flexibility.
+\end_layout
+
+\begin_layout Subsubsection*
+History
+\end_layout
+
+\begin_layout Standard
+It is an open source project, started in 2000 by Dries Buytaert, whom was
+ then still studying at the University of Antwerp.
+ He built a small news web site with a built-in web board, allowing his
+ friends in the same dorm to leave notes or to announce when they were having
+ dinner.
+ After graduation, they decided they wanted to stay in touch with each other,
+ so they wanted to keep this site online.
+ Dries wanted to register the domain name 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+dorp.org
+\end_layout
+
+\end_inset
+
+ (the Dutch word for 
+\begin_inset Quotes eld
+\end_inset
+
+village
+\begin_inset Quotes erd
+\end_inset
+
+), which was considered a fitting name.
+ But he made a typo and registered 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+drop.org
+\end_layout
+
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+drop.org
+\end_layout
+
+\end_inset
+
+'s audience changed as its members began talking about new web technologies,
+ such as syndication, rating and distributed authentication.
+ The ideas resulting from those discussions were implemented on 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+drop.org
+\end_layout
+
+\end_inset
+
+ itself.
+\begin_inset Newline newline
+\end_inset
+
+Only later, in 2001, Dries released the software behind 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+drop.org
+\end_layout
+
+\end_inset
+
+ as 
+\begin_inset Quotes eld
+\end_inset
+
+Drupal
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The purpose was to enable others to use and extend the experimentation
+ platform so that more people could explore new paths for development.
+ The name Drupal, pronounced "droo-puhl," derives from the English pronunciation
+ of the Dutch word "druppel," which means "drop" .
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/drupal.jpg
+	width 20text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Drupal's mascotte: Druplicon.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+What makes it different?
+\end_layout
+
+\begin_layout Standard
+There are a couple of things that separate Drupal from most other CMSes
+ and CMFs.
+ For starters, Drupal has a set of principles 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal principles"
+
+\end_inset
+
+ it strictly adheres to, amongst which is this one:
+\end_layout
+
+\begin_layout Quotation
+Drupal should also have minimal, widely-available server-side software requireme
+nts.
+ Specifically, Drupal should be fully operational on a platform with a web
+ server, PHP, and either MySQL or Postgresql.
+\end_layout
+
+\begin_layout Standard
+This is the reason PHP was chosen as the language to write Drupal in.
+ PHP is the justification for some people to not even try Drupal.
+ But it's also a reason why so many web sites today are running Drupal,
+ and why its statistics (and the popularity of its web site) have been growing
+ exponentially for years 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal.org growth,Drupal growth"
+
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+By settling for the lowest common denominator and creating a robust, flexible
+ platform on top of that, it can scale from a simple blogger (such as myself)
+ to the huge media company (such as Sony BMG, Universal Music, Warner Bros,
+ Popular Science, Disney, and so on), non-profit organizations (amongst
+ which are Amnesty International, the United Nations and Oxfam), schools
+ (Harvard, MIT and many more), even governments (including the Belgian,
+ French, U.S.
+ and New Zealand) and important organisations such as NASA and NATO.
+ The list is seemingly endless 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal sites"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Drupal is also strongly focused on innovation, and always closely follows
+ (or leads!) the cutting edge of the world wide web.
+ The Drupal community even has a saying for this:
+\end_layout
+
+\begin_layout Quote
+the drop is always moving 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal drop is always moving"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This means there will always be an upgrade from one major Drupal core version
+ to the next, but it will only preserve your data, your code will stop working.
+ This is what prevents Drupal from having an excessive amount of legacy
+ code that many other projects suffer from.
+ Each new major version contains many, often radical, changes in the APIs.
+\end_layout
+
+\begin_layout Subsubsection*
+Maturity
+\end_layout
+
+\begin_layout Standard
+Indicators of project maturity are also present: Drupal has a set of coding
+ standards 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal coding standards"
+
+\end_inset
+
+ that must be followed strictly.
+ For even the slightest deviation (a single missing space), a patch can
+ be marked as 'needs work'.
+ It also has a large security team 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal security team"
+
+\end_inset
+
+ which releases security advisories whenever a security flaw is found in
+ either Drupal core or any of the contributed modules.
+\end_layout
+
+\begin_layout Subsubsection*
+Community
+\end_layout
+
+\begin_layout Standard
+That brings us to the final part of this brief general introduction to Drupal:
+ the gold of Drupal is in its community.
+ The community is in general very eager to help getting newcomers acquainted
+ with the ins and outs of Drupal.
+ Many people have learned their way through the Drupal APIs by helping others
+ (including myself).
+ The result of this vibrant community is that there is a very large collection
+ of more than 4000 modules 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal modules"
+
+\end_inset
+
+ and more than 500 themes 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal themes"
+
+\end_inset
+
+ available for Drupal, albeit of varying quality.
+ This is what enables even the less technically adept to build a web site
+ with complex interactions, without writing a single line of code.
+\end_layout
+
+\begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -544,7 +871,7 @@ key "Google maps load time impact"
 \end_layout
 
 \begin_layout Standard
-it is clear that even the smallest delays can have disastrous and wondrous
+It is clear that even the smallest delays can have disastrous and wondrous
  effects.
  
 \end_layout
@@ -574,14 +901,17 @@ key "Drupal usage statistics"
 
 \end_inset
 
-) and would therefor affect ever more people
+) and would therefor affect ever more people.
+ Near the end of my bachelor thesis, on June 14, 2009, this had already
+ grown to more than 175,000 web sites.
+ 
 \end_layout
 
 \begin_layout Itemize
-Drupal is international, thanks to its i18n/L10n support, and thanks to
- that it is used for sites with very geographically dispersed audiences
- (whom face high network latencies) and developing countries (where low-speed
- internet connections are commonplace).
+Drupal is international, thanks to its internationalization and localization
+ support, and thanks to that it is used for sites with very geographically
+ dispersed audiences (whom face high network latencies) and developing countries
+ (where low-speed internet connections are commonplace).
  A faster Drupal would make a big difference there as well.
 \end_layout
 
@@ -1058,7 +1388,7 @@ key "UA Profiler"
 \end_layout
 
 \begin_layout Standard
-it is a handy, informative tool to find out which browser supports which
+It is a handy, informative tool to find out which browser supports which
  features related to page loading performance.
 \end_layout
 
@@ -1439,7 +1769,7 @@ key "YSlow 2.0 early preview"
 \begin_layout Standard
 Since only YSlow 1.0 is available at the time of writing, I'll stick with
  that.
- it is a very powerful and helpful tool as it stands, it'll just get better.
+ It is a very powerful and helpful tool as it stands, it'll just get better.
  But remember the two caveats: it only verifies rules (it does not measure
  real-world performance) and some of the rules may not be relevant for your
  web site.
@@ -1617,7 +1947,7 @@ while
  times, to calculate the average and mean page load times.
  Of course, this is a lot less precise than real-world profiling, but it
  allows you to profile while you are working.
- it is far more effective to prevent page loading performance problems due
+ It is far more effective to prevent page loading performance problems due
  to changes in code, because you have the test results within seconds or
  minutes after you've made these changes!
 \end_layout
@@ -8314,7 +8644,7 @@ So, I wrote a Drupal core patch exactly according to these specifications,
 \family typewriter
 custom_file_url_rewrite()
 \family default
- function returned 
+ function returns 
 \family typewriter
 FALSE
 \family default
@@ -9247,6 +9577,306 @@ TODO
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "High Performance Web Sites Book"
+
+\end_inset
+
+
+\emph on
+High Performance Web Sites
+\emph default
+, Steve Souders, 2007, O'Reilly, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://stevesouders.com/hpws/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal"
+
+\end_inset
+
+
+\emph on
+Drupal
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal history"
+
+\end_inset
+
+
+\emph on
+History
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/node/769
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal principles"
+
+\end_inset
+
+
+\emph on
+Principles
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/principles
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal.org growth"
+
+\end_inset
+
+
+\emph on
+Drupal.org Explosion and Trends
+\emph default
+, Steven Wittens, March 2007, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://acko.net/blog/drupal-org-explosion-and-trends
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal growth"
+
+\end_inset
+
+
+\emph on
+Drupal 6 growth
+\emph default
+, Dries Buytaert, April 2009, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://buytaert.net/drupal-6-growth
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal sites"
+
+\end_inset
+
+
+\emph on
+Drupal sites
+\emph default
+, Dries Buytaert, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://buytaert.net/tag/drupal-sites
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal drop is always moving"
+
+\end_inset
+
+
+\emph on
+On backward compatibility: the drop is always moving
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/node/65922
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal coding standards"
+
+\end_inset
+
+
+\emph on
+Coding standards
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/coding-standards
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal security team"
+
+\end_inset
+
+
+\emph on
+Security Team
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/security-team
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal modules"
+
+\end_inset
+
+
+\emph on
+Modules
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/modules
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal themes"
+
+\end_inset
+
+
+\emph on
+Themes
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/themes
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "presentation Design Fast Websites"
 
 \end_inset
@@ -9287,31 +9917,6 @@ status collapsed
 \begin_layout Plain Layout
 
 http://news.cnet.com/8301-10784_3-9954972-7.html
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Bibliography
-\begin_inset CommandInset bibitem
-LatexCommand bibitem
-key "High Performance Web Sites Book"
-
-\end_inset
-
-
-\emph on
-High Performance Web Sites
-\emph default
-, Steve Souders, 2007, O'Reilly, 
-\begin_inset Flex URL
-status collapsed
-
-\begin_layout Plain Layout
-
-http://stevesouders.com/hpws/
 \end_layout
 
 \end_inset
