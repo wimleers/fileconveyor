@@ -63,7 +63,8 @@ function episodes_server_menu() {
   $items['admin/reports/episodes-server/page-loading-performance'] = array(
     'title'            => 'Page loading performance',
     'access arguments' => array('administer site configuration'),
-    'page callback'    => 'episodes_server_report_plp',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('episodes_server_report_plp'),
     'type'             => MENU_LOCAL_TASK,
     'weight'           => 0,
     'file'             => 'episodes_server.reports.inc',

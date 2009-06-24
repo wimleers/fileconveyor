@@ -43,84 +43,148 @@ function episodes_server_report_overall() {
 }
 
 
-/**
- * Menu callback; reports UI; page loading performance.
- */
-function episodes_server_report_plp() {
-  $output = '';
+function episodes_server_report_filter_form($form_state) {
+  // Build list of countries.
+  $countries = array();
+  $result = db_query("SELECT DISTINCT(country) AS country FROM {episodes_server_episode}");
+  while ($row = db_fetch_object($result)) {
+    // Deal with countries ip2country didn't know.
+    if ($row->country == '') {
+      $row->country = 'unknown';
+    }
+    $country_info = countries_api_get_country($row->country);
+    $country_name = ($country_info !== FALSE && $country_info !== NULL) ? $country_info['printable_name'] : $row->country;
+    $countries[$row->country] = $country_name;
+  }
+  $countries[''] = '<none>';
+  asort($countries);
 
-  drupal_set_title('Episodes analysis - page loading performance');
-
-  $grid_step_percentage = 10;
-
-  //--------------------------------------------------------------------------
-  // Filters.
-  
-/*
-  $form['#method'] = 'GET';
   $form['filters'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Filters'),
     '#collapsible' => FALSE,
   );
-  $form['filters']['reset'] = array(
-    '#type'  => 'submit', 
-    '#value' => t('Reset all filters'),
+  $form['filters']['countries'] = array(
+    '#type'          => 'hierarchical_select',
+    '#title'         => t('Comparison countries'),
+    '#description'   => t('Compare other countries with the global statistics.'),
+    '#config'      => array(
+      'module' => 'hs_flatlist',
+      'params' => array(
+        'options' => $countries,
+      ),
+      'save_lineage'    => 0,
+      'enforce_deepest' => 0,
+      'entity_count'    => 0,
+      'resizable'       => 1,
+      'level_labels' => array(
+        'status' => 0,
+      ),
+      'dropbox' => array(
+        'status'   => 1,
+        'title'    => t('Selected countries'),
+        'limit'    => 0,
+        'reset_hs' => 0,
+      ),
+      'editability' => array(
+        'status' => 0,
+      ),
+    ),
+    '#default_value' => (isset($form_state['values']['countries'])) ? $form_state['values']['countries'] : array(),
   );
-  $output .= drupal_render($form);
-*/
 
-  //--------------------------------------------------------------------------
-  // Page loading performance.
+  $form['filters']['apply'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Apply'),
+  );
+
+  $form['#submit'][] = '_episodes_server_report_shared_submit';
+
+  return $form;
+}
+
+function _episodes_server_report_shared_submit($form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+}
+
+function _episodes_server_report_plp_details($country, $country_code) {
+  static $weight;
+
+  if (!isset($weight)) {
+    $weight = 0;
+  }
+  else {
+    $weight++;
+  }
+
+  $grid_step_percentage = 10;
 
   $totaltimes = $backends = $frontends = $num_pageloads = array();
-  $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
-                             AVG(duration) AS avg
-                      FROM {episodes_server_episode}
-                      WHERE name = 'totaltime'
-                      GROUP BY day");
+
+  // totaltime episodes.
+  $sql = "SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
+                 AVG(duration) AS avg
+          FROM {episodes_server_episode}
+          WHERE name = 'totaltime'";
+  if (isset($country_code)) {
+    $sql .= " AND country = '%s'";
+  }
+  $sql .= " GROUP BY day";
+  $result = db_query($sql, $country_code);
   while ($row = db_fetch_object($result)) {
     $totaltimes[$row->day] = $row->avg;
   }
-  $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
-                             AVG(duration) AS avg
-                      FROM {episodes_server_episode}
-                      WHERE name = 'backend'
-                      GROUP BY day");
+
+  // backend episodes.
+  $sql = "SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
+                 AVG(duration) AS avg
+          FROM {episodes_server_episode}
+          WHERE name = 'backend'";
+  if (isset($country_code)) {
+    $sql .= " AND country = '%s'";
+  }
+  $sql .= " GROUP BY day";
+  $result = db_query($sql, $country_code);
   while ($row = db_fetch_object($result)) {
     $backends[$row->day] = $row->avg;
   }
-  $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
-                             AVG(duration) AS avg,
-                             COUNT(duration) AS count
-                      FROM {episodes_server_episode}
-                      WHERE name = 'frontend'
-                      GROUP BY day");
+
+  // frontend episodes and number of  pageloads.
+  $sql = "SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
+                 AVG(duration) AS avg,
+                 COUNT(duration) AS count
+          FROM {episodes_server_episode}
+          WHERE name = 'frontend'";
+  if (isset($country_code)) {
+    $sql .= " AND country = '%s'";
+  }
+  $sql .= " GROUP BY day";
+  $result = db_query($sql, $country_code);
   while ($row = db_fetch_object($result)) {
     $frontends[$row->day]     = $row->avg;
     $num_pageloads[$row->day] = $row->count;
   }
 
   // Build basic form structure which we'll use to group content together.
-  $form = array();
-  $form['chart'] = array(
+  $form['chart' . $country] = array(
     '#type'        => 'fieldset',
-    '#title'       => t('Chart'),
+    '#title'       => t('Chart (!country)', array('!country' => $country)),
     '#collapsible' => TRUE,
+    '#weight'      => $weight,
   );
-  $form['chart']['output'] = array(
+  $form['chart' . $country]['output'] = array(
     '#value'  => NULL, // Will be set after the chart has been rendered.
     '#prefix' => '<div>',
     '#suffix' => '</div>',
   );
-  $form['table'] = array(
+  $form['table' . $country] = array(
     '#type'        => 'fieldset',
-    '#title'       => t('Table'),
+    '#title'       => t('Table (!country)', array('!country' => $country)),
     '#collapsible' => TRUE,
-    '#collapsed'   => !isset($_GET['sort']), // If the user is sorting the table, display it immediately.
     '#weight'      => 1,
+    '#weight'      => $weight + 10000,
   );
-  $form['table']['output'] = array(
+  $form['table' . $country]['output'] = array(
     '#value'  => NULL, // Will be set after the table has been rendered.
     '#prefix' => '<div>',
     '#suffix' => '</div>',
@@ -163,7 +227,7 @@ function episodes_server_report_plp() {
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * 20);
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][1][] = chart_mixed_axis_label(t("Duration (ms)"), 95);
   $output_chart .= chart_render($chart);
-  $form['chart']['output']['#value'] = $output_chart;
+  $form['chart' . $country]['output']['#value'] = $output_chart;
 
   // Render table.
   $header = array(t('Date'), t('Page loads'), 'totaltime', 'backend', 'frontend');
@@ -176,13 +240,35 @@ function episodes_server_report_plp() {
     
     $rows[] = array($date, $pageloads, $totaltime, $backend, $frontend);
   }
-  $form['table']['output']['#value'] = theme('table', $header, $rows);
+  $form['table' . $country]['output']['#value'] = theme('table', $header, $rows);
 
-  // Render the form structure, which contains both the chart and the table.
-  $output .= drupal_render($form);
-  $output .= '<br /><br />';
+  return $form;
+}
 
-  return $output;
+function episodes_server_report_plp($form_state) {
+  $output = '';
+
+  drupal_set_title('Episodes analysis - page loading performance');
+
+  // Filters.
+  $form = episodes_server_report_filter_form($form_state);
+  if (array_key_exists('values', $form_state)) {
+    if ($form_state['values']['countries'] != 0) {
+      $filter_countries = $form_state['values']['countries'];
+    }
+  }
+
+  // Page loading performance.
+  $form = array_merge($form, _episodes_server_report_plp_details('global'));
+  if (isset($filter_countries)) {
+    foreach ($filter_countries as $country_code) {
+      $country_info = countries_api_get_country($country_code);
+      $country_name = ($country_info !== FALSE && $country_info !== NULL) ? $country_info['printable_name'] : $country_code;
+      $form = array_merge($form, _episodes_server_report_plp_details($country_name, $country_code));
+    }
+  }
+
+  return $form;
 }
 
 
