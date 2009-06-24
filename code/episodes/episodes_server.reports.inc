@@ -192,7 +192,7 @@ function _episodes_server_report_plp_details($country, $country_code) {
 
   // Render chart.
   $chart = array();
-  $chart['#chart_id'] = 'chart-page-loading-performance';
+  $chart['#chart_id'] = 'chart-page-loading-performance-' . $country;
   $chart['#type'] = CHART_TYPE_LINE;
   $chart['#size']['#width'] = 800;
   $chart['#size']['#height'] = 200;
