@@ -47,8 +47,33 @@ function episodes_server_menu() {
     'title'            => 'Episodes analysis',
     'description'      => 'Analysis of the episodes that were logged through the Episodes Server module',
     'access arguments' => array('administer site configuration'),
-    'page callback'    => 'episodes_server_report',
+    'page callback'    => 'episodes_server_report_overall',
     'type'             => MENU_LOCAL_TASK,
+    'file'             => 'episodes_server.reports.inc',
+  );
+  $items['admin/reports/episodes-server/overall'] = array(
+    'title'            => 'Overall',
+    'description'      => 'Analysis of the episodes that were logged through the Episodes Server module',
+    'access arguments' => array('administer site configuration'),
+    'page callback'    => 'episodes_server_report_overall',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'weight'           => -1,
+    'file'             => 'episodes_server.reports.inc',
+  );
+  $items['admin/reports/episodes-server/page-loading-performance'] = array(
+    'title'            => 'Page loading performance',
+    'access arguments' => array('administer site configuration'),
+    'page callback'    => 'episodes_server_report_plp',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 0,
+    'file'             => 'episodes_server.reports.inc',
+  );
+  $items['admin/reports/episodes-server/episodes'] = array(
+    'title'            => 'Episodes',
+    'access arguments' => array('administer site configuration'),
+    'page callback'    => 'episodes_server_report_episodes',
+    'type'             => MENU_LOCAL_TASK,
+    'weight'           => 1,
     'file'             => 'episodes_server.reports.inc',
   );
 

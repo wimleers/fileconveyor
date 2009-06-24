@@ -8,17 +8,47 @@
 
 
 /**
- * Menu callback; reports UI.
+ * Menu callback; reports UI; overall.
  */
-function episodes_server_report() {
+function episodes_server_report_overall() {
   $output = '';
 
-  $lower_boundary = 10;
+  drupal_set_title('Episodes analysis - overall');
+
+  $num_episodes           = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode}"));
+  $num_frontend_episodes  = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'frontend'"));
+  $num_backend_episodes   = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'backend'"));
+  $since_date             = db_result(db_query("SELECT MIN(server_time) FROM {episodes_server_episode}"));
+  $until_date             = db_result(db_query("SELECT MAX(server_time) FROM {episodes_server_episode}"));
+
+  $output .= '<p>' . t('<strong>!num-episodes episode measurements</strong>
+                        have been collected over !num-frontend-episodes
+                        page views (!num-backend-episodes of which also
+                        contain measurements of the back-end) <strong>from
+                        !since-date to !until-date.</strong>',
+                        array(
+                          '!num-episodes'           => $num_episodes,
+                          '!num-frontend-episodes'  => $num_frontend_episodes,
+                          '!num-backend-episodes'   => $num_backend_episodes,
+                          '!since-date'             => format_date($since_date, 'large'),
+                          '!until-date'             => format_date($until_date, 'large'),
+                        )
+                     ) . '</p>';
+  $output .= '<br /><br />';
+
+  return $output;
+}
+
+
+/**
+ * Menu callback; reports UI; page loading performance.
+ */
+function episodes_server_report_plp() {
+  $output = '';
+
+  drupal_set_title('Episodes analysis - page loading performance');
+
   $grid_step_percentage = 10;
-
-  $ignored_episodes = array('totaltime', 'backend', 'pageready');
-  $container_episodes = array_merge($ignored_episodes, array('frontend', 'domready', 'DrupalBehaviors'));
-
 
   //--------------------------------------------------------------------------
   // Filters.
@@ -37,34 +67,8 @@ function episodes_server_report() {
   $output .= drupal_render($form);
 */
 
-
-  //--------------------------------------------------------------------------
-  // Overall statistics.
-
-  $num_episodes           = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode}"));
-  $num_frontend_episodes  = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'frontend'"));
-  $num_backend_episodes   = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'backend'"));
-  $since_date             = db_result(db_query("SELECT MIN(server_time) FROM {episodes_server_episode}"));
-
-  $output .= '<p>' . t('<strong>!num-episodes episode measurements</strong>
-                        have been collected over !num-frontend-episodes
-                        page views (!num-backend-episodes of which also
-                        contain measurements of the back-end) <strong>since
-                        !since-date.</strong>',
-                        array(
-                          '!num-episodes'           => $num_episodes,
-                          '!num-frontend-episodes' => $num_frontend_episodes,
-                          '!num-backend-episodes'   => $num_backend_episodes,
-                          '!since-date'             => format_date($since_date, 'large'),
-                        )
-                     ) . '</p>';
-  $output .= '<br /><br />';
-
-
   //--------------------------------------------------------------------------
   // Page loading performance.
-
-  $output .= '<h2>' . t('Page loading performance') . '</h2>';
 
   $totaltimes = $backends = $frontends = $num_pageloads = array();
   $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
@@ -175,10 +179,44 @@ function episodes_server_report() {
   $output .= drupal_render($form);
   $output .= '<br /><br />';
 
+  return $output;
+}
+
+
+/**
+ * Menu callback; reports UI; episodes.
+ */
+function episodes_server_report_episodes() {
+  $output = '';
+
+  drupal_set_title('Episodes analysis - episodes');
+
+  $lower_boundary = 10;
+  $grid_step_percentage = 10;
+
+  $ignored_episodes = array('totaltime', 'backend', 'pageready');
+  $container_episodes = array_merge($ignored_episodes, array('frontend', 'domready', 'DrupalBehaviors'));
+
+
+  //--------------------------------------------------------------------------
+  // Filters.
+  
+/*
+  $form['#method'] = 'GET';
+  $form['filters'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Filters'),
+    '#collapsible' => FALSE,
+  );
+  $form['filters']['reset'] = array(
+    '#type'  => 'submit', 
+    '#value' => t('Reset all filters'),
+  );
+  $output .= drupal_render($form);
+*/
+
   //--------------------------------------------------------------------------
   // Episodes.
-
-  $output .= '<h2>' . t('Episodes') . '</h2>';
 
   // Query the database.
   $avgs = $stds = $labels = array();
@@ -237,7 +275,7 @@ function episodes_server_report() {
   $chart['#size']['#width'] = 500;
   $chart['#data'] = array();
   $chart['#adjust_resolution'] = TRUE;
-  $chart['#grid_lines'] = chart_grid_lines($grid_step_percentage, 0); // Grid lines every 10% of the chart.
+  $chart['#grid_lines'] = chart_grid_lines($grid_step_percentage, 0, 0, 0); // Grid lines every 10% of the chart.
   $chart['#data_colors'][0] = 'C6D9FD';
   $j = 0;
   for ($i = 0; $i < count($avgs); $i++) {    
@@ -310,6 +348,6 @@ function episodes_server_report() {
 
   // Render the form structure, which contains both the chart and the table.
   $output .= drupal_render($form);
-  
+
   return $output;
 }
