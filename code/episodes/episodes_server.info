@@ -7,3 +7,5 @@ package = Performance
 php = 5.2
 
 dependencies[] = chart
+dependencies[] = ip2country
+dependencies[] = countries_api

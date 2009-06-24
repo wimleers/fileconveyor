@@ -94,6 +94,12 @@ function episodes_server_schema() {
         'not null'    => TRUE,
         'description' => "The OS of the client. Derived from {episodes_server_episode}.user_agent.",
       ),
+      'country' => array(
+        'type'        => 'varchar',
+        'length'      => 2,
+        'not null'    => FALSE,
+        'description' => "The country of the client. Derived from {episodes_server_episode}.client_ip.",
+      ),
     ),
     'primary key' => array('eid'),
   );

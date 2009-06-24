@@ -46,6 +46,7 @@ function episodes_server_ingestor_parse_entry($entry) {
     $measurement->uri         = substr($matches[5], 0, 255);
     $measurement->user_agent  = substr($matches[6], 0, 255);
     $measurement->server_host = substr($matches[7], 0, 255);
+    $measurement->country     = ip2country_get_country($measurement->client_ip);
 
     // Get the browser details.
     $browser->setUserAgent($measurement->user_agent);

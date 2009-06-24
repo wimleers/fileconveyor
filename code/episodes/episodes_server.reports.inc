@@ -18,6 +18,7 @@ function episodes_server_report_overall() {
   $num_episodes           = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode}"));
   $num_frontend_episodes  = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'frontend'"));
   $num_backend_episodes   = db_result(db_query("SELECT COUNT(eid) FROM {episodes_server_episode} WHERE name = 'backend'"));
+  $num_countries          = db_result(db_query("SELECT COUNT(DISTINCT(country)) FROM {episodes_server_episode}"));
   $since_date             = db_result(db_query("SELECT MIN(server_time) FROM {episodes_server_episode}"));
   $until_date             = db_result(db_query("SELECT MAX(server_time) FROM {episodes_server_episode}"));
 
@@ -25,13 +26,15 @@ function episodes_server_report_overall() {
                         have been collected over !num-frontend-episodes
                         page views (!num-backend-episodes of which also
                         contain measurements of the back-end) <strong>from
-                        !since-date to !until-date.</strong>',
+                        !since-date to !until-date</strong>, with visitors
+                        coming from !num-countries countries.',
                         array(
                           '!num-episodes'           => $num_episodes,
                           '!num-frontend-episodes'  => $num_frontend_episodes,
                           '!num-backend-episodes'   => $num_backend_episodes,
                           '!since-date'             => format_date($since_date, 'large'),
                           '!until-date'             => format_date($until_date, 'large'),
+                          '!num-countries'          => $num_countries,
                         )
                      ) . '</p>';
   $output .= '<br /><br />';
