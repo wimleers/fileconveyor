@@ -31,12 +31,35 @@ function episodes_admin_settings() {
     ),
     '#default_value' => variable_get(EPISODES_STATUS_VARIABLE, EPISODES_DEBUG),
   );
-  $form[EPISODES_BEACON_URL_VARIABLE] = array(
+
+  $form['logging'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => t('Logging'),
+    '#description' => t('Without logging, the collected episodes will only be
+                         visible in the Episodes Firebug plug-in in Firefox.
+                         By logging the collected statistics, the Episodes
+                         Server module can be used to visualize the collected
+                         statistics.'
+                       ),
+  );
+  $form['logging'][EPISODES_LOGGING_VARIABLE] = array(
+    '#type'        => 'radios',
+    '#title'       => t('Logging status'),
+    '#description' => t("When you've enabled logging, you should provide a
+                         valid beacon URL."),
+    '#options'     => array(
+      EPISODES_DISABLED => t('Disabled'),
+      EPISODES_ENABLED  => t('Enabled'),
+    ),
+    '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_DISABLED),
+  );
+  $form['logging'][EPISODES_BEACON_URL_VARIABLE] = array(
     '#type'          => 'textfield',
-    '#title'         => t('Beacon URL'),
-    '#description'   => t('The beacon URL you would like to use. Can also be
-                           the URL of a different server, potentially a web
-                           service that analyzes the logs for you.'),
+    '#title'         => t('Logging URL'),
+    '#description'   => t('The logging URL (also called <em>beacon URL</em>)
+                           you would like to use. Can also be the URL of a
+                           different server, or potentially even a web service
+                           that analyzes the logs for you.'),
     '#size'          => 60,
     '#maxlength'     => 255,
     '#default_value' => variable_get(EPISODES_BEACON_URL_VARIABLE, url('episodes/beacon', array('absolute' => TRUE))),
@@ -47,17 +70,6 @@ function episodes_admin_settings() {
     '#title'       => t('Advanced settings'),
     '#collapsible' => TRUE,
     '#collapsed'   => TRUE,
-  );
-  $form['advanced'][EPISODES_LOGGING_VARIABLE] = array(
-    '#type'        => 'radios',
-    '#title'       => t('Logging'),
-    '#description' => t("When you've enabled logging, you should provide a
-                         valid beacon URL."),
-    '#options'     => array(
-      EPISODES_DISABLED => t('Disabled'),
-      EPISODES_ENABLED  => t('Enabled'),
-    ),
-    '#default_value' => variable_get(EPISODES_LOGGING_VARIABLE, EPISODES_DISABLED),
   );
   $form['advanced'][EPISODES_EXCLUDED_PATHS_VARIABLE] = array(
     '#type'        => 'textarea',
