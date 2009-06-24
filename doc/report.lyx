@@ -4255,11 +4255,17 @@ reference "sec:Key-Properties-CDN"
  Supporting pull is easy, supporting push is a lot of work.
  But if we want to avoid vendor lock-in, it is necessary to be able to transpare
 ntly switch between pull and any of the transfer protocols for push.
+ Suppose that you are using CDN A, which only supports FTP.
+ when you want to switch to a cheaper, yet better CDN B, that would be a
+ costly operation, because CDN B only supports a custom protocol.
 \end_layout
 
 \begin_layout Standard
-To further avoid vendor lock-in, it is necessary that we can do the preprocessin
-g ourselves (be that video transcoding, image optimization or anything else).
+To further reduce costs, it is necessary that we can do the preprocessing
+ ourselves (be that video transcoding, image optimization or anything else).
+ Also note that many CDNs do not support processing of files — but it can
+ reduce the amount of bandwidth consumed significantly, and thereby the
+ bill received every month.
 \end_layout
 
 \begin_layout Standard
@@ -4282,7 +4288,8 @@ start the daemon
 \end_layout
 
 \begin_layout Enumerate
-retrieve the URLs of the synced files from an SQLite database
+retrieve the URLs of the synced files from an SQLite database (so you can
+ alter the existing URLs to files to the ones for the CDN)
 \end_layout
 
 \begin_layout Subsection
@@ -4329,7 +4336,9 @@ Detect (and sync) new ﬁles instantly: through inotify on Linux, FSEvents
 
 \begin_layout Itemize
 Robustness: when the daemon is stopped (or when it crashed), it should know
- where it left off and sync all added, modified and deleted files
+ where it left off and sync all added, modified and deleted files that it
+ was still syncing and that have been added, modified and deleted while
+ it was not running
 \end_layout
 
 \begin_layout Itemize
@@ -4369,11 +4378,17 @@ The transparency goal should speak for itself, but you may not yet have
 \begin_layout Standard
 Detecting and syncing files instantly is a must to ensure CDN usage is as
  high as possible.
- If new files would only be detected every 10 minutes, then visitors, who
- might have uploaded images as part of the content they've created, will
- be downloading the image from the web server (or maybe static file server),
- which is suboptimal, considering that they could've been downloading it
- from the CDN.
+ If new files would only be detected every 10 minutes, then visitors may
+ be downloading files directly from the web server instead of from the CDN.
+ This increases the load on the web server unnecessarily and also increases
+ the page load time for the visitors.
+\begin_inset Newline newline
+\end_inset
+
+For example, one visitor has uploaded images as part of the content he created.
+ All visitors will be downloading the image from the web server, which is
+ suboptimal, considering that they could've been downloading it from the
+ CDN.
 \end_layout
 
 \begin_layout Standard
@@ -4404,12 +4419,19 @@ The ability to mix CDNs and static file servers makes it possible to either
 Other use cases
 \end_layout
 
+\begin_layout Standard
+The daemon, or at least one or more of the modules that were written for
+ it, can be reused in other applications.
+ For example:
+\end_layout
+
 \begin_layout Itemize
 Back-up tool
 \end_layout
 
 \begin_layout Itemize
-Transcoding server
+Video transcoding server (e.g.
+ to transcode videos uploaded by visitors to H.264 or Flash video)
 \end_layout
 
 \begin_layout Itemize
@@ -4616,7 +4638,8 @@ path
 \family typewriter
 path
 \family default
- attribute sets a parent path inside which the files will be transported.
+ attribute sets a parent path (on the server) inside which the files will
+ be transported.
 \end_layout
 
 \end_deeper
@@ -5209,6 +5232,12 @@ PathScanner
  It is also used for persistent storage: when the daemon has been stopped,
  the database built and maintained through/by this class is used as a reference,
  to detect changes that have happened before it was started again.
+ This mean 
+\family typewriter
+PathScanner
+\family default
+ is used during the initialization of the daemon, regardless of the available
+ file system monitors.
 \end_layout
 
 \begin_layout Standard
@@ -5249,9 +5278,10 @@ mtime
 \begin_layout Standard
 Changes to the database are committed in batches, because changes in the
  filesystem typically occur in batches as well.
- If every change would be committed separately, the concurrency level would
- rise unnecessarily.
- By default, every batch of 50 changes are committed.
+ Changes are committed to the database on a per-directory level.
+ However, if many changes occured in a single directory and if every change
+ would be committed separately, the concurrency level would rise unnecessarily.
+ By default, every batch of 50 changes inside a directory is committed.
 \end_layout
 
 \begin_layout Standard
@@ -5407,7 +5437,8 @@ Windows support is possible, but hasn't been implemented yet due to time
  There are two APIs to choose between: FindFirstChangeNotification and ReadDirec
 toryChanges.
  There is a third, the FileSystemWatcher class, but this is only usable
- from within .NET, so it is not an option.
+ from within .NET and Visual C++, so it is an unlikely option because it
+ is not directly accessible from within Python.
  This was already mentioned in 
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -5526,6 +5557,16 @@ file moved
  event: it would be too resource-intensive to detect, or at the very least
  it would not scale.
  On the plus side, FSEvents maintains a complete history of events.
+ 
+\family typewriter
+PathScanner
+\family default
+'s 
+\family typewriter
+scan()
+\family default
+ method is used to detect the changes to the files in each directory that
+ was changed.
 \end_layout
 
 \begin_layout Standard
@@ -5576,6 +5617,20 @@ PathScanner
  This works equally well as using FSEvents' special support for this; it
  is just slower.
  But it is sufficient for now.
+ This was not implemented due to time constraints.
+\begin_inset Newline newline
+\end_inset
+
+To implement this, one would simply need to get the highest 
+\family typewriter
+mtime
+\family default
+ (modification time of a file) stored in the database, and then ask 
+\family typewriter
+FSEvents
+\family default
+ to send the events from that starting time to our callback function, instead
+ of starting from the current time.
 \end_layout
 
 \begin_layout Subsubsection
@@ -5583,15 +5638,15 @@ persistent_queue.py and persistent_list.py
 \end_layout
 
 \begin_layout Standard
-In order to provide data persistency , I wrote the 
+In order to provide data persistency , I wrote a 
 \family typewriter
 PersistentQueue
 \family default
- and 
+ class and a 
 \family typewriter
 PersistentList
 \family default
- classes.
+ class.
  As their names indicate, these provide you with a persistent queue and
  a persistent list.
  They use again an SQLite database for persistent storage.
@@ -5621,6 +5676,41 @@ PersistentList
 PersistentQeueue
 \family default
  is.
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+PersistentQueue
+\family default
+ is used to store the events that have been triggered by changes in the
+ file system via 
+\family typewriter
+fsmonitory.py
+\family default
+: 
+\family typewriter
+(input_file, event)
+\family default
+ pairs are stored in a persistent queue.
+ Because the backlog (especially the one after the initial scan) can become
+ very large (imagine 1 million files needing to be synced), this was a necessity.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\family typewriter
+PersistentList
+\family default
+ is used to store the files that are currently being processed and the list
+ of files that have failed to sync.
+ These must also be stored persistently, because if the daemon is interrupted
+ while still syncing files, these lists will not be empty, and data could
+ be lost.
+ Because they are persistent, the daemon can add the files in these lists
+ to the queue of files to be synced again, and the files will be synced,
+ as if the daemon was never interrupted.
 \end_layout
 
 \begin_layout Standard
@@ -5803,11 +5893,24 @@ reference "lst:Processors-YUICompressor"
 \end_layout
 
 \begin_layout Standard
-Processors are allowed to make any change they want to the file's contents.
- They are also allowed to change the base name of the input file, but they're
+Processors are allowed to make any change they want to the file's contents
+ and are executed before a file is synced, most often to reduce the size
+ of the file and thereby to decrease the page loading time.
+\begin_inset Newline newline
+\end_inset
+
+They are also allowed to change the base name of the input file, but they're
  not allowed to change its path.
- This measure was taken to reduce the amount of data that will need to be
- stored to know which file is stored where exactly.
+ This measure was taken to reduce the amount of data that needs to be stored
+ to know which file is stored where exactly in the database of synced files
+ (see later: section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Putting-it-all"
+
+\end_inset
+
+).
  This is enforced 
 \emph on
 by convention
@@ -5986,8 +6089,8 @@ Then there is the
 ProcessorChain
 \family default
  class, which receives a list of processors and then runs them as a chain:
- the output file of processor 1 is the input file of processor 2, and so
- on.
+ the output file of processor one is the input file of processor two, and
+ so on.
  
 \family typewriter
 ProcessorChains
@@ -6064,7 +6167,7 @@ name "sub:daemon:modules:filename.py"
 \end_layout
 
 \begin_layout Standard
-This processor module provides two procesor classes: 
+This processor module provides two processor classes: 
 \family typewriter
 SpacesToUnderscores
 \family default
@@ -6215,7 +6318,7 @@ pngcrush
 \begin_layout Standard
 JPEG files can be optimized in three complementary ways: stripping metadata,
  optimizing the Huffman tables and making them progressive.
- There are two variations to store a JPEG file: baseline and progresive.
+ There are two variations to store a JPEG file: baseline and progressive.
  A baseline JPEG file is stored as one top-to-bottom scan, whereas a progressive
  JPEG file is stored as a series of scans, with each scan gradually improving
  the quality of the overall image.
@@ -6256,11 +6359,11 @@ key "gifsicle"
 \end_layout
 
 \begin_layout Standard
-One nuance you should know about: stripping metadata may also remove the
- copyright information, which may have legal consequences.
- So you better do not strip metadata when you've bought some of the photos
- you are hosting, which may be the situation for a newspaper web site, for
- example.
+There is one important nuance though: stripping metadata may also remove
+ the copyright information, which may have legal consequences.
+ So it is not recommended to strip metadata when some of the photos being
+ hosted have been bought, which may be the situation for a newspaper web
+ site, for example.
 \end_layout
 
 \begin_layout Standard
@@ -7646,6 +7749,13 @@ This module is not unit tested, because it makes very little sense to do
 
 \begin_layout Subsection
 Putting it all together: arbitrator.py
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Putting-it-all"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
