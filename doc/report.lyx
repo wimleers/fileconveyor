@@ -1244,6 +1244,51 @@ name "tab:Pull-versus-Push"
 \end_layout
 
 \begin_layout Standard
+My aim is to suppor the following CDNs in this thesis:
+\end_layout
+
+\begin_layout Itemize
+any CDN that supports Origin Pull
+\end_layout
+
+\begin_layout Itemize
+any CDN that supports FTP
+\end_layout
+
+\begin_layout Itemize
+Amazon S3 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon S3"
+
+\end_inset
+
+ and Amazon CloudFront 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Amazon CloudFront"
+
+\end_inset
+
+.
+ Amazon S3 (or Simple Storage Service in full) is a storage service that
+ can be accessed via the web (via REST and SOAP interfaces).
+ It is used by many other web sites and web services.
+ It has a pay-per-use pricing model: per GB of file transfer and per GB
+ of storage.
+\begin_inset Newline newline
+\end_inset
+
+Amazon S3 is designed to be a storage service and only has servers in one
+ loation in the U.S.
+ and one location in Europe.
+ Recently, Amazon CloudFront has been added.
+ This is a service on top of S3 (files must be on S3 before they can be
+ served from CloudFront), which has edge servers everywhere in the world,
+ thereby acting as a CDN.
+\end_layout
+
+\begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -7110,6 +7155,19 @@ name "lst:Transporters-TransporterFTP"
 \end_layout
 
 \begin_layout Standard
+Django is a high-level Python Web framework that encourages rapid development
+ and clean, pragmatic design.
+ It's growing very strong in popularity.
+ It is very different from Drupal, which aims to be both a CMS (install
+ it and you have a working web site) and a framework.
+ Django just aims to be a framework.
+ It has APIs for many things, ranging from caching, datababase abstraction,
+ forms to sessions, syndication, authentication and of course storage systems.
+ I've extract that single API (and its dependencies) from Django and am
+ reusing it.
+\end_layout
+
+\begin_layout Standard
 Now, why the dependency on Django's 
 \family typewriter
 Storage
@@ -7118,9 +7176,9 @@ Storage
 \end_layout
 
 \begin_layout Enumerate
-Since Django is a pretty big open source project with many developers and
- is powering many web sites, it is fair to assume that the API is stable
- and solid.
+Since Django is a well-known, widely used open source project with many
+ developers and is powering many web sites, it is fair to assume that the
+ API is stable and solid.
  Reinventing the wheel is meaningless and will just introduce more bugs.
 \end_layout
 
@@ -7282,15 +7340,15 @@ For the last two, transporters are available.
 \begin_layout Standard
 So I clearly managed to make a big shortcut (for simplicity of the argument,
  I'm waving away the fact that I had to get this to work outside of Django
- itself) to achieve my goal: support CDNs that rely on FTP or origin pulling
- (see section 
+ itself) to achieve my goal: supporting CDNs that rely on FTP or origin
+ pulling (see section 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "sec:Key-Properties-CDN"
 
 \end_inset
 
-), as well as the Amazon S3 and CloudFront CDNs.
+), as well as the Amazon S3 and Amazon CloudFront CDNs.
 \end_layout
 
 \begin_layout Standard
@@ -7367,9 +7425,9 @@ It makes
 \family typewriter
 exists()
 \family default
- more reliable: it has been tested with 2 different FTP servers and so far
- it works without problems with the following FTP servers, whereas it did
- not work with any of them before:
+ more reliable: it has been tested with two different FTP servers and so
+ far it works without problems with the following FTP servers, whereas it
+ did not work with any of them before:
 \end_layout
 
 \begin_deeper
@@ -7401,7 +7459,8 @@ S3BotoStorage
 \family typewriter
 Content-Type
 \family default
- header, ACL fixed, use HTTP and disable query auth by default 
+ header, fixed the setting of permissions, use HTTP and disable query auth
+ by default 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "django-storages S3BotoStorage patch"
@@ -7425,8 +7484,9 @@ Content-Type
 \end_layout
 
 \begin_layout Enumerate
-The ACL now actually gets applied properly to the bucket and to each file
- that is saved to the bucket.
+The ACL (i.e.
+ file permissions) now actually gets applied properly to the bucket and
+ to each file that is saved to the bucket.
 \end_layout
 
 \begin_layout Enumerate
@@ -7565,17 +7625,15 @@ TransporterS3
 \family typewriter
 alter_url()
 \family default
- method to alter the Amazon S3 URL to an Amazon CloudFront URL 
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-S3 <-> CF relationship explanation somewhere?
-\end_layout
+ method to alter the Amazon S3 URL to an Amazon CloudFront URL (see section
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Key-Properties-CDN"
 
 \end_inset
 
-.
+).
 \end_layout
 
 \begin_layout Standard
@@ -7651,7 +7709,15 @@ filter
 \family typewriter
 Filter
 \family default
- class to ensure it is error free.
+ class to ensure it is error free (a 
+\family typewriter
+Filter
+\family default
+ object is created and the conditions from the 
+\family typewriter
+filter
+\family default
+ node are set and when no exceptions are raised, the conditions are valid).
  All references (to sources and servers) are also validated.
  Its validation routines are pretty thorough, but by no means perfect.
 \begin_inset Newline newline
@@ -7716,7 +7782,8 @@ DaemonThreadRunner
 \family default
  object, the pid will be written to the specified pid file name, the object
  will be marked as a daemon thread and started.
- While it is running, the pid is written to the pid file every 60 seconds.
+ While it is running, the pid is written to the pid file every sixty seconds,
+ in case the file is deleted accidentally.
 \end_layout
 
 \begin_layout Standard
@@ -8061,8 +8128,8 @@ That is
 roughly
 \emph default
  the logic of the daemon.
- It should already make some sense, but you are probably wondering what
- all the queues are for.
+ It should already make some sense, but it's likely that it is not yet clear
+ what all the queues are for.
  And how they are being filled and emptied.
  So now it is time to learn about the daemon's 
 \emph on
@@ -8586,8 +8653,8 @@ Reorganize code: make a proper packaged structure.
 \end_layout
 
 \begin_layout Itemize
-Make the code redistributable.
- As a Python egg, or maybe even as binaries for each supported platform.
+Make the code redistributable: as a Python egg, or maybe even as binaries
+ for each supported platform.
 \end_layout
 
 \begin_layout Itemize
@@ -8934,7 +9001,7 @@ custom_file_url_rewrite()
 \family default
  function was implemented, which rewrites the URL based on the mode.
  In basic mode, the CDN URL is automatically inserted into file URLs and
- in advanced mode, the synces files database is queried.
+ in advanced mode, the synced files database is queried.
  This is an SQLite database, which the Drupal 6 database abstraction layer
  does not support.
  Drupal 7's database abstraction layer does support SQLite, but is still
@@ -8955,8 +9022,8 @@ key "PDO"
 
 \begin_layout Standard
 That is all there is to tell about this module.
- It is very simple: all complexity is now embedded in the daemon.
- As it should be.
+ It is very simple: all complexity is now embedded in the daemon, as it
+ should be.
 \end_layout
 
 \begin_layout Subsection
