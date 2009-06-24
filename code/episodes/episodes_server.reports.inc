@@ -66,7 +66,7 @@ function episodes_server_report() {
 
   $output .= '<h2>' . t('Page loading performance') . '</h2>';
 
-  $totaltimes = $backends = $frontends = array();
+  $totaltimes = $backends = $frontends = $num_pageloads = array();
   $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
                              AVG(duration) AS avg
                       FROM {episodes_server_episode}
@@ -84,12 +84,14 @@ function episodes_server_report() {
     $backends[$row->day] = $row->avg;
   }
   $result = db_query("SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
-                             AVG(duration) AS avg
+                             AVG(duration) AS avg,
+                             COUNT(duration) AS count
                       FROM {episodes_server_episode}
                       WHERE name = 'frontend'
                       GROUP BY day");
   while ($row = db_fetch_object($result)) {
-    $frontends[$row->day] = $row->avg;
+    $frontends[$row->day]     = $row->avg;
+    $num_pageloads[$row->day] = $row->count;
   }
 
   // Build basic form structure which we'll use to group content together.
@@ -157,14 +159,15 @@ function episodes_server_report() {
   $form['chart']['output']['#value'] = $output_chart;
 
   // Render table.
-  $header = array(t('Date'), 'totaltime', 'backend', 'frontend');
+  $header = array(t('Date'), t('Page loads'), 'totaltime', 'backend', 'frontend');
   $rows = array();
   foreach (array_keys($totaltimes) as $date) {
     $totaltime = $totaltimes[$date];
     $backend   = $backends[$date];
     $frontend  = $frontends[$date];
+    $pageloads = $num_pageloads[$date];
     
-    $rows[] = array($date, $totaltime, $backend, $frontend);
+    $rows[] = array($date, $pageloads, $totaltime, $backend, $frontend);
   }
   $form['table']['output']['#value'] = theme('table', $header, $rows);
 
