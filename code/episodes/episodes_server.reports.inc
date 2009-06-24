@@ -63,6 +63,7 @@ function episodes_server_report_filter_form($form_state) {
     '#type'        => 'fieldset',
     '#title'       => t('Filters'),
     '#collapsible' => FALSE,
+    '#weight'      => -1,
   );
   $form['filters']['countries'] = array(
     '#type'          => 'hierarchical_select',
@@ -119,21 +120,7 @@ function _episodes_server_report_plp_details($country, $country_code) {
 
   $grid_step_percentage = 10;
 
-  $totaltimes = $backends = $frontends = $num_pageloads = array();
-
-  // totaltime episodes.
-  $sql = "SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
-                 AVG(duration) AS avg
-          FROM {episodes_server_episode}
-          WHERE name = 'totaltime'";
-  if (isset($country_code)) {
-    $sql .= " AND country = '%s'";
-  }
-  $sql .= " GROUP BY day";
-  $result = db_query($sql, $country_code);
-  while ($row = db_fetch_object($result)) {
-    $totaltimes[$row->day] = $row->avg;
-  }
+  $backends = $frontends = $num_pageloads = array();
 
   // backend episodes.
   $sql = "SELECT CONCAT(YEAR(FROM_UNIXTIME(server_time)), ' ', MONTH(FROM_UNIXTIME(server_time)), ' ', DAY(FROM_UNIXTIME(server_time))) AS day,
@@ -194,10 +181,9 @@ function _episodes_server_report_plp_details($country, $country_code) {
   $chart = array();
   $chart['#chart_id'] = 'chart-page-loading-performance-' . $country;
   $chart['#type'] = CHART_TYPE_LINE;
-  $chart['#size']['#width'] = 800;
+  $chart['#size']['#width'] = 700;
   $chart['#size']['#height'] = 200;
   $chart['#data'] = array();
-  $chart['#legends'][] = 'totaltime';
   $chart['#legends'][] = 'backend';
   $chart['#legends'][] = 'frontend';
   $chart['#adjust_resolution'] = TRUE;
@@ -208,41 +194,81 @@ function _episodes_server_report_plp_details($country, $country_code) {
     '298F3C',
   );
   $j = 0;
-  foreach (array_keys($totaltimes) as $date) {
-    $totaltime = $totaltimes[$date];
+  foreach (array_keys($backends) as $date) {
     $backend   = $backends[$date];
     $frontend  = $frontends[$date];
 
-    $chart['#data']['totaltime'][] = $totaltime;
     $chart['#data']['backend'][]   = $backend;
     $chart['#data']['frontend'][]  = $frontend;
   }
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(reset(array_keys($totaltimes)), 0);
-  $center = ceil(count($totaltimes) / 2);
-  $keys = array_keys($totaltimes);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(reset(array_keys($backends)), 0);
+  $center = ceil(count($backends) / 2);
+  $keys = array_keys($backends);
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label($keys[$center], 50);
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(end(array_keys($totaltimes)), 100);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(end(array_keys($backends)), 100);
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(t('Date'), 95);
-  $max_avg = ceil(max($chart['#data']['totaltime']) / 10) * 10;
+  $max_avg = ceil(max($chart['#data']['frontend']) / 10) * 10;
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * 20);
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][1][] = chart_mixed_axis_label(t("Duration (ms)"), 95);
   $output_chart .= chart_render($chart);
   $form['chart' . $country]['output']['#value'] = $output_chart;
 
   // Render table.
-  $header = array(t('Date'), t('Page loads'), 'totaltime', 'backend', 'frontend');
+  $header = array(t('Date'), t('Page loads'), 'backend', 'frontend');
   $rows = array();
-  foreach (array_keys($totaltimes) as $date) {
-    $totaltime = $totaltimes[$date];
+  foreach (array_keys($backends) as $date) {
     $backend   = $backends[$date];
     $frontend  = $frontends[$date];
     $pageloads = $num_pageloads[$date];
     
-    $rows[] = array($date, $pageloads, $totaltime, $backend, $frontend);
+    $rows[] = array($date, $pageloads, $backend, $frontend);
   }
   $form['table' . $country]['output']['#value'] = theme('table', $header, $rows);
 
-  return $form;
+  return array($form, $frontends);
+}
+
+function _episodes_server_report_plp_frontend_comparison_chart($frontends_per_country) {
+  $grid_step_percentage = 10;
+  $chart = array();
+  $chart['#chart_id'] = 'chart-page-loading-performance-comparison';
+  $chart['#type'] = CHART_TYPE_LINE;
+  $chart['#size']['#width'] = 700;
+  $chart['#size']['#height'] = 200;
+  $chart['#data'] = array();
+  foreach (array_keys($frontends_per_country) as $country_code) {
+    $country_info = countries_api_get_country($country_code);
+    $country_name = ($country_info !== FALSE && $country_info !== NULL) ? $country_info['printable_name'] : $country_code;
+    $chart['#legends'][] = $country_name;
+  }
+  $chart['#adjust_resolution'] = TRUE;
+  $chart['#grid_lines'] = chart_grid_lines($grid_step_percentage, 0); // Grid lines every 10% of the chart.
+  $chart['#data_colors'] = array(
+    'FF4117',
+    '3D6BFF',
+    '298F3C',
+    'FF66F2'
+  );
+  $j = 0;
+  $max = 0;
+  foreach (array_keys($frontends_per_country) as $country_code) {
+    foreach (array_keys($frontends_per_country[$country_code]) as $date) {
+      $frontend = $frontends_per_country[$country_code][$date];
+      $chart['#data'][$country_code][] = $frontend;
+      $max = max($max, $frontend);
+    }
+  }
+  $frontends_of_first_country = $frontends_per_country[reset(array_keys($frontends_per_country))];
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(reset(array_keys($frontends_of_first_country)), 0);
+  $center = ceil(count($frontends_of_first_country) / 2);
+  $keys = array_keys($frontends_of_first_country);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label($keys[$center], 50);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(end(array_keys($frontends_of_first_country)), 100);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(t('Date'), 95);
+  $max_avg = ceil($max / 10) * 10;
+  $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * 20);
+  $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][1][] = chart_mixed_axis_label(t("Duration (ms)"), 95);
+  return chart_render($chart);
 }
 
 function episodes_server_report_plp($form_state) {
@@ -259,13 +285,35 @@ function episodes_server_report_plp($form_state) {
   }
 
   // Page loading performance.
-  $form = array_merge($form, _episodes_server_report_plp_details('global'));
+  $comparison_frontends = array();
+  list($subform, $frontends) = _episodes_server_report_plp_details('global');
+  $comparison_frontends['global'] = $frontends;
+  $form = array_merge($form, $subform);
   if (isset($filter_countries)) {
     foreach ($filter_countries as $country_code) {
       $country_info = countries_api_get_country($country_code);
       $country_name = ($country_info !== FALSE && $country_info !== NULL) ? $country_info['printable_name'] : $country_code;
-      $form = array_merge($form, _episodes_server_report_plp_details($country_name, $country_code));
+      list($subform, $frontends) = _episodes_server_report_plp_details($country_name, $country_code);
+
+      // Merge the subform with the main form.
+      $form = array_merge($form, $subform);
+
+      // Store the received frontend episodes for this country.
+      $comparison_frontends[$country_code] = $frontends;
     }
+
+    $form['comparisonchart'] = array(
+      '#type'        => 'fieldset',
+      '#title'       => t('Comparison of frontend episodes'),
+      '#collapsible' => TRUE,
+      '#weight'      => count($filter_countries) + 10,
+    );
+    $form['comparisonchart']['output'] = array(
+      '#value'  => NULL, // Will be set after the chart has been rendered.
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+    $form['comparisonchart']['output']['#value'] = _episodes_server_report_plp_frontend_comparison_chart($comparison_frontends);
   }
 
   return $form;
