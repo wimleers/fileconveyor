@@ -255,7 +255,7 @@ path The relative path in a URL that defines the root of a web site.
  E.g.
  if the site 
 \family typewriter
-http://yoursite.com/
+http://example.com/
 \family default
  is where a web site lives, then the base path is 
 \family typewriter
@@ -264,7 +264,7 @@ http://yoursite.com/
 .
  If you've got another web site at 
 \family typewriter
-http://yoursite.com/subsite/
+http://example.com/subsite/
 \family default
 , then the base path for that web site is 
 \family typewriter
@@ -314,9 +314,21 @@ root The absolute path on the file system of the web server that corresponds
  with the root direcory of a web site.
  This is typically something like 
 \family typewriter
-/htdocs/yoursite.com
+/htdocs/example.com
 \family default
 .
+\end_layout
+
+\begin_layout Description
+Drupal
+\begin_inset space ~
+\end_inset
+
+behaviors Behaviors are event-triggered actions that attach to HTML elements,
+ enhancing default non-JavaScript UIs.
+ Through this system, behaviors are also attached automatically to new HTML
+ elements loaded through AHAH/AJAX and HTML elements to which the behaviors
+ have already been applied are automatically skipped.
 \end_layout
 
 \begin_layout Description
@@ -338,6 +350,16 @@ key "Episodes home page"
 internationalization The process of designing a software application so
  that it can be adapted to various languages and regions without engineering
  change.
+\end_layout
+
+\begin_layout Description
+lazy
+\begin_inset space ~
+\end_inset
+
+loading Deferring the loading of something until it's actually needed.
+ In the context of web pages, lazy loading a file implies that it will not
+ be loaded until the end user will actually get to see it.
 \end_layout
 
 \begin_layout Description
@@ -373,6 +395,12 @@ performance The time the server needs to render a web page.
 \begin_layout Description
 PoP A Point of Presence is an access point to the internet where multiple
  Internet Service Providers connect with each other.
+\end_layout
+
+\begin_layout Description
+prefetching Loading something when it not yet needed.
+ In the context of web pages, prefetching a file implies that it will be
+ cached by the browser before it is actually used in a web page.
 \end_layout
 
 \begin_layout Description
@@ -2835,7 +2863,7 @@ CSS sprites should be generated automatically.
 \end_layout
 
 \begin_layout Section
-Improving Drupal: Episodes module
+Improving Drupal: Episodes integration
 \begin_inset CommandInset label
 LatexCommand label
 name "sec:Episodes.module"
@@ -2846,8 +2874,8 @@ name "sec:Episodes.module"
 \end_layout
 
 \begin_layout Standard
-The work I'll be doing on improving Drupal's page loading performance should
- be practical, not theoretical.
+The work I am doing as part of bachelor thesis on improving Drupal's page
+ loading performance should be practical, not theoretical.
  It should have a real-world impact.
 \end_layout
 
@@ -2863,7 +2891,7 @@ key "Episodes Drupal module project page"
  This module integrates the Episodes framework for timing web pages (see
  section 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sub:Episodes"
 
 \end_inset
@@ -2921,6 +2949,9 @@ footerjs
 page.tpl.php
 \family default
  file of your theme.
+ That is the only modification you have to make by hand.
+ It is acceptable because a theme always must be tweaked for a given web
+ site.
 \end_layout
 
 \begin_layout Itemize
@@ -2928,16 +2959,19 @@ Provides basic reports with charts to make sense of the collected data.
 \end_layout
 
 \begin_layout Standard
-The Episodes module in fact contains two modules: the Episodes module and
- the Episodes Server module.
+I actually wrote two Drupal modules: the Episodes module and the Episodes
+ Server module.
  The former is the 
 \emph on
 actual
 \emph default
  integration and can be used without the latter.
- The latter can be installed on a separate Drupal web site (on a separate
- server) or on the same.
+ The latter can be installed on a separate Drupal web site or on the same.
  It provides basic reports.
+ It is recommended to install this on a separate Drupal web site, and preferably
+ even a separate web server, because it has to process a lot of data and
+ isn't optimized.
+ That would have led me too far outside of the scope of this bachelor thesis.
 \end_layout
 
 \begin_layout Standard
@@ -2946,6 +2980,7 @@ You could also choose to not enable the Episodes Server module and use an
  yet exist.
  This void will probably be filled in the next few years by the business
  world.
+ It might become the subject of my master thesis.
 \end_layout
 
 \begin_layout Subsection
@@ -2960,7 +2995,7 @@ The goal is to measure the different episodes of loading a web page.
 
 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "lst:sample-HTML"
 
 \end_inset
@@ -3216,8 +3251,20 @@ totaltime episode = totaltime - starttime, this episode contains the backend
 \begin_layout Standard
 These are just the basic time measurements and episodes.
  It is possible to also measure the time it took to load the CSS (lines
- 8-9) and JS files in the header (line 10) and in the footer (line 27),
- for example.
+ 8-9, this would be the 
+\family typewriter
+css
+\family default
+ episode) and JavaScript files in the header (line 10, this would be the
+ 
+\family typewriter
+headerjs
+\family default
+ episode) and in the footer (line 27, this would be the 
+\family typewriter
+footerjs
+\family default
+ episode), for example.
  It is possible to measure just about anything you want.
 \end_layout
 
@@ -3408,8 +3455,8 @@ Implemented
 hook_install()
 \family default
 , through which I set a module weight of -1000.
- This ensures the hook implementations of this module are always executed
- before all others.
+ This extremely low module weight ensures the hook implementations of this
+ module are always executed before all others.
 \end_layout
 
 \begin_layout Itemize
@@ -3480,14 +3527,86 @@ Thanks to Drupal's existing abstraction and the override I have implemented,
 \begin_inset Newline newline
 \end_inset
 
-A simplified version of what it does can be seen in listing
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "lst:Drupal.attachBehaviors()"
+A simplified version of what it does can be seen here:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize},float=h,language=Java,tabsize=2"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Drupal.attachBehaviors = function(context) {
+\end_layout
+
+\begin_layout Plain Layout
+
+	url = document.location;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	for (behavior in Drupal.behaviors) {
+\end_layout
+
+\begin_layout Plain Layout
+
+		window.postMessage("EPISODES:mark:" + behavior, url);
+\end_layout
+
+\begin_layout Plain Layout
+
+		Drupal.behaviors[behavior](context);
+\end_layout
+
+\begin_layout Plain Layout
+
+		window.postMessage("EPISODES:measure:" + behavior, url);
+\end_layout
+
+\begin_layout Plain Layout
+
+	}
+\end_layout
+
+\begin_layout Plain Layout
+
+};
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Drupal.attachBehaviors() override.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:Drupal.attachBehaviors()"
 
 \end_inset
 
-.
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Itemize
@@ -3573,87 +3692,10 @@ key "Drupal Forms API"
 \end_inset
 
 .
- It ensures the beacon URL exists and is properly configured (i.e.
+ It ensures the logging URL (this is the URL through which the collected
+ data is logged to Apache's log files) exists and is properly configured
+ (i.e.
  returns a zero-byte file).
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-lstparams "basicstyle={\scriptsize},float,language=Java,tabsize=2"
-inline false
-status open
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-Drupal.attachBehaviors = function(context) {
-\end_layout
-
-\begin_layout Plain Layout
-
-	url = document.location;
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	for (behavior in Drupal.behaviors) {
-\end_layout
-
-\begin_layout Plain Layout
-
-		window.postMessage("EPISODES:mark:" + behavior, url);
-\end_layout
-
-\begin_layout Plain Layout
-
-		Drupal.behaviors[behavior](context);
-\end_layout
-
-\begin_layout Plain Layout
-
-		window.postMessage("EPISODES:measure:" + behavior, url);
-\end_layout
-
-\begin_layout Plain Layout
-
-	}
-\end_layout
-
-\begin_layout Plain Layout
-
-};
-\end_layout
-
-\begin_layout Plain Layout
-
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Drupal.attachBehaviors() override.
-\begin_inset CommandInset label
-LatexCommand label
-name "lst:Drupal.attachBehaviors()"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsubsection
@@ -3836,7 +3878,7 @@ httpd.conf
 \begin_layout Itemize
 The ingestor parses the Apache log file and moves the data to the database.
  I was able to borrow a couple of regular expressions from Jiffy's ingestor
- (which is written in Perl …) but I completely rewrote it to obtain clean
+ (which is written in Perl) but I completely rewrote it to obtain clean
  and simple code, conform the Drupal coding guidelines.
  It detects the browser, browser version and operating system from the User
  Agent that was logged with the help of the Browser.php library 
@@ -3987,7 +4029,7 @@ Desired future features
 Due to lack of time, the basic reports are … well … very basic.
  It would be nice to have more charts and to be able to filter the data
  of the charts.
- In particular, these 3 filters would be very useful:
+ In particular, these three filters would be very useful:
 \end_layout
 
 \begin_layout Enumerate
@@ -4015,6 +4057,22 @@ Episodes module
 Generating the back-end start time on the server can never work reliably
  because the clocks of the client (browser) and server are never perfectly
  in sync, which is required.
+ Thus, I simply kept Steve Souders' 
+\family typewriter
+onbeforeunload
+\family default
+ method to log the time when a next page was requested.
+ The major disadvantage of this method is that it is impossible to measure
+ the 
+\family typewriter
+backend
+\family default
+ episode for each pageload: it is only possible to measure the 
+\family typewriter
+backend
+\family default
+ episode when the user navigates through our site (more specifically, when
+ the referrer is the same as the current domain).
 \end_layout
 
 \begin_layout Itemize
@@ -4087,17 +4145,21 @@ Currently the same database as Drupal is being used.
  Is this scalable enough for analyzing the logs of web sites with millions
  of page views? No.
  Writing everything to a SQLite database would not be better.
- The real solution is to use a different server to log to or even a web
- service.
- Better even is to log to a non-app server of your own and then send the
- logs to an external web service.
- This way you stay in control of all your data! (Avoiding vendor lock-in.)
+ The real solution is to use a different server to run the Episodes Server
+ module on or even an external web service.
+ Better even is to log to your own server and then send the logs to an external
+ web service.
+ This way you stay in control of all your data! Because you still have your
+ log data, you can switch to another external web service, thereby avoiding
+ vendor lock-in.
  The main reason I opted for using the same database, is ease of development.
 \begin_inset Newline newline
 \end_inset
 
 Optimizing the profiling tool is not the goal of this bachelor thesis, optimizin
 g page loading performance is.
+ As I already mentioned before, writing an advanced profiling tool could
+ be a master thesis on its own.
 \end_layout
 
 \end_deeper
@@ -4128,6 +4190,13 @@ Wow, this is awesome.
 \begin_layout Standard
 So, at least he thinks that this was a worthwhile job, which suggests that
  it will probably be worthwhile/helpful for the Drupal community as well.
+\begin_inset Newline newline
+\end_inset
+
+Unfortunately for me, Steve Souders is a very busy man, speaking at many
+ web-related conferences, teaching at Stanford, writing books and working
+ at Google.
+ He did not manage to get back to my list of questions.
 \end_layout
 
 \begin_layout Standard
