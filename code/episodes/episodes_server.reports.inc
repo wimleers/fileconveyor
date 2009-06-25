@@ -108,7 +108,7 @@ function _episodes_server_report_shared_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
 }
 
-function _episodes_server_report_plp_details($country, $country_code) {
+function _episodes_server_report_plp_details($country, $country_code = NULL) {
   static $weight;
 
   if (!isset($weight)) {
