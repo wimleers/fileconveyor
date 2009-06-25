@@ -3483,6 +3483,13 @@ episodes.js
 
 \begin_layout Subsection
 Episodes module: integration with Drupal
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Episodes-module"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -3878,6 +3885,13 @@ name "fig:Results-of-Episodes-module-in-Firebug"
 
 \begin_layout Subsection
 Episodes Server module: reports
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Episodes-Server-module"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -10060,28 +10074,42 @@ Test case: DriverPacks.net
 \begin_layout Standard
 As a back-up plan in case there would not be much feedback from companies
  (as turned out to be the case), I wanted to have a web site under my own
- control to test on.
- That web site is DriverPacks.net 
+ control to use as a test case.
+ That web site is 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+DriverPacks.net
+\end_layout
+
+\end_inset
+
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "DriverPacks.net"
 
 \end_inset
 
-.
+ (see the figure below for a screenshot of its homepage).
  It is the web site of an open source project, with more than 100,000 visits
  per month and more than 700,000 pageviews per month, with traffic coming
  from all around the world.
  These fairly large numbers and the geographical spread of its visitors
- makes it a good test case for measuring the overall effect.
- See figure 
+ make it a good test case for measuring the effect of a CDN.
+ See figure
+\begin_inset space ~
+\end_inset
+
+
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:Google-Analytics"
 
 \end_inset
 
- for details.
+ for a map and details.
 \begin_inset Newline newline
 \end_inset
 
@@ -10089,6 +10117,64 @@ Visitors come from 196 different countries, although the top three countries
  represent more than a quarter of the visitors and the top ten countries
  represent more than half of the visitors.
  Nevertheless, this is still a very geographically dispersed audience.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename images/testcase/driverpacks.net.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+DriverPacks.net homepage.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:DriverPacks.net-homepage."
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The goal was obviously to port this site to Drupal (which is not a part
+ of this thesis of course) and to install the Episodes module.
+ During about a week, statistics would be collected while no CDN was being
+ used.
+ Then, I would install the daemon on the server to sync the files to a CDN.
+ Next, I would install the Drupal CDN integration module.
+ Then again for about a week, statistics would be collected while the CDN
+ was being used.
+ Hopefully, by visualizing the collected episode measurements, it would
+ be confirmed that this had indeed had a positive effect.
 \end_layout
 
 \begin_layout Standard
@@ -10136,18 +10222,67 @@ Implementation
 \end_layout
 
 \begin_layout Standard
-The web site was previously completely custom and written in PHP.
- On June 11, I launched the new web site, which is built upon Drupal.
- On June 21 around 2 AM GMT+1, I enabled CDN integration for all users.
- To show the possibilities of the daemon in combination with the CDN integration
+The web site was previously a combination of static HTML and a bit of PHP.
+ On June 11, I launched the new web site, which was built using Drupal.
+ Drupal's CSS and JavaScript aggregation options were enabled.
+ Due to this, Drupal combines the CSS files for the same media type (
+\family typewriter
+screen
+\family default
+, 
+\family typewriter
+all
+\family default
+ …) and in the same section (header or footer) and the JavaScript file sin
+ the same section (header or footer), thereby already significantly reducing
+ the number of HTTP requests and page loading time.
+ If I would have turned this on when enabling CDN integration, the effect
+ would have been far more significant.
+ But the comparison would have been unfair.
+ Hence, these options were enabled, right from the beginning.
+\begin_inset Newline newline
+\end_inset
+
+Also the JavaScript for the Google Analytics service has been cached on
+ the web server since the launch of the web site, because the Google Analytics
+ module for Drupal supports it.
+ This makes it even harder to show the effect.
+\begin_inset Newline newline
+\end_inset
+
+Finally, DriverPacks.net is a site with virtually no images (because it slows
+ down the page loading, but mostly because I'm not a designer).
+ Only two images are loaded for the web site's style, one is loaded for
+ each of the two statistics services and one is loaded for the ad at the
+ top.
+ Only the two images that are part of the web site's style can be cached.
+ This makes it again more difficult to show the effect.
+\begin_inset Newline newline
+\end_inset
+
+This suggests that the results that will be observed should be magnified
+ significantly for more media-rich web sites, which is typically the case
+ nowadays.
+ However, I did not have such a web site around to test with.
+ It is likely that if the effect is noticeable on this web site, it is dramatica
+lly noticeable on a meda-rich web site.
+\end_layout
+
+\begin_layout Standard
+On June 21 around 2 AM GMT+1, I enabled CDN integration for all users.
+ To show the potential of the daemon in combination with the CDN integration
  module however, I implemented the 
 \family typewriter
 cdn_advanced_pick_server()
 \family default
  function that the Drupal CDN integration module calls when it is running
  in advanced mode and when that function exists.
- It really allows you to create any desired logic for routing users to CDNs
- or static file servers, as is demonstrated in listing 
+ It really allows you to create any desired logic for routing users to specific
+ CDNs or static file servers, as is demonstrated in listing
+\begin_inset space ~
+\end_inset
+
+
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "lst:cdn_advanced_pick_server"
@@ -10158,10 +10293,12 @@ reference "lst:cdn_advanced_pick_server"
 \end_layout
 
 \begin_layout Standard
-It was decided to use two servers because the latency to SimpleCDN's servers
+Both a static file server and a CDN are being used, but not just for demonstrati
+ve purposes.
+ It was decided to use two servers because the latency to SimpleCDN's servers
  is higher than acceptable in Europe (around 100 milliseconds or more).
  They claim to have servers in Amsterdam, but for some reason all requests
- from my IP (in Belgium) was being routed to a datacenter in Phoenix, Arizona
+ from my IP (in Belgium) are being routed to a datacenter in Phoenix, Arizona
  in the United States, which explains the high latency (this was discovered
  using the 
 \family typewriter
@@ -10175,7 +10312,7 @@ not
  using a CDN for countries with low-latency connections to Belgium.
  Since latency is the major problem in the loading of CSS, JavaScript and
  other files referenced by the HTML (because of the multitude of round trips
- of HTTP requests), I measured this using the 
+ due to HTTP requests), I measured this using the 
 \family typewriter
 ping
 \family default
@@ -10195,11 +10332,19 @@ key "Just Ping"
 
 \end_inset
 
- to get ping times from all around the world, to get a good global view.
+ to get ping times from all around the world, to get a global view.
+\begin_inset Newline newline
+\end_inset
+
+If only SimpleCDN would have been used, the web site would have become significa
+ntly slower in Europe (also in Russia, but less dramatically) and it would
+ have been very likely that no improvement could be observed from the collected
+ statistics.
 \end_layout
 
 \begin_layout Standard
-The 'warp' server uses the 
+The static file server (labeled 'warp') server is located in Berchem, Belgium
+ and uses the 
 \begin_inset Flex URL
 status collapsed
 
@@ -10210,9 +10355,9 @@ static.driverpacks.net
 
 \end_inset
 
- domain name and is an Apache instance (with far future Expires headers,
- gzip enabled and Last-Modified headers disabled) optimized for static file
- serving and the 'simplecdn' server uses the 
+ domain name and is an Apache HTTP server instance (with far future Expires
+ headers, gzip enabled and Last-Modified headers disabled) optimized for
+ static file serving and the CDN (labeled 'simplecdn') server uses the 
 \begin_inset Flex URL
 status collapsed
 
@@ -10233,9 +10378,21 @@ e1h21.simplecdn.net
 
 \end_inset
 
-.
- Files served from this domain have gzip Enabled, far future Expire Headers
+ (this server is for SimpleCDN's 
+\begin_inset Quotes eld
+\end_inset
+
+StormFront
+\begin_inset Quotes erd
+\end_inset
+
+ service, which claims to have 9 POPs in the United States and 2 POPs in
+ Europe).
+ Files served from this domain have gzip enabled, far future Expires headers
  and no Last-Modified headers.
+ There are other CDN services than SimpleCDN that provide POPs all over
+ the world, as opposed to just two continents.
+ They are typically far more expensive though.
 \end_layout
 
 \begin_layout Standard
@@ -10255,7 +10412,7 @@ key "Drupal ip2country"
  for Internet Numbers.
  ARIN is one of the five official Regional Internet Registries (RIR) responsible
  for assigning IP addresses.
- It is claimed to be 98% accurate.
+ It is claimed to be 98% accurate, which should be sufficiently accurate.
  Via the 
 \family typewriter
 continents_api
@@ -10278,12 +10435,11 @@ key "Drupal countries_api"
 
 \end_inset
 
-), all country codes for Europe are collected.
+), all country codes for Europe are collected in an array.
  Russia's country code is appended to this array.
  This way, all European countries plus Russia are assigned to the 'warp'
  server.
- Visitors from all other countries are assigned to the 'simplecdn' server,
- which is the SimpleCDN account.
+ Visitors from all other countries are assigned to the 'simplecdn' server.
  This implies that files are being synced through the daemon to both the
  'warp' server (using the symlink or copy transporter, see section 
 \begin_inset CommandInset ref
@@ -10566,12 +10722,60 @@ name "lst:cdn_advanced_pick_server"
 \end_layout
 
 \begin_layout Standard
-One day later, again around 2 AM GMT+1, I added some optimizations: the
- CSS and JavaScript of the delicious.com bookmarking widget on the homepage
- was altered to be served from DriverPacks.net's web server (and after syncing,
- these files will be served from either the static file server or the CDN).
- The AJAX request to delicious.com's servers was being delayed until after
+One day later, again around 2 AM GMT+1, I added some optimizations: from
+ that moment, Google Analytics' JavaScript code was being executed after
  the 
+\family typewriter
+window.onload
+\family default
+ event.
+ This caused the executing of JavaScript code and the loading of an invisible
+ 1x1 image to be delayed until after the page was fully rendered, thereby
+ speeding up the rendering of the page and thus the perceived page load
+ time.
+\begin_inset Newline newline
+\end_inset
+
+The CSS and JavaScript of the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+delicious.com
+\end_layout
+
+\end_inset
+
+ bookmarking widget (see the bottom right of figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:DriverPacks.net-homepage."
+
+\end_inset
+
+) on the homepage were also altered to be served from 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+DriverPacks.net
+\end_layout
+
+\end_inset
+
+'s web server (and after syncing, these files were being served from either
+ the static file server or the CDN).
+ The AJAX request to 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+delicious.com
+\end_layout
+
+\end_inset
+
+'s servers was being delayed until after the 
 \family typewriter
 window.onload
 \family default
@@ -10581,7 +10785,24 @@ window.onload
 \begin_inset Newline newline
 \end_inset
 
-I also modified the loading of the image necessary for the statistics service.
+Finally, I also modified the loading of the image necessary for the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+whos.amung.us
+\end_layout
+
+\end_inset
+
+ statistics service 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "whos.amung.us"
+
+\end_inset
+
+.
  Normally, this image is simply referenced from within the HTML.
  However, now it is being detected on the server side if the visitor has
  JavaScript enabled (Drupal then sets a 
@@ -10595,7 +10816,428 @@ window.onload
 \family default
  event, which inserts the HTML that loads the image.
  CSS is used to consume the whitespace until the image is loaded (where
- otherwise the image would have been), to prevent relayouting.
+ otherwise the image would have been), to prevent annoying relayouting (perceive
+d as 
+\begin_inset Quotes eld
+\end_inset
+
+flicker
+\begin_inset Quotes erd
+\end_inset
+
+ by the end user).
+\end_layout
+
+\begin_layout Subsubsection*
+Collected statistics
+\end_layout
+
+\begin_layout Standard
+About 100 MB worth of statistics have been logged.
+ These were then imported on June 25 (using the Episodes Server module,
+ see section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Episodes-Server-module"
+
+\end_inset
+
+), resulting in a database table of 642.4 MB.
+ More than 2.7 million episodes were collected over more than 260,000 page
+ views.
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Episodes-analysis:-overall."
+
+\end_inset
+
+ for details (note: in the figure, the times are in GMT, which explain the
+ discrepancy in time span).
+ All screenshots listed in this subsection are made from the Episodes Server
+ module running on 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+DriverPacks.net
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename /Users/wimleers/School/thesis/svn/doc/images/testcase/episodes analysis - overall.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes analysis: overall.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-analysis:-overall."
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This means episode measurements have been collected since the beginning
+ of June 11 until the beginning of June 25, resulting in exactly two weeks
+ of data, with the last 4 days having CDN integration.
+ This is in fact too short to see the full effect of caching kicking in.
+ 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+DriverPacks.net
+\end_layout
+
+\end_inset
+
+'s visitors typically don't visit the site daily, but weekly or monthly.
+ Hence many visitors have an empty cache, which drives the measured durations
+ up.
+ Fortunately, the effect of the CDN on visitors with an empty cache is clearly
+ visible.
+ The effect of visitors with primed caches is also visible, but less explicit.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/testcase/episodes analysis - page loading performance.png
+	height 98theight%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes analysis: page loading performance.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-analysis:-page"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now the interesting part begins.
+ There are five charts in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Episodes-analysis:-page"
+
+\end_inset
+
+.
+ The first four display the average duration of the 
+\family typewriter
+backend
+\family default
+ and 
+\family typewriter
+frontend
+\family default
+ episodes per day, for a given territory of visitors.
+ The first chart gives the results for all collected data, i.e.
+ globally.
+ The second chart is for Brazil, the third for the Netherlands and the fourth
+ for the United States.
+ As we've seen, the United States and Brazil represent the largest groups
+ of visitors, so their results should closely match the average real-world
+ performance there, which means they should be well represented in these
+ charts.
+ The Netherlands were chosen because a location very close to the 'warp'
+ server was also needed.
+ The Netherlands were chosen over Belgium because more visitors originate
+ from there, making the results more representative.
+ On average, the U.S.
+ had about 2,800 page views per day, Brazil had about 1,500 page views per
+ day and the Netherlands had about 350 daily page views.
+\begin_inset Newline newline
+\end_inset
+
+The fifth and last chart compares the average duration of the 
+\family typewriter
+frontend
+\family default
+ episodes per day of the three countries with the global averages.
+\end_layout
+
+\begin_layout Standard
+As this bachelor thesis is not page rendering performance, but about page
+ loading performance, the charted data for 
+\family typewriter
+backend
+\family default
+ episodes can be ignored.
+ I have no explanation for why it peaks at different times around the world.
+\begin_inset Newline newline
+\end_inset
+
+The 
+\family typewriter
+frontend
+\family default
+ episodes contain the durations of loading all CSS, JavaScript and images.
+\end_layout
+
+\begin_layout Standard
+Looking at the 
+\family typewriter
+frontend
+\family default
+ episode durations in the first four charts, it is clear that in the period
+ from June 11 until June 21, the variability in page loading time was very
+ large.
+ This may suggest that measurements are not taken over enough page views
+ from a global point of view, but in the case of the United States and Brazil,
+ which both had more than 2,500 page views per day (which should be sufficient
+ to cancel out anomalies), it suggests that the variability of network latency
+ (due to distance or congestion) can be great.
+ This can probably be explained by the fact that most files had to be retrieved
+ from the web server in Belgium.
+ Belgium is a long distance from Brazil and the United States and therefor
+ there are more opportunities (at every hop along the route) for the latency
+ to increase, which is possibly the reason for the large variability.
+\end_layout
+
+\begin_layout Standard
+Starting June 21, which is the date when CDN integration was enabled, there
+ is a slight increase in some countries, but globally, there is a slight
+ decrease.
+ This is to be expected, as the frequent visitors have to download the static
+ files again, this time from the CDN ('simplecdn' server) or static file
+ server ('warp' server).
+ On June 22, when another batch of changes was applied and the cached CSS
+ and JavaScript files were once again obsolete, there is a slight increase
+ globally, but a significant drop in the Netherlands.
+\begin_inset Newline newline
+\end_inset
+
+It is likely that this is because whereas Dutch visitors previously had
+ to wait for as much as five round trips to the United States (three to
+ the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+delicious.com
+\end_layout
+
+\end_inset
+
+ servers, one to Google Analytics' server and one to the additional statistics
+ service's server), that is now reduced to just three (the CSS and JavaScript
+ files for the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+delicious.com
+\end_layout
+
+\end_inset
+
+ widget are being served from the CDN or, in the case of the Netherlands,
+ from the static file server in Belgium).
+\begin_inset Newline newline
+\end_inset
+
+However, starting on June 23, there is a clear, worldwide, downward trend.
+ Especially in Brazil and the United States, this trend is very prominently
+ visible in the charts.
+ It is less strong in the Netherlands, because they were getting their files
+ already from a server with a fairly small latency.
+ The reason it drops even further for the Netherlands likely is that the
+ static file server is configured properly to maximize client-side caching
+ (i.e.
+ in the visitor's browser), whereas before the CDN and static file server
+ were being used, static files were being served using the default Apache
+ settings.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/testcase/episodes analysis - episodes.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Episodes analysis: episodes.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Episodes-analysis:-episodes."
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Finally, there is the analysis of the duration of the episodes (see figure
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Episodes-analysis:-episodes."
+
+\end_inset
+
+) themselves, regardless of country.
+ Through this chart, it's possible to examine which episode have the greatest
+ impact on the overal page loading time and would thus benefit the most
+ from optimizations.
+ Unfortunately, I did not have the time to create a chart that displays
+ the evolution over time.
+ So it is currently impossible to see how much a specific episode has improved
+ over time.
+\begin_inset Newline newline
+\end_inset
+
+However, it is very clear that the 
+\family typewriter
+headerjs
+\family default
+ episode (which represents the episode of loading the JavaScript in the
+ 
+\family typewriter
+<head> 
+\family default
+element of the HTML document) is by far the episode with the longest duration,
+ thus is the best candidate for optimization.
+ Probably even after CDN integration, this episode will remain the longest.
+\end_layout
+
+\begin_layout Subsubsection*
+Conclusion
+\end_layout
+
+\begin_layout Standard
+Globally, there has been a strong decrease in the page loading time and
+ thus a strong increase in page loading performance.
+ And since this test was conducted on a media-poor web site, it is likely
+ that the effect is dramatically more noticeable on a media-rich web site.
+ Since the downward trend lasted two days, it seems likely that the page
+ loading time will become less variable because the static files have been
+ cached in the browser.
+\end_layout
+
+\begin_layout Standard
+Especially for countries that are located far from Belgium, such as Brazil
+ and the United States, variability seems to have decreased significantly.
+ This suggests that adding more servers around the world, at strategic locations
+ (for example in the case of 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+DriverPacks.net
+\end_layout
+
+\end_inset
+
+, Bangkok in Thailand is the city that generates the most visitors around
+ the world according to Google Analytics), may be a very effective method
+ for improving page loading performance.
+ Depending on the web site, this strategy may achieve equal or better performanc
+e than a CDN with servers all around the world, at a fraction of the cost.
+\end_layout
+
+\begin_layout Standard
+It is certain that every web site can benefit from an analysis like the
+ one above.
+ The strategy to optimize page loading performance is different for every
+ web site.
 \end_layout
 
 \begin_layout Standard
@@ -13465,6 +14107,31 @@ status collapsed
 \begin_layout Plain Layout
 
 http://drupal.org/node/255215#comment-1722758
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "whos.amung.us"
+
+\end_inset
+
+
+\emph on
+whos.amung.us
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+whos.amung.us
 \end_layout
 
 \end_inset
