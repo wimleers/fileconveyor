@@ -62,7 +62,7 @@ function episodes_server_report_filter_form($form_state) {
   $form['filters'] = array(
     '#type'        => 'fieldset',
     '#title'       => t('Filters'),
-    '#collapsible' => FALSE,
+    '#collapsible' => TRUE,
     '#weight'      => -1,
   );
   $form['filters']['countries'] = array(
@@ -168,6 +168,7 @@ function _episodes_server_report_plp_details($country, $country_code) {
     '#type'        => 'fieldset',
     '#title'       => t('Table (!country)', array('!country' => $country)),
     '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
     '#weight'      => 1,
     '#weight'      => $weight + 10000,
   );
@@ -187,7 +188,7 @@ function _episodes_server_report_plp_details($country, $country_code) {
   $chart['#legends'][] = 'backend';
   $chart['#legends'][] = 'frontend';
   $chart['#adjust_resolution'] = TRUE;
-  $chart['#grid_lines'] = chart_grid_lines($grid_step_percentage, 0); // Grid lines every 10% of the chart.
+  $chart['#grid_lines'] = chart_grid_lines(0, 12); // Horizontal gridlines.
   $chart['#data_colors'] = array(
     'FF4117',
     '3D6BFF',
@@ -201,11 +202,9 @@ function _episodes_server_report_plp_details($country, $country_code) {
     $chart['#data']['backend'][]   = $backend;
     $chart['#data']['frontend'][]  = $frontend;
   }
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(reset(array_keys($backends)), 0);
-  $center = ceil(count($backends) / 2);
-  $keys = array_keys($backends);
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label($keys[$center], 50);
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(end(array_keys($backends)), 100);
+  $dates = array_keys($frontends);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_range_label(substr(reset($dates), 7, 2), substr(end($dates), 7, 2));
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(substr($date, 0, 6), 50);
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(t('Date'), 95);
   $max_avg = ceil(max($chart['#data']['frontend']) / 10) * 10;
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * 20);
@@ -242,12 +241,14 @@ function _episodes_server_report_plp_frontend_comparison_chart($frontends_per_co
     $chart['#legends'][] = $country_name;
   }
   $chart['#adjust_resolution'] = TRUE;
-  $chart['#grid_lines'] = chart_grid_lines($grid_step_percentage, 0); // Grid lines every 10% of the chart.
+  $chart['#grid_lines'] = chart_grid_lines(0, 12); // Horizontal gridlines.
   $chart['#data_colors'] = array(
     'FF4117',
     '3D6BFF',
     '298F3C',
-    'FF66F2'
+    'FF66F2',
+    'FFC840',
+    '63D7FF',
   );
   $j = 0;
   $max = 0;
@@ -259,11 +260,9 @@ function _episodes_server_report_plp_frontend_comparison_chart($frontends_per_co
     }
   }
   $frontends_of_first_country = $frontends_per_country[reset(array_keys($frontends_per_country))];
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(reset(array_keys($frontends_of_first_country)), 0);
-  $center = ceil(count($frontends_of_first_country) / 2);
-  $keys = array_keys($frontends_of_first_country);
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label($keys[$center], 50);
-  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(end(array_keys($frontends_of_first_country)), 100);
+  $dates = array_keys($frontends_of_first_country);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_range_label(substr(reset($dates), 7, 2), substr(end($dates), 7, 2));
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(substr($date, 0, 6), 50);
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(t('Date'), 95);
   $max_avg = ceil($max / 10) * 10;
   $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * 20);
@@ -387,7 +386,7 @@ function episodes_server_report_episodes() {
     '#type'        => 'fieldset',
     '#title'       => t('Table'),
     '#collapsible' => TRUE,
-    '#collapsed'   => !isset($_GET['sort']), // If the user is sorting the table, display it immediately.
+    '#collapsed'   => TRUE,
     '#weight'      => 1,
   );
   $form['table']['output'] = array(
@@ -422,7 +421,7 @@ function episodes_server_report_episodes() {
 
     // Some episodes should always be ignored, but others only when they are
     // too insignificant. Displayin *all* data on a chart doesn't work well.
-    if (in_array($label, $ignored_episodes) || $avg < $lower_boundary)
+    if (in_array($label, $container_episodes) || $avg < $lower_boundary)
       continue;
 
     $chart['#data'][] = $avg;
@@ -441,6 +440,7 @@ function episodes_server_report_episodes() {
   $chart['#size']['#height'] = 30 + count($chart['#data']) * 30;
   $max_avg = ceil(max($chart['#data']) / 10) * 10;
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_range_label(0, $max_avg, $max_avg / 100 * $grid_step_percentage);
+  $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][0][] = chart_mixed_axis_label(max($chart['#data']), 100);
   $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label(t('Duration (ms)'), 95);
   $output_chart .= chart_render($chart);
   $form['chart']['output']['#value'] = $output_chart;
@@ -464,6 +464,8 @@ function episodes_server_report_episodes() {
   $sql .= tablesort_sql($header);
   $result = db_query($sql);
   while ($row = db_fetch_object($result)) {
+    if ($row->name == '')
+      continue;
     $labels[] = $row->name;
     $avgs[] = (float) $row->avg;
     $stds[] = (float) $row->std;
