@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
   <!-- Sources -->
-  <sources>
+  <sources ignoredDirs="CVS:.svn">
     <source name="drupal" scanPath="/htdocs/drupal" documentRoot="/htdocs" basePath="/drupal/" />
     <source name="downloads" scanPath="/Users/wimleers/Downloads" />
   </sources>
@@ -26,7 +26,6 @@
       <filter>
         <paths>misc:profiles:modules:themes:sites/all:sites/default</paths>
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
-        <ignoredDirs>CVS:.svn</ignoredDirs>
       </filter>
       <processorChain>
         <processor name="image_optimizer.KeepFilename" />
@@ -44,7 +43,6 @@
       <filter>
         <paths>modules:misc</paths>
         <extensions>flv:mov:avi:wmv</extensions>
-        <ignoredDirs>CVS:.svn</ignoredDirs>
         <size conditionType="minimum">1000000</size>
       </filter>
       <processorChain>

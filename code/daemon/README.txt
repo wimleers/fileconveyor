@@ -103,6 +103,12 @@ To get a feeling of the daemon's speed, you may want to run it in the console
 and look at its output.
 
 
+Verifying the synced files
+--------------------------
+Running the verify.py script will open the synced files database and verify
+that each synced file actually exists.
+
+
 
 
 ==============================================================================
