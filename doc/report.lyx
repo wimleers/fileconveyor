@@ -161,17 +161,7 @@ Abstract
 \end_layout
 
 \begin_layout Standard
-TODO
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-TODO
-\end_layout
-
-\end_inset
-
-
+The 
 \end_layout
 
 \begin_layout Section
@@ -4579,6 +4569,11 @@ Low resource consumption (except for processors, which may be very demanding
 \begin_layout Itemize
 No dependencies other than Python (but processors can have additional dependenci
 es)
+\end_layout
+
+\begin_layout Itemize
+All the logic of the daemon should be contained in a single module, to allow
+ for quick refactoring.
 \end_layout
 
 \begin_layout Standard
@@ -11541,17 +11536,287 @@ Conclusion
 \end_layout
 
 \begin_layout Standard
-TODO
+The goal of this bachelor thesis is improving Drupal's page loading performance.
+ But in order to guarantee that my attempted improvements to Drupal actually
+ have an effect, I had to be able to measure the results.
+\end_layout
+
+\begin_layout Standard
+After analyzing a broad set of page loading performance profiling tools
+ (and related tools), it became clear that Episodes (which was written as
+ a prototype by Steve Souders, whom can be considered the evangelizer of
+ page loading performance) was the best candidate: it is the only one that
+ is capable of measuring the real-world page loading performance, the results
+ from the actual people using it.
+ Furthermore, it has the most potential for becoming the standard profiling
+ tool over the next few years and even to become integrated with future
+ browsers.
+ 
+\begin_inset Newline newline
+\end_inset
+
+So I polished the code, made it ready (or at least usable) for the real
+ world and integrated it with Drupal: the Drupal Episodes module.
+ The integration with Drupal happens in such a way that all Drupal behaviors
+ (all JavaScript behaviors are defined using a standardized Drupal JavaScript
+ API) are automatically measured.
+ All that is needed, are a couple of changes to the theme to make the measuremen
+ts cover all aspects.
+\begin_inset Newline newline
+\end_inset
+
+This module is ready for production.
+\end_layout
+
+\begin_layout Standard
+I also made another Drupal module (the Episodes Server module) that is able
+ to import the logs collected through Episodes and visualize the measurements
+ through charts.
+ Thanks to these charts, you can track the real-world page loading performance
+ over time and even compare the page loading performance of multiple countries
+ simultaneously with the global page loading performance.
+ It also allows you to find out which episodes are the biggest bottlenecks
+ for a better page loading time.
+\begin_inset Newline newline
+\end_inset
+
+This module is not ready for production, but is a good base to start from.
+ The code that imports the logs into the database is covered by unit tests.
+ The code is licensed under the GPL and available at 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/episodes
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Then there is the daemon for syncing files, of course.
+ This was the most important part of this thesis.
+ As odd as it may seem, there seems to be nothing similar in existence,
+ or at least not publicly available (not even commercially).
+ If it did exist, I would surely have been informed by one of the tens —
+ potentially several hundred — of people who know about the concept of my
+ bachelor thesis.
+\begin_inset Newline newline
+\end_inset
+
+I started with the configuration file design.
+ The configuration of the daemon happens through an XML file that is designed
+ to be easy to use if you're familiar with the terminology.
+ Several people who are familiar with the terminology were asked to look
+ at it and immediately responded that it made sense.
+ It's important that this is easy, because this is the interface to the
+ daemon.
+\begin_inset Newline newline
+\end_inset
+
+I decomposed the daemon into major components and started with the most
+ simple one, because I was writing this in Python, a language that I had
+ never used before, but was rumored to be extremely easy to program in —
+ this ease was supposedly partially thanks to the availability of modules
+ for nearly everything imaginable.
+ Fortunately, that turned out to be the case, although I had been fearing
+ for a long time that I had to write all the code for transporters myself
+ — a near impossible challenge given the timeframe.
+\begin_inset Newline newline
+\end_inset
+
+This is why the daemon in fact is just a set of Python modules that can
+ be used in any application.
+ For example, in the case of the 
+\family typewriter
+fsmonitor.py
+\family default
+ module — which abstracts file system monitors on different operating systems,
+ thereby creating a cross-platform API — it is certainly possible that it
+ will be reused by other applications.
+\begin_inset Newline newline
+\end_inset
+
+Thus I wrote a fairly large set of Python modules: 
+\family typewriter
+config.py
+\family default
+, 
+\family typewriter
+daemon_thread_runner.py
+\family default
+, 
+\family typewriter
+filter.py
+\family default
+, 
+\family typewriter
+fsmonitor.py
+\family default
+ (with one subclass for every supported operating system), 
+\family typewriter
+pathscanner.py
+\family default
+, 
+\family typewriter
+persistent_list.py
+\family default
+, 
+\family typewriter
+persistent_queue,py
+\family default
+, 
+\family typewriter
+processor.py
+\family default
+ (with a set of subclasses, one for each processor) and 
+\family typewriter
+transporter.py
+\family default
+ (with subclasses that are very thin wrappers around Django custom storage
+ systems).
+ Whenever feasible, I wrote unit tests.
+ But because this application involves a lot of file I/O and network I/O
+ due to its nature, this was often extremely hard and thus skipped.
+ For 
+\family typewriter
+fsmonitor
+\family default
+ support in Linux, I was able to build upon the 
+\family typewriter
+pyinotify
+\family default
+ module and for the transporters, I was able to completely reuse Django's
+ custom storage systems.
+ All other modules are completely my own product.
+\begin_inset Newline newline
+\end_inset
+
+This has an interesting side effect: 
+\family typewriter
+arbitrator.py
+\family default
+, the module that links all these stand-alone modules together into a single
+ whole, i.e.
+ which arbitrates between all different modules, can easily be refactored
+ completely.
+ While it is almost a thousand lines of code (albeit with a lot of comments),
+ the code could easily be rewritten completely as part of a redesign, and
+ you would only have to write the logic that links all modules together.
+ This means that in a worst case scenario, for example, the daemon is found
+ to have a bottleneck in a certain situation due to a design flaw, it can
+ easily be adapted, because all the logic of the daemon itself is embedded
+ in a single module.
+ Only that part must be rewritten.
+\begin_inset Newline newline
+\end_inset
+
+Because it is impossible to be sure that the daemon works correctly and
+ reliably in every environment and with every possible configuration, it
+ is recommended that a company first simulates its use case and verifies
+ that the daemon works to its expectations.
+ The code is licensed under the GPL and will be made available on a web
+ site (but a name for the daemon has not yet been decided on).
+ Hopefully, others will start contributing to it to improve it further to
+ make it suitable for more situations.
+\end_layout
+
+\begin_layout Standard
+A Drupal module for easy integration with CDNs was also written: the CDN
+ integration module.
+ However, I first had to write a patch for Drupal core, because it is necessary
+ to be able to alter the URLs to files that are generated by default, because
+ it is necessary to point them to the files on the CDN instead of those
+ on the web server.
+ A patch for Drupal 7 (which is currently in development), to make this
+ functionality part of Drupal core in the future, has had very positive
+ reviews, but must still go through the minutious peer review process and
+ will soon get committed.
 \begin_inset Note Note
 status open
 
 \begin_layout Plain Layout
-TODO
+Drupal core patch
 \end_layout
 
 \end_inset
 
 
+\begin_inset Newline newline
+\end_inset
+
+In the Drupal module, two modes are available: basic and advanced.
+ In basic mode, it can only be used with Origin Pull CDNs.
+ But because it now makes this very easy, whereas it previously required
+ a lot of manual fiddling, this alone is a worthy addition to the Drupal
+ contributed modules.
+ However, in advanced mode, it becomes truly interesting: then it uses the
+ synced files database generated by the daemon to rewrite file URLs.
+ It is even possible to implement a special callback function which can
+ be used to select a specific server to serve the files from based on properties
+ of the visitor (location, membership type, anything).
+\begin_inset Newline newline
+\end_inset
+
+This module is also ready for production.
+ The code is licensed under the GPL and is available at 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/cdn
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The feedback from companies was underwhelming in numbers but overwhelming
+ in positivity.
+ I couldn't have hoped for more positive feedback.
+ The code structure of the daemon was described as 
+\begin_inset Quotes eld
+\end_inset
+
+clear and self-explanatory
+\begin_inset Quotes erd
+\end_inset
+
+ and the documentation (of the daemon itself and my description of it in
+ this thesis text) as 
+\begin_inset Quotes eld
+\end_inset
+
+very clear
+\begin_inset Quotes erd
+\end_inset
+
+.
+ It even made the reviewer regret that he did not finish his own bachelor
+ degree.
+ The reviewer was even so positive that he already started writing patches
+ for the daemon so that it would better suit his infrastructure.
+ This suggests that it is feasible that the daemon will become a lively
+ open source project.
+\end_layout
+
+\begin_layout Standard
+Finally, the results of my own testing case confirmed the thesis that integratin
+g Drupal with a CDN could further improve the page loading performance.
+ While the results (as logged via the Episodes module) were not as explicit
+ as they could have been for a media-rich site (my test case was a media-poor
+ web site), the difference was still clearly discernable in the charts (as
+ generated by the Episodes Server module).
+ Despite the fact that the web site had already been optimized with the
+ mechanisms available in Drupal by default, integrating it with a CDN (via
+ the CDN integration module and the daemon), clearly improved the overall,
+ worldwide page loading performance.
 \end_layout
 
 \begin_layout Standard
