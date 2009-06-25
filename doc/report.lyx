@@ -9828,6 +9828,31 @@ actually
 \end_layout
 
 \begin_layout Standard
+Three CDNs promised me to provide me (and the businesses that were going
+ to test my work) free CDN accounts for testing purposes.
+ Two of them immediately gave me accounts: SimpleCDN 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SimpleCDN"
+
+\end_inset
+
+ and Rambla 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Rambla"
+
+\end_inset
+
+.
+ Thanks!
+\begin_inset Newline newline
+\end_inset
+
+I ensured the daemon's FTP support was compatible with their FTP servers.
+\end_layout
+
+\begin_layout Standard
 There is 
 \emph on
 one
@@ -10036,6 +10061,541 @@ Test case: DriverPacks.net
 As a back-up plan in case there would not be much feedback from companies
  (as turned out to be the case), I wanted to have a web site under my own
  control to test on.
+ That web site is DriverPacks.net 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "DriverPacks.net"
+
+\end_inset
+
+.
+ It is the web site of an open source project, with more than 100,000 visits
+ per month and more than 700,000 pageviews per month, with traffic coming
+ from all around the world.
+ These fairly large numbers and the geographical spread of its visitors
+ makes it a good test case for measuring the overall effect.
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Google-Analytics"
+
+\end_inset
+
+ for details.
+\begin_inset Newline newline
+\end_inset
+
+Visitors come from 196 different countries, although the top three countries
+ represent more than a quarter of the visitors and the top ten countries
+ represent more than half of the visitors.
+ Nevertheless, this is still a very geographically dispersed audience.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename images/testcase/google analytics.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Google Analytics' Map Overlay view for DriverPacks.net.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Google-Analytics"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Implementation
+\end_layout
+
+\begin_layout Standard
+The web site was previously completely custom and written in PHP.
+ On June 11, I launched the new web site, which is built upon Drupal.
+ On June 21 around 2 AM GMT+1, I enabled CDN integration for all users.
+ To show the possibilities of the daemon in combination with the CDN integration
+ module however, I implemented the 
+\family typewriter
+cdn_advanced_pick_server()
+\family default
+ function that the Drupal CDN integration module calls when it is running
+ in advanced mode and when that function exists.
+ It really allows you to create any desired logic for routing users to CDNs
+ or static file servers, as is demonstrated in listing 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "lst:cdn_advanced_pick_server"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+It was decided to use two servers because the latency to SimpleCDN's servers
+ is higher than acceptable in Europe (around 100 milliseconds or more).
+ They claim to have servers in Amsterdam, but for some reason all requests
+ from my IP (in Belgium) was being routed to a datacenter in Phoenix, Arizona
+ in the United States, which explains the high latency (this was discovered
+ using the 
+\family typewriter
+traceroute
+\family default
+ command).
+ This was worse than 
+\emph on
+not
+\emph default
+ using a CDN for countries with low-latency connections to Belgium.
+ Since latency is the major problem in the loading of CSS, JavaScript and
+ other files referenced by the HTML (because of the multitude of round trips
+ of HTTP requests), I measured this using the 
+\family typewriter
+ping
+\family default
+ command.
+ I mostly relied on the 
+\begin_inset Quotes eld
+\end_inset
+
+just ping
+\begin_inset Quotes erd
+\end_inset
+
+ web service 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Just Ping"
+
+\end_inset
+
+ to get ping times from all around the world, to get a good global view.
+\end_layout
+
+\begin_layout Standard
+The 'warp' server uses the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+static.driverpacks.net
+\end_layout
+
+\end_inset
+
+ domain name and is an Apache instance (with far future Expires headers,
+ gzip enabled and Last-Modified headers disabled) optimized for static file
+ serving and the 'simplecdn' server uses the 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+cdn.driverpacks.net
+\end_layout
+
+\end_inset
+
+ domain name.
+ This is a DNS CNAME record pointing to 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+e1h21.simplecdn.net
+\end_layout
+
+\end_inset
+
+.
+ Files served from this domain have gzip Enabled, far future Expire Headers
+ and no Last-Modified headers.
+\end_layout
+
+\begin_layout Standard
+The Drupal 
+\family typewriter
+ip2country
+\family default
+ module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal ip2country"
+
+\end_inset
+
+ is used to map an IP to a country code.
+ This module uses the database maintained by ARIN, the American Registry
+ for Internet Numbers.
+ ARIN is one of the five official Regional Internet Registries (RIR) responsible
+ for assigning IP addresses.
+ It is claimed to be 98% accurate.
+ Via the 
+\family typewriter
+continents_api
+\family default
+ module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal continents_api"
+
+\end_inset
+
+ (which I wrote as an addition to the 
+\family typewriter
+countries_api
+\family default
+ module 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Drupal countries_api"
+
+\end_inset
+
+), all country codes for Europe are collected.
+ Russia's country code is appended to this array.
+ This way, all European countries plus Russia are assigned to the 'warp'
+ server.
+ Visitors from all other countries are assigned to the 'simplecdn' server,
+ which is the SimpleCDN account.
+ This implies that files are being synced through the daemon to both the
+ 'warp' server (using the symlink or copy transporter, see section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:daemon:modules:transporter_symlink_or_copy.py"
+
+\end_inset
+
+) and to the 'simplecdn' server (using the FTP transporter, again see section
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:daemon:modules:transporter_ftp.py"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Visitors are informed on the homepage from which server they are getting
+ their static files, as can be seen in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Visitor-location-block."
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/testcase/visitor location block.png
+	scale 70
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Visitor location block.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Visitor-location-block."
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "basicstyle={\scriptsize},float,language=PHP,tabsize=4"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+function driverpacksnet_map_country_to_server($country_code) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  $countries_for_warp_server = continents_api_get_countries('EU') + array('RU');
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (in_array($country_code, $countries_for_warp_server)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 'warp';
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  else {
+\end_layout
+
+\begin_layout Plain Layout
+
+    return 'simplecdn';
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+/**
+\end_layout
+
+\begin_layout Plain Layout
+
+ * Implementation of cdn_advanced_pick_server().
+\end_layout
+
+\begin_layout Plain Layout
+
+ */
+\end_layout
+
+\begin_layout Plain Layout
+
+function cdn_advanced_pick_server($servers_for_file) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  static $server_name;
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (!isset($server_name)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    // Determine which server to use for the current visitor.
+\end_layout
+
+\begin_layout Plain Layout
+
+    $ip = $_SERVER['REMOTE_ADDR'];
+\end_layout
+
+\begin_layout Plain Layout
+
+    $country_code = ip2country_get_country($ip);
+\end_layout
+
+\begin_layout Plain Layout
+
+    $server_name = driverpacksnet_map_country_to_server($country_code);
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  // Try to pick the desired server - if the file being served is available
+ on
+\end_layout
+
+\begin_layout Plain Layout
+
+  // our the desired server.
+\end_layout
+
+\begin_layout Plain Layout
+
+  foreach ($servers_for_file as $server_for_file) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if ($server_for_file['server'] == $server_name) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      return $server_for_file;
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  // In case our desired server does not have the file, pick the first server
+\end_layout
+
+\begin_layout Plain Layout
+
+  // that does have it.
+\end_layout
+
+\begin_layout Plain Layout
+
+  return $servers_for_file[0];
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\family typewriter
+cdn_advanced_pick_server()
+\family default
+ function and helper function.
+\begin_inset CommandInset label
+LatexCommand label
+name "lst:cdn_advanced_pick_server"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One day later, again around 2 AM GMT+1, I added some optimizations: the
+ CSS and JavaScript of the delicious.com bookmarking widget on the homepage
+ was altered to be served from DriverPacks.net's web server (and after syncing,
+ these files will be served from either the static file server or the CDN).
+ The AJAX request to delicious.com's servers was being delayed until after
+ the 
+\family typewriter
+window.onload
+\family default
+ event, i.e.
+ when the page was fully rendered.
+ This is not annoying because the information in this widget is not critical.
+\begin_inset Newline newline
+\end_inset
+
+I also modified the loading of the image necessary for the statistics service.
+ Normally, this image is simply referenced from within the HTML.
+ However, now it is being detected on the server side if the visitor has
+ JavaScript enabled (Drupal then sets a 
+\family typewriter
+has_js
+\family default
+ cookie, which can be detected on the server side) and in that case, a piece
+ of JavaScript is inserted instead that is executed after the 
+\family typewriter
+window.onload
+\family default
+ event, which inserts the HTML that loads the image.
+ CSS is used to consume the whitespace until the image is loaded (where
+ otherwise the image would have been), to prevent relayouting.
 \end_layout
 
 \begin_layout Standard
@@ -12690,6 +13250,56 @@ http://php.net/pdo
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "SimpleCDN"
+
+\end_inset
+
+
+\emph on
+SimpleCDN
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.simplecdn.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Rambla"
+
+\end_inset
+
+
+\emph on
+Rambla
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://rambla.be/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "SlideME"
 
 \end_inset
@@ -12725,11 +13335,136 @@ Android
 \emph default
 , 
 \begin_inset Flex URL
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
 http://www.android.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "DriverPacks.net"
+
+\end_inset
+
+
+\emph on
+DriverPacks.net
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://driverpacks.net/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Just Ping"
+
+\end_inset
+
+
+\emph on
+Just Ping
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://just-ping.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal ip2country"
+
+\end_inset
+
+
+\emph on
+IP-based Determination of a Visitor's Country
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/ip2country
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal countries_api"
+
+\end_inset
+
+
+\emph on
+Country codes API
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/project/countries_api
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Drupal continents_api"
+
+\end_inset
+
+
+\emph on
+Continents API
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/node/255215#comment-1722758
 \end_layout
 
 \end_inset
