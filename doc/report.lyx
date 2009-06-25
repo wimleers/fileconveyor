@@ -189,7 +189,7 @@ TODO
 
 \end_inset
 
-
+ 
 \end_layout
 
 \begin_layout Section
@@ -9808,17 +9808,234 @@ Feedback from businesses
 \end_layout
 
 \begin_layout Standard
-TODO
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-TODO
+I had a nice list of seven companies who wanted to test my bachelor thesis,
+ either the CDN integration for Drupal using the CDN or just the daemon
+ (for either syncing files to a static file server or to back up servers).
 \end_layout
+
+\begin_layout Standard
+I gave them more than three weeks time to test this, which is a fairly large
+ amount of time, considering that the whole timespan of the thesis was about
+ 4 months.
+ Unfortunately, these are actual companies, each with their own schedules
+ and clients to keep satisfied.
+ So, as was to be expected, the feedback I 
+\emph on
+actually
+\emph default
+ got was far more sparse than I hoped for.
+ However unfortunate, this is of course understandable.
+\end_layout
+
+\begin_layout Standard
+There is 
+\emph on
+one
+\emph default
+ company that did give feedback though.
+ Which is of course still much better than none at all.
+\end_layout
+
+\begin_layout Standard
+The company SlideME 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SlideME"
 
 \end_inset
 
+ evaluated the daemon I wrote, which is by far the most important part of
+ this thesis.
+ They will be using it on a Drupal web site though, but have to adapt the
+ daemon first to match their infrastructure (see later).
+ My sincere thanks go to SlideME! What's interesting is that their company
+ is all about Android 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Android"
 
+\end_inset
+
+, another open source project.
+\end_layout
+
+\begin_layout Quotation
+SlideME is an industry pioneer in Android content delivery, creating the
+ first application manager for discovering, downloading and purchasing of
+ Android applications directly to the device.
+ 
+\end_layout
+
+\begin_layout Standard
+They are planning on using it with the following infrastructure:
+\end_layout
+
+\begin_layout Enumerate
+MySQL database instance (with few slaves)
+\end_layout
+
+\begin_layout Enumerate
+Dedicated 
+\begin_inset Quotes eld
+\end_inset
+
+editor instance
+\begin_inset Quotes erd
+\end_inset
+
+ (i.e.
+ a single web server for the users that are allowed to add content) with
+ Amazon S3 to keep Drupal files and upload new ones.
+\end_layout
+
+\begin_layout Enumerate
+Multiple "viewer instances
+\begin_inset Quotes erd
+\end_inset
+
+ for regular users on Amazon Elastic Compute Cloud (EC2, these are virtual
+ server instances in the cloud) behind Elastic Load Balancing (which distributes
+ incoming traffic across mutliple Amazon EC2 instances).
+\end_layout
+
+\begin_layout Standard
+Kay Webber, whom works for SlideME and is responsible for integrating my
+ daemon with the infrastructure, made four suggestions:
+\end_layout
+
+\begin_layout Enumerate
+On his servers with the CentOS operating system , only Python 2.4 was available,
+ whereas, my daemon requires Python 2.5.
+ He made the changes necessary to get it to work in Python 2.4.
+ He did not manage to find a pyinotify package for his Linux distribution
+ however, making 
+\family typewriter
+fsmonitor.py
+\family default
+ fall back to the polling mechanism.
+ However, not all of the Python packages I use are guaranteed to work with
+ Python 2.4 (because Python 2.4 is quite old already, it was released in November
+ 2004).
+ On most servers, it is possible to install Python 2.5 with a single command.
+\end_layout
+
+\begin_layout Enumerate
+The daemon is run on the editor instance, but the database of synced files
+ needs to be accessed from the viewer instances as well.
+ Therefor, he is working on a patch to also support storing the synced files
+ database in a MySQL database (which supports replication) instead of just
+ SQLite.
+\end_layout
+
+\begin_layout Enumerate
+He would like to be able to use environment variables in the configuration
+ file.
+ He's also working on a patch for this.
+\end_layout
+
+\begin_layout Enumerate
+He needs the ability to upload 
+\begin_inset Quotes eld
+\end_inset
+
+private
+\begin_inset Quotes erd
+\end_inset
+
+ files to Amazon S3 (this works using query string authentication, i.e.
+ placing a combination of a public key and a signature in the query string).
+\end_layout
+
+\begin_layout Standard
+In response, I asked him a couple of questions:
+\end_layout
+
+\begin_layout Itemize
+Was the documentation sufficient?
+\end_layout
+
+\begin_layout Quote
+Thesis and readme are both very clear.
+ Now I regret that I did not finished my own bachelor degree ;) So the answer
+ to your question is yes.
+\end_layout
+
+\begin_layout Itemize
+Did you find the setup easy? Do you think the configuration file is self-explana
+tory?
+\end_layout
+
+\begin_layout Quote
+The configuration file was mostly but not 
+\emph on
+always
+\emph default
+ self-explanatory.
+ For example, I missed the connection between 
+\family typewriter
+<source name="drupal_files">
+\family default
+ and 
+\family typewriter
+<rule for="drupal_files">
+\family default
+ and named them differently at the beginning.
+ But I have no suggestions for this case.
+\begin_inset Newline newline
+\end_inset
+
+The documentation on setup is clear.
+\end_layout
+
+\begin_layout Itemize
+Since you've already been writing patches: what did you think of the code
+ structure?
+\end_layout
+
+\begin_layout Quote
+Clear and self-explanatory.
+\end_layout
+
+\begin_layout Itemize
+How would you rate the performance? (Keeping in mind that discovering files
+ is orders of magnitude slower due to the fallback to polling for detecting
+ changes.) How many files are you syncing and what is their combined size?
+\end_layout
+
+\begin_layout Quote
+I have not started performance tests yet, so I cannot rate it.
+\end_layout
+
+\begin_layout Standard
+So, overall, the impression seems to be very good.
+ The documentation in general, setting it up and the configuration file
+ were strongly approved by him.
+ The code structure even more.
+ He did not yet have the time to do real-world tests.
+\begin_inset Newline newline
+\end_inset
+
+The trend in his answers suggests that the code structure is sufficiently
+ solid and that it conceptually makes sense; that setup and configuration
+ are sufficiently straightforward; all of which hopefully is enough for
+ this application to become a healthy open source project.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage pagebreak
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Test case: DriverPacks.net
+\end_layout
+
+\begin_layout Standard
+As a back-up plan in case there would not be much feedback from companies
+ (as turned out to be the case), I wanted to have a web site under my own
+ control to test on.
 \end_layout
 
 \begin_layout Standard
@@ -12463,6 +12680,56 @@ status collapsed
 \begin_layout Plain Layout
 
 http://php.net/pdo
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "SlideME"
+
+\end_inset
+
+
+\emph on
+SlideME LLC
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://slideme.org/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Android"
+
+\end_inset
+
+
+\emph on
+Android
+\emph default
+, 
+\begin_inset Flex URL
+status open
+
+\begin_layout Plain Layout
+
+http://www.android.com/
 \end_layout
 
 \end_inset
