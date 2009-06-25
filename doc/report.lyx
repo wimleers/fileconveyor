@@ -4413,7 +4413,7 @@ So, at least he thinks that this was a worthwhile job, which suggests that
 Unfortunately for me, Steve Souders is a very busy man, speaking at many
  web-related conferences, teaching at Stanford, writing books and working
  at Google.
- He did not manage to get back to my list of questions.
+ He did not manage to get back to the questions I asked him.
 \end_layout
 
 \begin_layout Standard
@@ -4720,6 +4720,28 @@ basePath
 \family default
  attributes, which may be necessary for some processors that perform magic
  with URLs.
+ 
+\family typewriter
+sources
+\family default
+ itself also has an optional 
+\family typewriter
+ignoredDirs
+\family default
+ attribute, which will subsequently be applied to all 
+\family typewriter
+filter
+\family default
+ nodes.
+ While unnecessary, this prevents needless duplication of 
+\family typewriter
+ignoredDirs
+\family default
+ nodes inside 
+\family typewriter
+filter
+\family default
+ nodes.
 \end_layout
 
 \begin_layout Enumerate
@@ -4889,7 +4911,7 @@ status open
 
 \begin_layout Plain Layout
 
-  <sources>
+  <sources ignoredDirs="CVS:.svn">
 \end_layout
 
 \begin_layout Plain Layout
@@ -5024,11 +5046,6 @@ status open
 \begin_layout Plain Layout
 
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
-\end_layout
-
-\begin_layout Plain Layout
-
-        <ignoredDirs>CVS:.svn</ignoredDirs>
 \end_layout
 
 \begin_layout Plain Layout
@@ -5330,7 +5347,12 @@ all
 \begin_inset Newline newline
 \end_inset
 
-The five conditions are:
+The five conditions that can be set (as soon as one or mroe conditions are
+ set, 
+\family typewriter
+Filter
+\family default
+ will work) are:
 \end_layout
 
 \begin_layout Enumerate
@@ -5557,6 +5579,13 @@ remove_files()
 \family default
  to add/update/remove files manually (useful when your application has more/fast
 er knowledge of changes)
+\end_layout
+
+\begin_layout Standard
+Special care had to be taken to not scan directory trees below directories
+ that are in fact symbolic links.
+ This design decision was made to mimick the behavior of file system monitors,
+ which are incapable of following symbolic links.
 \end_layout
 
 \begin_layout Standard
@@ -6088,8 +6117,9 @@ Processor
 \family default
  class takes a lot of the small annoying tasks on its shoulders, such as
  checking if the file is actually a file this processor can process, calculating
- the default output file and a simple abstraction around an otherwise multi-line
- construction to run a command.
+ the default output file, checking if the processor (and therefor the entire
+ chain of processors) should be run per server or not and a simple abstraction
+ around an otherwise multi-line construction to run a command.
 \begin_inset Newline newline
 \end_inset
 
@@ -6321,7 +6351,11 @@ ProcessorChain
 \end_layout
 
 \begin_layout Standard
-There are two special exceptions Processor subclasses can throw:
+There are two special exceptions 
+\family typewriter
+Processor
+\family default
+ subclasses can throw:
 \end_layout
 
 \begin_layout Enumerate
@@ -6963,7 +6997,11 @@ CSSURLUpdater
 \family typewriter
 CSSURLUpdater
 \family default
- uses the cssutils
+ uses the 
+\family typewriter
+cssutils
+\family default
+
 \begin_inset space ~
 \end_inset
 
@@ -6982,13 +7020,19 @@ key "cssutils"
 \end_layout
 
 \begin_layout Standard
-All 
+The 
 \family typewriter
 CSSURLUpdater
 \family default
- does is resolving relative URLs (relative to the CSS file or relative to
- the document root) to absolute paths on the file system, then looking up
- the corresponding URLs on the CDN and placing those instead in the CSS
+ processor requires to be run per-server (and therefor the entire processor
+ chain which it is part of), because it wants the referenced files (typically
+ images, but possibly also fonts) to be on the same server.
+\begin_inset Newline newline
+\end_inset
+
+All it does is resolving relative URLs (relative to the CSS file or relative
+ to the document root) to absolute paths on the file system, then looking
+ up the corresponding URLs on the CDN and placing those instead in the CSS
  file.
  If one of the referenced files cannot be found on the file system, this
  URL remains unchanged.
@@ -7364,7 +7408,11 @@ Because the daemon relies on (unmodified!) Django code, it can benefit from
 \end_layout
 
 \begin_layout Enumerate
-django-storages 
+
+\family typewriter
+django-storages
+\family default
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "django-storages"
@@ -7425,6 +7473,21 @@ key "CouchDB"
 
  is a distributed, fault-tolerant and schema-free document-oriented database
  accessible via a RESTful HTTP/JSON API
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+CloudFilesStorage
+\family default
+; Mosso/Rackspace Cloud Files 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Cloud Files"
+
+\end_inset
+
+, an alternative to Amazon S3
 \end_layout
 
 \begin_layout Enumerate
@@ -7505,8 +7568,69 @@ For the last two, transporters are available.
  The first three are not so widely used and thus not yet implemented, although
  it would be very easy to support them, exactly because all that is necessary,
  is to write thin wrappers.
+ For the third, a transporter was planned, but scrapped due to time constraints.
  The fourth is not very meaningful to use, since the fifth is better (better
  maintained and higher performance).
+\begin_inset Newline newline
+\end_inset
+
+The 
+\family typewriter
+CouchDBStorage
+\family default
+ custom storage class was added about a month after I selected 
+\family typewriter
+django-storages
+\family default
+ as the package I would use, indicating that the project is alive and well
+ and thus a good choice.
+\begin_inset Newline newline
+\end_inset
+
+The 
+\family typewriter
+CloudFilesStorage
+\family default
+ custom storage class is part of 
+\family typewriter
+django-storages
+\family default
+ thanks to my mediations.
+ An early tester of the daemon requested 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "daemon cloudfiles feature request"
+
+\end_inset
+
+ support for Cloud Files and interestingly enough, one day before, somebody
+ had published a Python package (
+\family typewriter
+django-cumulus
+\family default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "django-cumulus"
+
+\end_inset
+
+) that did just that.
+ Within a week, a dependency on django-storages was added from 
+\family typewriter
+django-cumulus
+\family default
+ and 
+\family typewriter
+django-storages
+\family default
+ had Cloud Files support.
+ This is further confirmation that I had made a good choice: it suggests
+ that my choice for 
+\family typewriter
+django-storages
+\family default
+ is beneficial for both projects.
 \end_layout
 
 \begin_layout Standard
@@ -7560,7 +7684,11 @@ SymlinkOrCopyStorage
 \end_layout
 
 \begin_layout Standard
-In total, I have contributed three patches to django-storages:
+In total, I have contributed three patches to 
+\family typewriter
+django-storages
+\family default
+:
 \end_layout
 
 \begin_layout Enumerate
@@ -7838,8 +7966,11 @@ TransporterSymlinkOrCopy
 \family typewriter
 SymlinkOrCopyStorage
 \family default
-, which is a new custom storage system I contributed to django-storages,
- as mentioned before.
+, which is a new custom storage system I contributed to 
+\family typewriter
+django-storages
+\family default
+, as mentioned before.
 \end_layout
 
 \begin_layout Subsubsection
@@ -13659,6 +13790,82 @@ status collapsed
 \begin_layout Plain Layout
 
 http://code.welldev.org/django-storages/wiki/Home
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "Cloud Files"
+
+\end_inset
+
+
+\emph on
+Cloud Files
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://www.rackspacecloud.com/cloud_hosting_products/files
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "daemon cloudfiles feature request"
+
+\end_inset
+
+
+\emph on
+Support for CloudFiles CDN?
+\emph default
+, Tomas J.
+ Fulopp, 2009
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://drupal.org/node/469526
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "django-cumulus"
+
+\end_inset
+
+
+\emph on
+django-cumulus
+\emph default
+, Rich Leland, 2009
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://github.com/richleland/django-cumulus/tree/master
 \end_layout
 
 \end_inset
