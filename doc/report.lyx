@@ -60,6 +60,58 @@ Improving Drupal's page loading performance
 \end_layout
 
 \begin_layout Author
+Wim Leers
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
 Thesis proposed to achieve the degree of bachelor
 \begin_inset Newline newline
 \end_inset
@@ -72,7 +124,47 @@ in computer science/ICT/knowledge technology
 \begin_inset Newline newline
 \end_inset
 
-Wim Leers
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
 \begin_inset Newline newline
 \end_inset
 
@@ -219,6 +311,13 @@ Finally, a test case was built.
  Episodes and conclusions were drawn from this.
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Preface
 \end_layout
@@ -227,7 +326,7 @@ Preface
 When I wrote a custom proposal for a bachelor thesis, it was quickly approved
  by my promotor, Prof.
  dr.Wim Lamotte.
- I'd like to thank him for making this bachelor thesis possible.
+ I would like to thank him for making this bachelor thesis possible.
  He also approved of writing this thesis in the open, to get feedback from
  the community and to release all my work under the GPL, which will hopefully
  ensure it will be used.
@@ -236,8 +335,8 @@ When I wrote a custom proposal for a bachelor thesis, it was quickly approved
 \end_layout
 
 \begin_layout Standard
-During the creation of this bachelor thesis, I've often received very useful
- feedback from my mentors, Maarten Wijnants and Stijn Agten.
+During the creation of this bachelor thesis, I have often received very
+ useful feedback from my mentors, Maarten Wijnants and Stijn Agten.
  My sincere thanks go to them.
  I would also like to thank 
 \shape italic
@@ -257,22 +356,460 @@ Finally, I would like to thank my parents and my brother, whose support
  
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Dutch summary/Nederlandstalige samenvatting
 \end_layout
 
 \begin_layout Standard
-TODO
-\begin_inset Note Note
-status open
 
-\begin_layout Plain Layout
-TODO
-\end_layout
-
+\lang dutch
+Het doel van deze bachelorproef is het verbeteren van de 
+\begin_inset Quotes eld
 \end_inset
 
+page loading performance
+\begin_inset Quotes erd
+\end_inset
 
+ van Drupal.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Drupal is een systeem om websites mee te bouwen en is bedoeld voor zowel
+ ontwikkelaars als eindgebruikers: het voorziet zowel uitgebreide API's
+ als een rijk ecosysteem aan kant-en-klare modules, die kunnen gedownload
+ en geïnstalleerd worden in minder dan een minuut.
+ Het is geschreven in PHP, omdat die taal op de meeste servers beschikbaar
+ is en één van de doelstellingen van Drupal is om op zoveel mogelijk servers
+ te werken.
+ Zo is het aantal potentiële gebruikers het grootst, want het maakt het
+ gebruik van Drupal goedkoper.
+ Drupal is er ook op gericht om zoveel mogelijk te innoveren en om de laatste
+ trends te volgen — of er op vooruit te lopen.
+ Het is een volwassen open source software project dat wordt gebruikt door
+ vele bekende instanties, waaronder de Belgische overheid, Disney, de NASA,
+ Harvard university en de Verenigde Naties.
+\begin_inset Newline newline
+\end_inset
+
+Honderdduizenden websites gebruiken Drupal.
+ Het verbeteren van de page loading performance van Drupal kan dus een effect
+ hebben op een groot aantal websites.
+ Een van de meest effectieve methodes om de page loading performance te
+ verbeteren, is het gebruik van een CDN.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Een CDN is een verzameling van webservers die verspreid staan over meerdere
+ locaties om gegevens efficiënter af te leveren bij gebruikers.
+ De server die geselecteerd wordt om gegevens aan een specifieke gebruiker
+ te leveren wordt meestal gedaan op basis van de afstand in het netwerk,
+ waarbij dichterbij beter is.
+\begin_inset Newline newline
+\end_inset
+
+Er zijn twee soorten CDN wat betreft het plaatsen van bestanden op de CDN:
+ push en pull.
+ Pull vereist vrijwel geen werk: URLs moeten aangepast worden, waarbij de
+ domeinnaam van de CDN geplaatst wordt waar voorheen de domeinnaam van de
+ website stond.
+ De CDN downloadt dan vanzelf de bestanden die het moet verzenden aan de
+ gebruiker van de server van de website.
+ Dit wordt de 
+\emph on
+Origin Pull
+\emph default
+ techniek genoemd.
+ Anderzijds zijn er ook CDNs die een push-mechanisme ondersteunen, waarbij
+ door middel van bijvoorbeeld FTP de bestanden op de CDN kunnen geplaatst
+ worden.
+ De CDN downloadt dus niet vanzelf de bestanden, die moeten er door de eigenaar
+ van de website op geplaatst worden.
+\begin_inset Newline newline
+\end_inset
+
+Mijn doelstelling was om drie soorten CDN's te ondersteunen:
+\end_layout
+
+\begin_layout Enumerate
+
+\lang dutch
+iedere CDN die Origin Pull ondersteunt
+\end_layout
+
+\begin_layout Enumerate
+
+\lang dutch
+iedere CDN die FTP ondersteunt
+\end_layout
+
+\begin_layout Enumerate
+
+\lang dutch
+Amazon S3/CloudFront, dit is een specifieke CDN met een eigen protocol.
+ Omdat deze zo populair is, heb ik er voor gekozen om deze ook expliciet
+ te ondersteunen.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Dit lijken de de drie meest gebruikte soorten CDN's te zijn.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Page loading performance gaat over het minimaliseren van de tijd die nodig
+ is om een webpagina in te laden.
+ Want snellere websites betekent tevredenere bezoekers die vaker terugkomen
+ en, indien je website commercieel is, meer omzet.
+\begin_inset Newline newline
+\end_inset
+
+Zo wezen bijvoorbeeld tests van Google uit dat een halve seconde extra tijd
+ om zoekresultaten te laden, een vermindering van twintig procent van het
+ aantal zoekacties met zich meebracht.
+ Amazon merkte dat iedere honderd milliseconde aan extra tijd om een webpagina
+ in te laden in een daling van één procent van het aantal verkopen resulteerde.
+ Als je dan nog weet dat het helemaal niet uitzonderlijk is om laadtijden
+ van vijf seconden en meer te hebben, wordt al snel duidelijk dat de impact
+ groot kan zijn.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Om te garanderen dat mijn pogingen om de page loading performance van Drupal
+ te verbeteren, was het echter noodzakelijk om de resultaten te kunnen meten.
+ Na het analyseren van een brede waaier aan page loading performance profiling
+ tools (en gerelateerde tools), werd het al snel duidelijk dat Episodes
+ (dit was slechts een prototype, geschreven door Steve Souders — dit is
+ de persoon die het fenomeen page loading performance en het nut van het
+ optimaliseren ervan, bekend heeft gemaakt) was de beste kandidaat: het
+ is de enige tool die de mogelijkheid heeft om de wérkelijke page loading
+ performance te meten, omdat het metingen doet in de browser van iedere
+ bezoeker van de website, bij iedere paginaweergave.
+ De gemeten episodes worden door middel van een GET request en een uitgebreide
+ query string naar een Apache server gelogd naar een Apache log.
+ Deze tool heeft bovendien ook het potentieel om dé standaard te worden
+ in de loop van de komende jaren.
+ Het is zelfs niet ondenkbaar dat het ingebouwd zal worden in toekomstige
+ browsers.
+\begin_inset Newline newline
+\end_inset
+
+Om het te gebruiken in mijn bachelorproef, heb ik de code opgekuist en het
+ klaar gemaakt (of tenminste bruikbaar) voor gebruik op een Drupal website,
+ via een nieuwe Drupal module: de Episodes module.
+ Deze integratie gebeurt op zo'n manier dat alle 
+\begin_inset Quotes eld
+\end_inset
+
+Drupal behaviors
+\begin_inset Quotes erd
+\end_inset
+
+ (dit zijn alle JavaScript 
+\begin_inset Quotes eld
+\end_inset
+
+behaviors
+\begin_inset Quotes erd
+\end_inset
+
+ (gedragingen) die gedefinieerd worden door middel van een vastgelegde Drupal
+ JavaScript API) automatisch worden gemeten.
+ Alles dat de eigenaar van de website moet doen, is enkele veranderingen
+ in zijn Drupal 
+\begin_inset Quotes eld
+\end_inset
+
+theme
+\begin_inset Quotes erd
+\end_inset
+
+ (letterlijk: thema, het design van de website dus) aan te brengen om er
+ voor te zorgen dat al dat wat kan gemeten worden, ook effectief gemeten
+ wordt.
+\begin_inset Newline newline
+\end_inset
+
+Deze module is klaar voor gebruik in productie.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Ik heb tevens een bijbehorende Episodes Server module gemaakt.
+ Via deze module is het mogelijk om de logs die verzameld zijn door middel
+ van Episodes te importeren en de metingen te visualiseren door middel van
+ grafieken (gegenereerd aan de hand van Google Chart API).
+ Dankzij deze grafieken kan je de werkelijke page loading performance over
+ een tijdspanne evalueren.
+ Het is zelfs mogelijk om de page loading performance van meerdere landen
+ tegelijk te vergelijken met de globale page loading performance.
+ Het laat je ook toe om te zien welke episodes momenteel het langst duren
+ en dus het best geschikt zijn voor optimalisatie.
+\begin_inset Newline newline
+\end_inset
+
+Deze module is nog niet klaar voor gebruik in productie, maar het is een
+ goede basis om van te beginnen.
+ De code die de logs in de database importeert, werkt gegarandeerd dankzij
+ unit tests.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Dan is er natuurlijk de daemon om bestanden te synchroniseren.
+ Dit was het belangrijkste deel van deze bachelorproef.
+ Hoe raar het ook mag lijken, er lijkt niets vergelijkbaar te bestaan, of
+ tenminste niet publiekelijk beschikbaar (zelfs geen commerciële programma's).
+ Als het zou bestaan, zou ik het zeker al vernomen hebben van een van de
+ tientallen mensen die op de hoogte zijn van het concept en doel van mijn
+ bachelorproef.
+\begin_inset Newline newline
+\end_inset
+
+Ik ben begonnen met het ontwerp van het configuratiebestand.
+ De configuratie van de daemon gebeurt door middel van een XML bestand dat
+ is ontworpen om gemakkelijk te zijn in gebruik, op voorwaarde dat je bekend
+ bent met de terminologie.
+ Verscheidene mensen die zich thuis voelen in de terminologie werden gevraagd
+ om een voorbeeld configuratiebestand te bekijken en ze antwoordden meteen
+ dat het logisch in elkaar zat.
+ Het is belangrijk dat dit gemakkelijk is, want het is de interface naar
+ de daemon toe.
+\begin_inset Newline newline
+\end_inset
+
+De daemon werd gesplitst in grote componenten en ik ben begonnen met de
+ eenvoudigste, omdat ik dit zou schrijven in Python, een taal die ik nooit
+ eerder had gebruikt.
+ Ik heb voor deze taal gekozen omdat volgens de geruchten het je leven als
+ programmeur een stuk makkelijker zou maken, deels dankzij de beschikbaarheid
+ van modules voor vrijwel alles dat je je kan inbeelden.
+ Gelukkig bleek dat grotendeels waar te zijn, hoewel ik wel lange tijd gevreesd
+ heb dat ik alle code voor het transporteren van bestanden (transporters)
+ zelf zou moeten gaan schrijven.
+ Dat zou een vrijwel onmogelijke opdracht geweest zijn, gegeven de hoeveelheid
+ tijd.
+\begin_inset Newline newline
+\end_inset
+
+Dit is dan ook de reden waarom de daemon eigenlijk eenvoudigweg een verzameling
+ Python modules is.
+ Deze modules kunnen in eender welke applicatie gebruikt worden, bijvoorbeeld
+ de 
+\family typewriter
+fsmonitory.py
+\family default
+ module — die bestandssysteem monitors op verschillende besturingssystemen
+ abstraheert en zo een cross-platform API creëert — kan makkelijk hergebruikt
+ worden in andere applicaties.
+\begin_inset Newline newline
+\end_inset
+
+Dus heb ik een relatief grote verzameling Python modules geschreven: 
+\family typewriter
+config.py
+\family default
+, 
+\family typewriter
+daemon_thread_runner.py
+\family default
+, 
+\family typewriter
+filter.py
+\family default
+, 
+\family typewriter
+fsmonitor.py
+\family default
+ (met een subclass voor ieder ondersteund besturingssysteem), 
+\family typewriter
+pathscanner.py
+\family default
+, 
+\family typewriter
+persistent_list.py
+\family default
+, 
+\family typewriter
+persistent_queue,py
+\family default
+, 
+\family typewriter
+processor.py
+\family default
+ (met een verzameling subclasses, één voor iedere processor) en 
+\family typewriter
+transporter.py
+\family default
+ (met subclasses die zeer dunne wrappers rond Django custom storage systems
+ zijn).
+ Telkens indien het haalbaar was, heb ik unit tests geschreven.
+ Maar omdat er in deze applicatie veel bestand I/O en netwerk I/O aan te
+ pas komt, was dit vaak extreem complex om te doen en dus overgeslagen,
+ ook omdat de hoeveelheid beschikbare tijd beperkt was.
+ Voor 
+\family typewriter
+fsmonitor
+\family default
+ ondersteuning in Linux kon ik verder bouwen op de 
+\family typewriter
+pyinotify
+\family default
+ module en voor de transporters zag ik de mogelijkheid om Django's custom
+ storage systems geheel te hergebruiken, waardoor ik zonder al te veel moeite
+ ondersteuning heb voor FTP, Amazon S3 en 
+\begin_inset Quotes eld
+\end_inset
+
+Symlink or Copy
+\begin_inset Quotes erd
+\end_inset
+
+ (een speciaal custom storage system, om verwerkte bestanden ook te kunnen
+ synchroniseren met Origin Pull CDNs).
+ Django is een framework om websites mee te bouwen (in tegenstelling tot
+ Drupal is het énkel geschikt voor developers) en daarvan heb ik dus één
+ API (en zijn dependencies) hergebruikt.
+ Het gevolg is dus dat veranderingen die gemaakt worden aan de transporters
+ in de daemon, weer kunnen worden teruggegeven en vice versa.
+ Ik heb enkele bugfixes doorgegeven die reeds goed bevonden zijn en nu dus
+ deel uitmaken van die code.
+\begin_inset Newline newline
+\end_inset
+
+Dit heeft een interessant neveneffect: 
+\family typewriter
+arbitrator.py
+\family default
+, de module die al deze op zich zelf staande modules samenbindt tot één
+ geheel (die dus arbitreert tussen de verscheidene modules), kan eenvoudig
+ compleet gerefactored worden.
+ Hoewel het bijna duizend regels code is (maar veel regels daarvan zijn
+ commentaar), kan men eenvoudig de hele arbitrator herschrijven, omdat het
+ enkel logica bevat die de losse modules aan elkaar linkt.
+ Dus indien er bijvoorbeeld een bottleneck zou gevonden worden die zich
+ enkel in bepaalde situaties voordoet omwille van een fout in het ontwerp
+ van de arbitrator, kan dit relatief eenvoudig opgevangen worden, omdat
+ alle logica van de daemon in een enkele module zit.
+\begin_inset Newline newline
+\end_inset
+
+Omdat het onmogelijk is om zeker te zijn dat de daemon correct en betrouwbaar
+ werkt in iedere omgeving en iedere mogelijke configuratie, is het aan te
+ raden dat een bedrijf eerst haar use case simuleert en verifieert dat de
+ daemon zoals gewenst functioneert in die simulatie.
+ Hopelijk trekt dit project voldoende mensen aan die er aan werken om het
+ verder geschikt te maken voor meer situaties.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Een Drupal module om de integratie met CDNs te vereenvoudigen werd ook geschreve
+n: de CDN integratie module.
+ Echter, voordat deze kon geschreven worden, was het nodig om een patch
+ voor Drupal core te schrijven, omdat het nodig is om de URLs naar bestanden
+ te kunnen aanpassen.
+ Indien deze URLs niet aanpasbaar zijn (zoals het geval is voor Drupal 6),
+ kunnen ze ook niet aangepast worden om naar een CDN te verwijzen.
+\begin_inset Newline newline
+\end_inset
+
+Een patch voor Drupal 7 (deze versie van Drupal is momenteel in ontwikkeling)
+ — met unit tests want dat is een vereiste — om deze functionaliteit deel
+ te laten uitmaken van Drupal in de toekomst, heeft zeer positieve reviews
+ gekregen, maar moet nog steeds door het minutieuse peer review proces gaan.
+ Het is zeer waarschijnlijk dat het binnenkort gecommit zal worden.
+\begin_inset Newline newline
+\end_inset
+
+Er zijn twee modi beschikbaar in de Drupal module: eenvoudig en geavanceerd.
+ In de geavanceerde modus kan enkel gebruik gemaakt worden van Origin Pull
+ CDN's.
+ Maar omdat het gebruiken van dit soort CDN's nu zeer eenvoudig wordt dankzij
+ deze module, terwijl het vroeger een reeks manuele stappen vereiste, is
+ dit alleen al erg nuttig.
+ Echter, in de geavanceerde modus wordt het pas echt interessant: dan wordt
+ de database van gesynchroniseerde bestanden gebruikt die door de daemon
+ werd aangemaakt en wordt onderhouden.
+ Dan wordt de URL van een bestand op de CDN opgezocht, waarna deze URL wordt
+ gebruikt.
+ Het is zelfs mogelijk om een speciale callback functie te implementeren
+ die kan gebruikt worden om een specifieke server te selecteren, op basis
+ van de eigenschappen van de gebruiker (locatie, type lidmaatschap of wat
+ dan ook).
+\begin_inset Newline newline
+\end_inset
+
+Deze module is ook klaar voor gebruik in productie.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+De feedback van bedrijven was teleurstellend wat betreft de hoeveelheid
+ maar overweldigend positief.
+ Op meer positieve feedback zou ik niet gehoopt kunnen hebben.
+ De codestructuur van de daemon werd beschreven als 
+\begin_inset Quotes eld
+\end_inset
+
+duidelijk en zelfverklarend
+\begin_inset Quotes erd
+\end_inset
+
+ en de documentatie (van de daemon zelf en de beschrijving ervan in de bachelorp
+roef tekst) als 
+\begin_inset Quotes eld
+\end_inset
+
+zeer duidelijk
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Het zorgde er blijkbaar zelfs voor dat de reviewer er spijt van kreeg dat
+ hij zijn bachelor graad niet voltooid heeft.
+ Hij was zelfs zo enthousiast dat hij al begonnen was met het schrijven
+ van patches voor de daemon, zodat die beter inzetbaar was in zijn infrastructuu
+r.
+ Dit suggereert dat het mogelijk haalbaar is dat de daemon een levendig
+ open source project wordt.
+\end_layout
+
+\begin_layout Standard
+
+\lang dutch
+Ten slotte bevestigden de resultaten van mijn test case de stelling dat
+ het integreren van Drupal met een CDN de page loading performance kan verbetere
+n.
+ Hoewel de resultaten (die gelogd worden door middel van de Episodes module)
+ niet zo expliciet waren als ze zouden kunnen geweest zijn voor een website
+ rijk aan media (mijn test case was een website die arm was aan media),
+ was het verschil nog steeds duidelijk te onderscheiden in de grafieken
+ (die gegenereerd werden door de Episodes Server module).
+ Ondanks het feit dat de website al geoptimaliseerd was aan de hand van
+ de mechanismen die standaard in Drupal aanwezig zijn, resulteerde de integratie
+ met een CDN (via de CDN integratie module en de daemon) in een duidelijke
+ algemene wereldwijde verbetering van de page loading performance.
 \end_layout
 
 \begin_layout Standard
@@ -327,7 +864,7 @@ http://example.com/
 /
 \family default
 .
- If you've got another web site at 
+ If you have got another web site at 
 \family typewriter
 http://example.com/subsite/
 \family default
@@ -376,7 +913,7 @@ document
 \end_inset
 
 root The absolute path on the file system of the web server that corresponds
- with the root direcory of a web site.
+ with the root directory of a web site.
  This is typically something like 
 \family typewriter
 /htdocs/example.com
@@ -422,7 +959,7 @@ lazy
 \begin_inset space ~
 \end_inset
 
-loading Deferring the loading of something until it's actually needed.
+loading Deferring the loading of something until it is actually needed.
  In the context of web pages, lazy loading a file implies that it will not
  be loaded until the end user will actually get to see it.
 \end_layout
@@ -781,13 +1318,13 @@ key "Drupal principles"
 Drupal should also have minimal, widely-available server-side software requireme
 nts.
  Specifically, Drupal should be fully operational on a platform with a web
- server, PHP, and either MySQL or Postgresql.
+ server, PHP, and either MySQL or PostgreSQL.
 \end_layout
 
 \begin_layout Standard
 This is the reason PHP was chosen as the language to write Drupal in.
  PHP is the justification for some people to not even try Drupal.
- But it's also a reason why so many web sites today are running Drupal,
+ But it is also a reason why so many web sites today are running Drupal,
  and why its statistics (and the popularity of its web site) have been growing
  exponentially for years 
 \begin_inset CommandInset citation
@@ -933,8 +1470,8 @@ Your web site's visitors will not be timing the page loads themselves, but
  Fast web sites are rewarded, slow web sites are punished.
  Fast web sites get more visitors, have happier visitors and their visitors
  return more often.
- If the revenue of your company is generated through your web site, you'll
- want to make sure that page loading performance is as good as possible,
+ If the revenue of your company is generated through your web site, you
+ will want to make sure that page loading performance is as good as possible,
  because it will maximize your revenue as well.
 \end_layout
 
@@ -1079,7 +1616,7 @@ key "cdn-comparing-1,cdn-comparing-2"
 \end_layout
 
 \begin_layout Standard
-That is why CDNs achieve differentiation through their featuresets, not
+That is why CDNs achieve differentiation through their feature sets, not
  through performance.
  Depending on your audience, the geographical spread (the number of PoPs
  around the world) may be very important to you.
@@ -1107,7 +1644,7 @@ Origin Pull
 \emph default
  technique and will periodically pull the files from the origin (that is
  your server).
- How often that is, depends on how you've configured headers (particularly
+ How often that is, depends on how you have configured headers (particularly
  the 
 \family typewriter
 Expires
@@ -1356,7 +1893,7 @@ key "Amazon CloudFront"
 \end_inset
 
 Amazon S3 is designed to be a storage service and only has servers in one
- loation in the U.S.
+ location in the U.S.
  and one location in Europe.
  Recently, Amazon CloudFront has been added.
  This is a service on top of S3 (files must be on S3 before they can be
@@ -1389,7 +1926,7 @@ Lord Kelvin
 The same applies to page loading performance: if you cannot measure it,
  you cannot know which parts have the biggest effect and thus deserve your
  focus.
- So before doing any real work, we'll have to figure out which tools can
+ So before doing any real work, we will have to figure out which tools can
  help us analyzing page loading performance.
  
 \begin_inset Quotes eld
@@ -1439,10 +1976,10 @@ key "profiling"
 \end_layout
 
 \begin_layout Standard
-So we'll go through a list of tools: UA Profiler, Cuzillion, YSlow, Hammerhead,
+So a list of tools will be evaluated: UA Profiler, Cuzillion, YSlow, Hammerhead,
  Apache JMeter, Gomez/Keynote/WebMetrics/Pingdom and Jiffy/Episodes.
- As you can tell, it is a pretty long list, so I'll pick the tools I'll
- use while improving Drupal's page loading performance based on two factors:
+ From this fairly long list, the tools that will be used while improving
+ Drupal's page loading performance will be picked, based on two factors:
 \end_layout
 
 \begin_layout Enumerate
@@ -1470,7 +2007,7 @@ key "UA Profiler"
  (on the number of parallel connections, downloading scripts without blocking,
  caching, et cetera).
  The tests run automatically when you navigate to the test page from any
- browser – this is why it is powered by crowdsourcing.
+ browser – this is why it is powered by crowd sourcing.
 \end_layout
 
 \begin_layout Standard
@@ -1558,7 +2095,7 @@ page loading profiling tools
 \end_layout
 
 \begin_layout Standard
-Let's go through a simple example for a better understanding.
+Here is a simple example to achieve a better understanding.
  How does the following combination of components (in the 
 \family typewriter
 <body>
@@ -1602,7 +2139,7 @@ reference "fig:Cuzillion-Safari"
 
 ), the loading of the first image seems to be deferred until the inline
  script has been executed (the images are displayed when the light purple
- bars become darkpurple).
+ bars become dark purple).
  In Firefox (see figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1860,9 +2397,9 @@ key "YSlow 2.0 early preview"
 \end_layout
 
 \begin_layout Standard
-Since only YSlow 1.0 is available at the time of writing, I'll stick with
+Since only YSlow 1.0 is available at the time of writing, I will stick with
  that.
- It is a very powerful and helpful tool as it stands, it'll just get better.
+ It is a very powerful and helpful tool as it stands, it will just get better.
  But remember the two caveats: it only verifies rules (it does not measure
  real-world performance) and some of the rules may not be relevant for your
  web site.
@@ -2042,7 +2579,7 @@ while
  allows you to profile while you are working.
  It is far more effective to prevent page loading performance problems due
  to changes in code, because you have the test results within seconds or
- minutes after you've made these changes!
+ minutes after you have made these changes!
 \end_layout
 
 \begin_layout Standard
@@ -2297,8 +2834,8 @@ key "video of Velocity 2008 Jiffy presentation"
 \end_inset
 
 .
- That implies their results aren't a representation of the real-world situation,
- which means you cannot rely upon these metrics for making decisions: what
+ That implies their results are not a representation of the real-world situation
+, which means you cannot rely upon these metrics for making decisions: what
  if a commonly used real-world browser behaves completely differently? Even
  if the services would all use real-world browsers, they would never reflect
  real-world performance, because each site has different visitors and therefor
@@ -2312,7 +2849,7 @@ Unsuited for Web 2.0
 \begin_layout Standard
 The problem with these services is that they still assume the World Wide
  Web is the same as it was 10 years ago, where JavaScript was rather a scarcity
- than the abundancy it is today.
+ than the abundance it is today.
  They still interpret the 
 \family typewriter
 onload
@@ -2804,7 +3341,7 @@ So, Episodes' very
 \emph on
 raison d'existence
 \emph default
- is to achieve a concensus on a JavaScript-based page loading instrumentation
+ is to achieve a consensus on a JavaScript-based page loading instrumentation
  toolset.
  It aims to become an industry standard and is maintained by Steve Souders,
  who is currently on Google's payroll to work full-time on all things related
@@ -2817,7 +3354,7 @@ key "Google Analytics"
 \end_inset
 
  service in the future).
- Add in the fact that Jiffy hasn't been updated since its initial release,
+ Add in the fact that Jiffy has not been updated since its initial release,
  and it becomes clear that Episodes is the better long-term choice.
 \end_layout
 
@@ -2858,7 +3395,7 @@ However, for the scope of this thesis, there is one tool that jumps out:
 \begin_inset Newline newline
 \end_inset
 
-This kind of analysis is exactly what I'll perform in the next section.
+This kind of analysis is exactly what I will perform in the next section.
 \end_layout
 
 \begin_layout Standard
@@ -2913,7 +3450,7 @@ So you might expect that Drupal has already invested heavily in improving
 Because of this, the article I wrote more than a year ago is still completely
  applicable.
  It does not make much sense to just rephrase the article here in my thesis
- text, so instead I'd like to forward you to that article
+ text, so instead I would like to forward you to that article
 \begin_inset space ~
 \end_inset
 
@@ -3030,7 +3567,7 @@ Automatically includes the necessary JavaScript files and settings on each
 \end_layout
 
 \begin_layout Itemize
-Automatically inserts the crucial initializiation variables at the beginning
+Automatically inserts the crucial initialization variables at the beginning
  of the 
 \family typewriter
 head
@@ -3091,7 +3628,7 @@ actual
  It provides basic reports.
  It is recommended to install this on a separate Drupal web site, and preferably
  even a separate web server, because it has to process a lot of data and
- isn't optimized.
+ is not optimized.
  That would have led me too far outside of the scope of this bachelor thesis.
 \end_layout
 
@@ -3438,7 +3975,7 @@ key "Episodes Example"
 \begin_layout Standard
 There also seems to be a bug in Episodes when used in Internet Explorer
  8.
- It's actually a bug in Internet Explorer 8: near the end of the page loading
+ It is actually a bug in Internet Explorer 8: near the end of the page loading
  sequence, Internet Explorer 8 seems to be randomly disabling the window.postMess
 age() JavaScript function, thereby causing JavaScript errors.
  After a while of searching cluelessly for the cause, I gave up and made
@@ -3585,7 +4122,7 @@ episodes.js
 \family default
 .
  Line 6 should be as early in the page as possible, because it is the most
- important reference timestamp.
+ important reference time stamp.
 \end_layout
 
 \begin_layout Subsection
@@ -4107,8 +4644,8 @@ reference "fig:Episodes-Server-module-analysis-episodes"
 \end_inset
 
 .
- It's possible to compare the page loading performance of multiple countries
- by simply selecting as many countries as you'd like in the 
+ It is possible to compare the page loading performance of multiple countries
+ by simply selecting as many countries as you would like in the 
 \begin_inset Quotes eld
 \end_inset
 
@@ -4360,7 +4897,7 @@ onbeforeunload
 \family typewriter
 backend
 \family default
- episode for each pageload: it is only possible to measure the 
+ episode for each page load: it is only possible to measure the 
 \family typewriter
 backend
 \family default
@@ -4672,14 +5209,14 @@ Detecting and syncing files instantly is a must to ensure CDN usage is as
 
 For example, one visitor has uploaded images as part of the content he created.
  All visitors will be downloading the image from the web server, which is
- suboptimal, considering that they could've been downloading it from the
+ suboptimal, considering that they could have been downloading it from the
  CDN.
 \end_layout
 
 \begin_layout Standard
 The ability to mix CDNs and static file servers makes it possible to either
  maximize the page loading performance or minimize the costs.
- Depending on your company's customerbase, you may either want to pay for
+ Depending on your company's customer base, you may either want to pay for
  a global CDN or a local one.
  If you are a global company, a global CDN makes sense.
  But if you are present only in a couple of countries, say the U.S.A., Japan
@@ -4912,9 +5449,9 @@ processor
 \family typewriter
 name
 \family default
- attribute) the procesor module and the specific processor class within
+ attribute) the processor module and the specific processor class within
  that processor module that you would like to use.
- They'll be chained in the order you specify here.
+ They will be chained in the order you specify here.
 \end_layout
 
 \begin_layout Enumerate
@@ -5415,7 +5952,7 @@ all
 \begin_inset Newline newline
 \end_inset
 
-The five conditions that can be set (as soon as one or mroe conditions are
+The five conditions that can be set (as soon as one or more conditions are
  set, 
 \family typewriter
 Filter
@@ -5493,9 +6030,9 @@ maximum
 \begin_layout Enumerate
 
 \family typewriter
-treshold
+threshold
 \family default
-: the treshold in bytes
+: the threshold in bytes
 \end_layout
 
 \end_deeper
@@ -5586,7 +6123,7 @@ mtime
 Changes to the database are committed in batches, because changes in the
  filesystem typically occur in batches as well.
  Changes are committed to the database on a per-directory level.
- However, if many changes occured in a single directory and if every change
+ However, if many changes occurred in a single directory and if every change
  would be committed separately, the concurrency level would rise unnecessarily.
  By default, every batch of 50 changes inside a directory is committed.
 \end_layout
@@ -5652,7 +6189,7 @@ er knowledge of changes)
 \begin_layout Standard
 Special care had to be taken to not scan directory trees below directories
  that are in fact symbolic links.
- This design decision was made to mimick the behavior of file system monitors,
+ This design decision was made to mimic the behavior of file system monitors,
  which are incapable of following symbolic links.
 \end_layout
 
@@ -5746,7 +6283,7 @@ Falls back to polling when neither one is present
 \end_layout
 
 \begin_layout Standard
-Windows support is possible, but hasn't been implemented yet due to time
+Windows support is possible, but has not been implemented yet due to time
  constraints.
  There are two APIs to choose between: FindFirstChangeNotification and ReadDirec
 toryChanges.
@@ -5966,9 +6503,9 @@ PersistentList
  They use again an SQLite database for persistent storage.
  For each instance you create, you must choose the table name and you can
  optionally choose which database file to write to.
- This allows you to group persistent datastructures in a logical manner
+ This allows you to group persistent data structures in a logical manner
  (i.e.
- related persistent datastructures can be stored in the same database file,
+ related persistent data structures can be stored in the same database file,
  thereby also making it portable and easy to backup).
 \end_layout
 
@@ -5979,7 +6516,7 @@ To prevent excessive file system access due to an overreliance on SQLite,
 \family typewriter
 PersistentQueue
 \family default
- are cached in-memory (a minimum and maximum treshold can be configured),
+ are cached in-memory (a minimum and maximum threshold can be configured),
  but for 
 \family typewriter
 PersistentList
@@ -6214,8 +6751,8 @@ Processors are allowed to make any change they want to the file's contents
 \begin_inset Newline newline
 \end_inset
 
-They are also allowed to change the base name of the input file, but they're
- not allowed to change its path.
+They are also allowed to change the base name of the input file, but they
+ are not allowed to change its path.
  This measure was taken to reduce the amount of data that needs to be stored
  to know which file is stored where exactly in the database of synced files
  (see later: section 
@@ -6524,7 +7061,7 @@ Mtime
 MD5
 \family default
 .
- MTime appends the mtime (last modification time) as a UNIX timestamp to
+ MTime appends the mtime (last modification time) as a UNIX time stamp to
  the file's base name (preceded by an underscore).
  MD5 does the same, but instead of the mtime, it appends the MD5 hash of
  the file to the file's base name.
@@ -6596,8 +7133,8 @@ convert
  PNG8 offers lossless image quality, as does GIF, but results in a smaller
  file size.
  PNG8 is also supported in all browsers, including IE6.
- The alpha channels of truecolor PNG (PNG24 & PNG32) are not supported in
- IE6.
+ The alpha channels of true color PNG (PNG24 & PNG32) are not supported
+ in IE6.
 \end_layout
 
 \begin_layout Standard
@@ -7441,13 +7978,13 @@ name "lst:Transporters-TransporterFTP"
 \begin_layout Standard
 Django is a high-level Python Web framework that encourages rapid development
  and clean, pragmatic design.
- It's growing very strong in popularity.
+ It is growing very strong in popularity.
  It is very different from Drupal, which aims to be both a CMS (install
  it and you have a working web site) and a framework.
  Django just aims to be a framework.
- It has APIs for many things, ranging from caching, datababase abstraction,
+ It has APIs for many things, ranging from caching, database abstraction,
  forms to sessions, syndication, authentication and of course storage systems.
- I've extract that single API (and its dependencies) from Django and am
+ I have extract that single API (and its dependencies) from Django and am
  reusing it.
 \end_layout
 
@@ -7702,10 +8239,9 @@ django-storages
 \end_layout
 
 \begin_layout Standard
-So I clearly managed to make a big shortcut (for simplicity of the argument,
- I'm waving away the fact that I had to get this to work outside of Django
- itself) to achieve my goal: supporting CDNs that rely on FTP or origin
- pulling (see section 
+So I clearly managed to make a big shortcut (although it had to be made
+ working outside of Django itself) to achieve my goal: supporting CDNs that
+ rely on FTP or origin pulling (see section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sec:Key-Properties-CDN"
@@ -7741,7 +8277,7 @@ I had to be creative here.
  path in the web site.
  But what about files that are not modified? Or have just changed filenames
  (for unique URLs)? Copying these means storing the exact same data twice.
- The answer is fortunately very simple: symlinks.
+ The answer is fortunately very simple: symbolic links.
  Although available only on UNIX, it is very much worth it: it reduces redundant
  data storage significantly.
  This was then implemented in a new custom storage system: 
@@ -7827,8 +8363,8 @@ S3BotoStorage
 \family typewriter
 Content-Type
 \family default
- header, fixed the setting of permissions, use HTTP and disable query auth
- by default 
+ header, fixed the setting of permissions, use HTTP and disable query authentica
+tion by default 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "django-storages S3BotoStorage patch"
@@ -7904,8 +8440,8 @@ The maintainer was very receptive to these patches and replied a mere 23
 \end_layout
 
 \begin_layout Quote
-davidbgk@wimleers Impressive patches, I'll merge your work asap.
- Thanks for contributing! Interesing bachelor thesis :)
+davidbgk@wimleers Impressive patches, I will merge your work ASAP.
+ Thanks for contributing! Interesting bachelor thesis :)
 \end_layout
 
 \begin_layout Standard
@@ -8291,7 +8827,7 @@ Transporter
 \end_layout
 
 \begin_layout Standard
-Now that you have an insight in the big picture, let's examine how exactly
+Now that you have an insight in the big picture, let us examine how exactly
  
 \family typewriter
 Arbitrator
@@ -8364,7 +8900,7 @@ collect all metadata for each rule
 \end_layout
 
 \begin_layout Enumerate
-initialize all datastructures for the pipeline (queues, persistent queues
+initialize all data structures for the pipeline (queues, persistent queues
  and persistent lists)
 \end_layout
 
@@ -8496,8 +9032,8 @@ That is
 roughly
 \emph default
  the logic of the daemon.
- It should already make some sense, but it's likely that it is not yet clear
- what all the queues are for.
+ It should already make some sense, but it is likely that it is not yet
+ clear what all the queues are for.
  And how they are being filled and emptied.
  So now it is time to learn about the daemon's 
 \emph on
@@ -8530,7 +9066,7 @@ key "pipes-and-filters-1,pipes-and-filters-2,pipes-and-filters-3,pipes-and-filte
 
 \end_inset
 
-, is slightly underdocumented, but it is still a very useful design pattern.
+, is slightly under documented, but it is still a very useful design pattern.
  Its premise is to deliver an architecture to divide a large processing
  task into smaller, sequential steps (
 \begin_inset Quotes eld
@@ -8622,7 +9158,7 @@ core logic
 \begin_layout Standard
 So many queues are used because there are so many stages in the pipeline.
  There is a queue for each stage in the pipeline, plus some additional ones
- because the persistent datastructures use the pysqlite module, which only
+ because the persistent data structures use the pysqlite module, which only
  allows you to access the database from the same thread as the connection
  was created in.
  Because I (have to) work with callbacks, the calling thread may be different
@@ -8790,7 +9326,7 @@ ProcessorChain
 \family typewriter
 Transporter
 \family default
- callbacks only carry information about the file they've just been operating
+ callbacks only carry information about the file they have just been operating
  on, I had to find an elegant method to transfer the additional metadata
  for this file, which is necessary to let the file continue through the
  pipeline.
@@ -8906,7 +9442,7 @@ peek()
  The worst case scenario is that the daemon crashes between adding the file
  to the 'files in pipeline' persistent list and removing it from the pipeline
  queue.
- Then it'll end up twice in the queue.
+ Then it will end up twice in the queue.
  But the second sync will just overwrite the first one, so all that is lost,
  is CPU time.
 \end_layout
@@ -8950,7 +9486,8 @@ Performance tests
 I have performed fairly extensive tests on both Mac OS X and Linux.
  The application behaved identically on both platforms, despite the fact
  that different file system monitors are being used in the background.
- The rest of this problemless cross-platform functioning is thanks to Python.
+ The rest of this cross-platform functioning without problems is thanks
+ to Python.
 \end_layout
 
 \begin_layout Standard
@@ -8970,14 +9507,14 @@ At all times, the memory usage remained below 17 MB on Mac OS X and below
 cssutils
 \family default
  Python module is to blame).
- A backlag of more than 10,000 files was no problem.
+ A backlog of more than 10,000 files was no problem.
  Synchronizing 10 GB of files was no problem.
- I also tried alot of variations in the configuration and all of them worked
- (well, sometimes it needed some bugfixing of course).
+ I also tried a lot of variations in the configuration and all of them worked
+ (well, sometimes it needed some bug fixing of course).
  Further testing should happen in real-world environments.
  Even tests in which I forced processors or transporters to crash were completed
- succesfully: no files were lost and they would be synced again after restarting
- the daemon.
+ successfully: no files were lost and they would be synced again after restartin
+g the daemon.
 \end_layout
 
 \begin_layout Subsection
@@ -8988,8 +9525,7 @@ Possible further optimizations
 Files should be moved from the discover queue to the pipeline queue in a
  separate thread, to minimize the risk of losing files due to a crashed
  application before files are moved to the pipeline queue.
- In fact, the discover queue could be eliminitated altogether thanks to
- this.
+ In fact, the discover queue could be eliminated altogether thanks to this.
 \end_layout
 
 \begin_layout Itemize
@@ -9210,12 +9746,6 @@ drewish
 \end_layout
 
 \begin_layout Standard
-My patch will be against Drupal 6, but the file URL generation mechanism
- is identical in Drupal 7.
- So, my patch should be easy to port to Drupal 7.
-\end_layout
-
-\begin_layout Standard
 Drupal already has one function to generate file URLs: 
 \family typewriter
 file_create_url($path)
@@ -9296,16 +9826,22 @@ file_create_url()
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-Try to get this into core, write about the results here.
-\end_layout
-
+This patch was also ported to Drupal 7 (which will be the next version of
+ Drupal) and submitted for review.
+ Unit tests were added (this is a requirement).
+ The reviews are very positive so far (with Dries Buytaert, the Drupal founder,
+ simply commenting 
+\begin_inset Quotes eld
 \end_inset
 
+Awesome.
+\begin_inset Quotes erd
+\end_inset
 
+ and adding it to his list of favorite patches) but it was submitted too
+ late to ensure it got committed before this thesis text had to be finalized.
+ However, the positivity of the reviews suggests that is is very likely
+ that the patch will get committed.
 \end_layout
 
 \begin_layout Subsection
@@ -10228,7 +10764,7 @@ key "SlideME"
  this thesis.
  They will be using it on a Drupal web site though, but have to adapt the
  daemon first to match their infrastructure (see later).
- My sincere thanks go to SlideME! What's interesting is that their company
+ My sincere thanks go to SlideME! What is interesting is that their company
  is all about Android 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -10275,7 +10811,7 @@ Multiple "viewer instances
 
  for regular users on Amazon Elastic Compute Cloud (EC2, these are virtual
  server instances in the cloud) behind Elastic Load Balancing (which distributes
- incoming traffic across mutliple Amazon EC2 instances).
+ incoming traffic across multiple Amazon EC2 instances).
 \end_layout
 
 \begin_layout Standard
@@ -10310,7 +10846,7 @@ The daemon is run on the editor instance, but the database of synced files
 \begin_layout Enumerate
 He would like to be able to use environment variables in the configuration
  file.
- He's also working on a patch for this.
+ He is also working on a patch for this.
 \end_layout
 
 \begin_layout Enumerate
@@ -10368,7 +10904,7 @@ The documentation on setup is clear.
 \end_layout
 
 \begin_layout Itemize
-Since you've already been writing patches: what did you think of the code
+Since you have already been writing patches: what did you think of the code
  structure?
 \end_layout
 
@@ -10593,7 +11129,7 @@ Also the JavaScript for the Google Analytics service has been cached on
 \end_inset
 
 Finally, DriverPacks.net is a site with virtually no images (because it slows
- down the page loading, but mostly because I'm not a designer).
+ down the page loading, but mostly because I am not a designer).
  Only two images are loaded for the web site's style, one is loaded for
  each of the two statistics services and one is loaded for the ad at the
  top.
@@ -11181,7 +11717,7 @@ Collected statistics
 \end_layout
 
 \begin_layout Standard
-About 100 MB worth of statistics have been logged.
+About 100 MB worth of statistics had been logged.
  These were then imported on June 25 (using the Episodes Server module,
  see section 
 \begin_inset CommandInset ref
@@ -11352,7 +11888,7 @@ frontend
  globally.
  The second chart is for Brazil, the third for the Netherlands and the fourth
  for the United States.
- As we've seen, the United States and Brazil represent the largest groups
+ As we have seen, the United States and Brazil represent the largest groups
  of visitors, so their results should closely match the average real-world
  performance there, which means they should be well represented in these
  charts.
@@ -11525,7 +12061,7 @@ reference "fig:Episodes-analysis:-episodes."
 \end_inset
 
 ) themselves, regardless of country.
- Through this chart, it's possible to examine which episode have the greatest
+ Through this chart, it is possible to examine which episode have the greatest
  impact on the overal page loading time and would thus benefit the most
  from optimizations.
  Unfortunately, I did not have the time to create a chart that displays
@@ -11633,7 +12169,7 @@ ts cover all aspects.
 \begin_inset Newline newline
 \end_inset
 
-This module is ready for production.
+This module is ready for use in production.
 \end_layout
 
 \begin_layout Standard
@@ -11669,18 +12205,17 @@ Then there is the daemon for syncing files, of course.
  This was the most important part of this thesis.
  As odd as it may seem, there seems to be nothing similar in existence,
  or at least not publicly available (not even commercially).
- If it did exist, I would surely have been informed by one of the tens —
- potentially several hundred — of people who know about the concept of my
- bachelor thesis.
+ If it did exist, I would surely have been informed by one of the tens of
+ people who know about the concept of my bachelor thesis.
 \begin_inset Newline newline
 \end_inset
 
 I started with the configuration file design.
  The configuration of the daemon happens through an XML file that is designed
- to be easy to use if you're familiar with the terminology.
+ to be easy to use if you are familiar with the terminology.
  Several people who are familiar with the terminology were asked to look
  at it and immediately responded that it made sense.
- It's important that this is easy, because this is the interface to the
+ It is important that this is easy, because this is the interface to the
  daemon.
 \begin_inset Newline newline
 \end_inset
@@ -11802,17 +12337,7 @@ A Drupal module for easy integration with CDNs was also written: the CDN
  A patch for Drupal 7 (which is currently in development), to make this
  functionality part of Drupal core in the future, has had very positive
  reviews, but must still go through the minutious peer review process and
- will soon get committed.
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-Drupal core patch
-\end_layout
-
-\end_inset
-
-
+ will likely soon get committed.
 \begin_inset Newline newline
 \end_inset
 
@@ -11829,7 +12354,7 @@ In the Drupal module, two modes are available: basic and advanced.
 \begin_inset Newline newline
 \end_inset
 
-This module is also ready for production.
+This module is also ready for use in production.
  The code is licensed under the GPL and is available at 
 \begin_inset Flex URL
 status collapsed
@@ -11847,7 +12372,7 @@ http://drupal.org/project/cdn
 \begin_layout Standard
 The feedback from companies was underwhelming in numbers but overwhelming
  in positivity.
- I couldn't have hoped for more positive feedback.
+ I could not have hoped for more positive feedback.
  The code structure of the daemon was described as 
 \begin_inset Quotes eld
 \end_inset
@@ -11868,7 +12393,7 @@ very clear
 .
  It even made the reviewer regret that he did not finish his own bachelor
  degree.
- The reviewer was even so positive that he already started writing patches
+ The reviewer was even so enthusiastic that he already started writing patches
  for the daemon so that it would better suit his infrastructure.
  This suggests that it is feasible that the daemon will become a lively
  open source project.
