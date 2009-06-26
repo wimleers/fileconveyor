@@ -4,7 +4,7 @@ RCS file: /cvs/drupal/drupal/includes/common.inc,v
 retrieving revision 1.925
 diff -u -F^f -r1.925 common.inc
 --- includes/common.inc	18 Jun 2009 21:19:01 -0000	1.925
-+++ includes/common.inc	22 Jun 2009 22:32:29 -0000
++++ includes/common.inc	23 Jun 2009 20:36:45 -0000
 @@ -2456,15 +2456,15 @@ function drupal_get_css($css = NULL) {
              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
              // regardless of whether preprocessing is on or off.
@@ -57,21 +57,30 @@ RCS file: /cvs/drupal/drupal/includes/file.inc,v
 retrieving revision 1.171
 diff -u -F^f -r1.171 file.inc
 --- includes/file.inc	9 Jun 2009 21:33:12 -0000	1.171
-+++ includes/file.inc	22 Jun 2009 22:32:30 -0000
-@@ -79,20 +79,52 @@
++++ includes/file.inc	23 Jun 2009 20:36:46 -0000
+@@ -79,20 +79,62 @@
  /**
   * Create the download path to a file.
   *
+- * @param $path A string containing the path of the file to generate URL for.
+- * @return A string containing a URL that can be used to download the file.
 + * There are two kinds of files:
-+ * - those in the files directory (which is stored in the file_directory_path
-+ *   variable and can be retrieved using file_directory_path()). These are
-+ *   files that have either been uploaded by users or were generated
-+ *   automatically (for example through CSS aggregation).
-+ * - those outside of the files directory, which ship as part of Drupal core
-+ *   or contributed modules.
++ * - "created files", i.e. those in the files directory (which is stored in
++ *   the file_directory_path variable and can be retrieved using
++ *   file_directory_path()). These are files that have either been uploaded by
++ *   users or were generated automatically (for example through CSS
++ *   aggregation).
++ * - "shipped files", i.e. those outside of the files directory, which ship as
++ *   part of Drupal core or contributed modules or themes.
++ * When the custom_file_url_rewrite() function is defined and returns a
++ * rewritten path (and not FALSE), then that rewritten path is used instead of
++ * creating a URL for the file at the given path.
 + *
-  * @param $path A string containing the path of the file to generate URL for.
-  * @return A string containing a URL that can be used to download the file.
++ * @param $path
++ *   A string containing the Drupal path (i.e. path relative to the Drupal
++ *   root directory) of the file to generate the URL for.
++ * @return
++ *   A string containing a URL that can be used to download the file.
   */
  function file_create_url($path) {
 -  // Strip file_directory_path from $path. We only include relative paths in
@@ -84,9 +93,9 @@ diff -u -F^f -r1.171 file.inc
 -      return $GLOBALS['base_url'] . '/' . file_directory_path() . '/' . str_replace('\\', '/', $path);
 -    case FILE_DOWNLOADS_PRIVATE:
 -      return url('system/files/' . $path, array('absolute' => TRUE));
-+  // Check if the file is in the files directory.
-+  $is_in_files_directory = (strpos($path, file_directory_path() .'/') === 0);
-+  
++  // Clean up Windows paths.
++  $path = str_replace('\\', '/', $path);
++
 +  // Allow rewriting of file URLs, so one can use static file servers and
 +  // CDNs.
 +  if (function_exists('custom_file_url_rewrite')) {
@@ -103,20 +112,23 @@ diff -u -F^f -r1.171 file.inc
 +  // the file doesn't match some conditions to be served from a CDN or static
 +  // file server, or because the file has not yet been synced to the CDN or
 +  // static file server.
-+  if (!$is_in_files_directory) {
++
++  // Shipped files.
++  if (strpos($path, file_directory_path() . '/') !== 0) {
 +    return base_path() . $path;
 +  }
++  // Created files.
 +  else {
-+    // Strip file_directory_path from $path. We only include relative paths in urls.
-+    if (strpos($path, file_directory_path() .'/') === 0) {
-+      $path = trim(substr($path, strlen(file_directory_path())), '\\/');
-+    }
-+
 +    switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
 +      case FILE_DOWNLOADS_PUBLIC:
-+        return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
++        return $GLOBALS['base_url'] . '/' . $path;
 +      case FILE_DOWNLOADS_PRIVATE:
-+        return url('system/files/'. $path, array('absolute' => TRUE));
++        // Strip file_directory_path from $path. Private downloads' URLs are
++        // rewritten to be served relatively to system/files (which is a menu
++        // callback that streams the file) instead of relatively to the file
++        // directory path.
++        $path = trim(substr($path, strlen(file_directory_path())), '/');
++        return url('system/files/' . $path, array('absolute' => TRUE));
 +    }
    }
  }
@@ -127,7 +139,7 @@ RCS file: /cvs/drupal/drupal/includes/form.inc,v
 retrieving revision 1.343
 diff -u -F^f -r1.343 form.inc
 --- includes/form.inc	20 Jun 2009 15:17:38 -0000	1.343
-+++ includes/form.inc	22 Jun 2009 22:32:33 -0000
++++ includes/form.inc	23 Jun 2009 20:36:49 -0000
 @@ -2413,7 +2413,7 @@ function theme_image_button($element) {
      (!empty($element['#value']) ? ('value="' . check_plain($element['#value']) . '" ') : '') .
      'id="' . $element['#id'] . '" ' .
@@ -143,7 +155,7 @@ RCS file: /cvs/drupal/drupal/includes/theme.inc,v
 retrieving revision 1.496
 diff -u -F^f -r1.496 theme.inc
 --- includes/theme.inc	18 Jun 2009 21:19:02 -0000	1.496
-+++ includes/theme.inc	22 Jun 2009 22:32:34 -0000
++++ includes/theme.inc	23 Jun 2009 20:36:50 -0000
 @@ -1086,24 +1086,24 @@ function theme_get_setting($setting_name
  
      if ($settings['toggle_logo']) {
@@ -183,13 +195,204 @@ diff -u -F^f -r1.496 theme.inc
      return '<img src="' . check_url($url) . '" alt="' . check_plain($alt) . '" title="' . check_plain($title) . '" ' . (isset($image_attributes) ? $image_attributes : '') . $attributes . ' />';
    }
  }
+Index: modules/simpletest/tests/file.test
+===================================================================
+RCS file: /cvs/drupal/drupal/modules/simpletest/tests/file.test,v
+retrieving revision 1.32
+diff -u -F^f -r1.32 file.test
+--- modules/simpletest/tests/file.test	2 Jun 2009 13:42:40 -0000	1.32
++++ modules/simpletest/tests/file.test	23 Jun 2009 20:36:54 -0000
+@@ -1908,6 +1908,25 @@ function file_test_file_scan_callback($f
+   }
+ 
+   /**
++   * Test the generating of public file URLs.
++   */
++  function testPublicFileURL() {
++    // Set file downloads to public.
++    variable_set('file_downloads', FILE_DOWNLOADS_PUBLIC);
++
++    // Test generating an URL to a created file.
++    $file = $this->createFile();
++    $url = file_create_url($file->filepath);
++    $this->assertEqual($GLOBALS['base_url'] . '/' . file_directory_path() . '/' . $file->filename, $url, t('Correctly generated a URL for a created file.'));
++
++    // Test generating an URL to a shipped file (i.e. a file that is part of 
++    // Drupal core, a module or a theme, for example a JavaScript file).
++    $file = 'misc/jquery.js';
++    $url = file_create_url($file);
++    $this->assertEqual(base_path() . $file, $url, t('Correctly generated a URL for a shipped file.'));
++  }
++
++  /**
+    * Test the private file transfer system.
+    */
+   function testPrivateFileTransfer() {
+@@ -1916,7 +1935,7 @@ function file_test_file_scan_callback($f
+ 
+     // Create a file.
+     $file = $this->createFile();
+-    $url = file_create_url($file->filename);
++    $url = file_create_url($file->filepath);
+ 
+     // Set file_test access header to allow the download.
+     file_test_set_return('download', array('x-foo' => 'Bar'));
+@@ -1938,6 +1957,45 @@ function file_test_file_scan_callback($f
+ }
+ 
+ /**
++ * Tests for file URL rewriting.
++ */
++class FileURLRewritingTest extends FileDownloadTest {
++  public static function getInfo() {
++    return array(
++      'name' => t('File URL rewriting'),
++      'description' => t('Tests for file URL rewriting.'),
++      'group' => t('File'),
++    );
++  }
++
++  function setUp() {
++    DrupalWebTestCase::setUp('file_test', 'file_url_test');
++  }
++
++  /**
++   * Test the generating of rewritten public file URLs.
++   */
++  function testPublicFileURL() {
++    // Set file downloads to public.
++    variable_set('file_downloads', FILE_DOWNLOADS_PUBLIC);
++
++    // Test generating an URL to a created file.
++    $file = $this->createFile();
++    $url = file_create_url($file->filepath);
++    $this->assertEqual(FILE_URL_TEST_CDN_1 . '/' . $file->filepath, $url, t('Correctly generated a URL for a created file.'));
++
++    // Test generating an URL to a shipped file (i.e. a file that is part of 
++    // Drupal core, a module or a theme, for example a JavaScript file).
++    $file = 'misc/jquery.js';
++    $url = file_create_url($file);
++    $this->assertEqual(FILE_URL_TEST_CDN_1 . '/' . $file, $url, t('Correctly generated a URL for a shipped file.'));
++    $file = 'misc/favicon.ico';
++    $url = file_create_url($file);
++    $this->assertEqual(FILE_URL_TEST_CDN_2 . '/' . $file, $url, t('Correctly generated a URL for a shipped file.'));
++  }
++}
++
++/**
+  * Tests for file_munge_filename() and file_unmunge_filename().
+  */
+ class FileNameMungingTest extends FileTestCase {
+Index: modules/simpletest/tests/file_url_test.info
+===================================================================
+RCS file: modules/simpletest/tests/file_url_test.info
+diff -N modules/simpletest/tests/file_url_test.info
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ modules/simpletest/tests/file_url_test.info	23 Jun 2009 20:36:54 -0000
+@@ -0,0 +1,8 @@
++; $Id$
++name = "File URL test"
++description = "Support module for file URL generation tests."
++package = Testing
++version = VERSION
++core = 7.x
++files[] = file_url_test.module
++hidden = TRUE
+Index: modules/simpletest/tests/file_url_test.module
+===================================================================
+RCS file: modules/simpletest/tests/file_url_test.module
+diff -N modules/simpletest/tests/file_url_test.module
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ modules/simpletest/tests/file_url_test.module	23 Jun 2009 20:36:54 -0000
+@@ -0,0 +1,26 @@
++<?php
++
++
++define('FILE_URL_TEST_CDN_1', 'http://cdn1.example.com');
++define('FILE_URL_TEST_CDN_2', 'http://cdn2.example.com');
++
++
++function custom_file_url_rewrite($path) {
++  $cdn_extensions = array('css', 'js', 'gif', 'jpg', 'jpeg', 'png');
++
++  // Most CDN's don't support private file transfers without a lot of hassle,
++  // so don't support this in the common case.
++  if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
++    return FALSE;
++  }
++
++  // Serve files without extension and files with one of the CDN extensions
++  // from CDN 1, all others from CDN 2.
++  $pathinfo = pathinfo($path);
++  if (!array_key_exists('extension', $pathinfo) || in_array($pathinfo['extension'], $cdn_extensions)) {
++    return FILE_URL_TEST_CDN_1 . '/' . $path;
++  }
++  else {
++    return FILE_URL_TEST_CDN_2 . '/' . $path;
++  }
++}
+Index: modules/system/system.api.php
+===================================================================
+RCS file: /cvs/drupal/drupal/modules/system/system.api.php,v
+retrieving revision 1.43
+diff -u -F^f -r1.43 system.api.php
+--- modules/system/system.api.php	22 Jun 2009 09:10:06 -0000	1.43
++++ modules/system/system.api.php	23 Jun 2009 20:36:55 -0000
+@@ -1078,6 +1078,47 @@ function custom_url_rewrite_inbound(&$re
+ }
+ 
+ /**
++ * custom_file_url_rewrite is not a hook, it's a function you can add to
++ * settings.php to alter all file URLs generated by Drupal. This function is
++ * called from file_create_url().
++ * This function is called fairly frequently (10+ times per page), depending
++ * on how many files there are in a given page and. If CSS and JS aggregation
++ * are disabled, this can become very frequently (50+ times per page) so
++ * performance is critical.
++ *
++ * This function should return the rewritten path, if it wants to rewrite the
++ * file URL. If it doesn't want to rewrite a given path, then it should
++ * return FALSE.
++ *
++ * @param $path
++ *   A string containing the Drupal path (i.e. path relative to the Drupal
++ *   root directory) of the file to generate the URL for.
++ * @return
++ *   A string containing a URL that can be used to download the file.
++ */
++function custom_file_url_rewrite($path) {
++  $cdn1 = 'http://cdn1.example.com';
++  $cdn2 = 'http://cdn2.example.com';
++  $cdn_extensions = array('css', 'js', 'gif', 'jpg', 'jpeg', 'png');
++
++  // Most CDN's don't support private file transfers without a lot of hassle,
++  // so don't support this in the common case.
++  if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
++    return FALSE;
++  }
++
++  // Serve files without extension and files with one of the CDN extensions
++  // from CDN 1, all others from CDN 2.
++  $pathinfo = pathinfo($path);
++  if (!array_key_exists('extension', $pathinfo) || in_array($pathinfo['extension'], $cdn_extensions)) {
++    return $cdn1 . '/' . $path;
++  }
++  else {
++    return $cdn2 . '/' . $path;
++  }
++}
++
++/**
+  * Load additional information into file objects.
+  *
+  * file_load_multiple() calls this hook to allow modules to load
 Index: themes/garland/template.php
 ===================================================================
 RCS file: /cvs/drupal/drupal/themes/garland/template.php,v
 retrieving revision 1.22
 diff -u -F^f -r1.22 template.php
 --- themes/garland/template.php	2 Jun 2009 03:57:22 -0000	1.22
-+++ themes/garland/template.php	22 Jun 2009 22:32:35 -0000
++++ themes/garland/template.php	23 Jun 2009 20:36:56 -0000
 @@ -91,9 +91,9 @@ function garland_node_submitted($node) {
  function garland_get_ie_styles() {
    global $language;
