@@ -161,7 +161,62 @@ Abstract
 \end_layout
 
 \begin_layout Standard
-The 
+This bachelor thesis is about improving Drupal's page loading performance
+ through integrating Drupal with a CDN.
+ Page loading performance is about reducing the time it takes to load a
+ web page.
+ Because reducing that time also reduces the time required to access information
+, increases the number of satisfied visitors, and if the web site is commercial,
+ it increases revenue.
+\end_layout
+
+\begin_layout Standard
+Before you can prove that improvements are made, you need a tool to measure
+ that.
+ So first, a comparison is made of available page loading performance profiling
+ tools (and related tools).
+ Episodes is chosen because it is the only tool that measures the real-world
+ page loading performance.
+ This requires tight integration with Drupal though, so a module was written
+ to integrate Episodes with Drupal.
+ A companion module to visualize the collected measurements through basic
+ charts was also written.
+\end_layout
+
+\begin_layout Standard
+Next, a daemon was written to synchronize files to a CDN (actually, any
+ kind of file server).
+ It was attempted to make the configuration as self-explanatory as possible.
+ The daemon is capable of processing the file before it is synced, for example
+ to optimize images or compress CSS and JavaScript files.
+ A variety of transporters (for different protocols) is available to transport
+ the file to file servers.
+ According to the configuration file, files are detected through the operating
+ system's file system monitor and then processed and transported to their
+ destination servers.
+ The resulting URLs at which the files are available are stored in a database.
+\end_layout
+
+\begin_layout Standard
+Then, a Drupal module was written that makes it easy to integrate Drupal
+ with a CDN (both with and without the daemon).
+ A patch for Drupal core had to be written to make it possible to alter
+ the URLs to static files (CSS, JavaScript, images, and so on).
+ To make this functionality part of the next version of Drupal core, a patch
+ for that version was also submitted.
+\end_layout
+
+\begin_layout Standard
+Finally, a test case was built.
+ A high-traffic web site with a geographically dispersed audience was migrated
+ to Drupal and the Episodes integration was enabled.
+ The first period, no CDN integration was enabled.
+ Then the daemon was installed and CDN integration was enabled.
+ Files were being synced to a static file server in Belgium and a North-American
+ CDN, and visitors were assigned to either one, based on their geographical
+ location.
+ This second period, with CDN integration enabled, was also measured using
+ Episodes and conclusions were drawn from this.
 \end_layout
 
 \begin_layout Section
@@ -169,16 +224,36 @@ Preface
 \end_layout
 
 \begin_layout Standard
-TODO
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-TODO
+When I wrote a custom proposal for a bachelor thesis, it was quickly approved
+ by my promotor, Prof.
+ dr.Wim Lamotte.
+ I'd like to thank him for making this bachelor thesis possible.
+ He also approved of writing this thesis in the open, to get feedback from
+ the community and to release all my work under the GPL, which will hopefully
+ ensure it will be used.
+ I have worked to the best of my abilities to try to ensure that my work
+ can be used in real world applications.
 \end_layout
 
-\end_inset
+\begin_layout Standard
+During the creation of this bachelor thesis, I've often received very useful
+ feedback from my mentors, Maarten Wijnants and Stijn Agten.
+ My sincere thanks go to them.
+ I would also like to thank 
+\shape italic
+\emph on
+dr.
+ Peter Quax, co-promotor of this bachelor thesis.
+\end_layout
 
+\begin_layout Standard
+I would also like to thank Rambla and SimpleCDN for providing free CDN accounts
+ for testing and SlideME for providing feedback on my work.
+\end_layout
+
+\begin_layout Standard
+Finally, I would like to thank my parents and my brother, whose support
+ has been invaluable.
  
 \end_layout
 
@@ -507,7 +582,13 @@ name "fig:End-user-response-time"
 It should be obvious now that it is far more effective to focus on front-end
  performance than it is to focus on back-end performance, because it has
  got a greater potential.
- It is also easier to optimize than the back-end.
+ It is also easier to optimize than the back-end, because instead of having
+ to profile the entire codebase through which the page is generated (which
+ is necessary for optimizing the back-end performance), you can simply change
+ where in the HTML files are being referenced and possibly also replacing
+ the URLs to use a CDN instead.
+ These measures are clearly far more easy to implement.
+ 
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -558,6 +639,7 @@ It is an open source project, started in 2000 by Dries Buytaert, whom was
 status collapsed
 
 \begin_layout Plain Layout
+
 dorp.org
 \end_layout
 
@@ -577,6 +659,7 @@ village
 status collapsed
 
 \begin_layout Plain Layout
+
 drop.org
 \end_layout
 
@@ -591,6 +674,7 @@ drop.org
 status collapsed
 
 \begin_layout Plain Layout
+
 drop.org
 \end_layout
 
@@ -603,6 +687,7 @@ drop.org
 status collapsed
 
 \begin_layout Plain Layout
+
 drop.org
 \end_layout
 
@@ -617,6 +702,7 @@ Only later, in 2001, Dries released the software behind
 status collapsed
 
 \begin_layout Plain Layout
+
 drop.org
 \end_layout
 
@@ -1234,7 +1320,7 @@ name "tab:Pull-versus-Push"
 \end_layout
 
 \begin_layout Standard
-My aim is to suppor the following CDNs in this thesis:
+My aim is to support the following CDNs in this thesis:
 \end_layout
 
 \begin_layout Itemize
@@ -1495,7 +1581,7 @@ an image on domain 1 with a 2 second delay
 \begin_layout Standard
 First you create this setup in Cuzillion (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Cuzillion"
 
 \end_inset
@@ -1509,7 +1595,7 @@ reference "fig:Cuzillion"
 As you can see, Safari and Firefox behave very differently.
  In Safari (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Cuzillion-Safari"
 
 \end_inset
@@ -1519,7 +1605,7 @@ reference "fig:Cuzillion-Safari"
  bars become darkpurple).
  In Firefox (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Cuzillion-Firefox"
 
 \end_inset
@@ -1681,7 +1767,7 @@ key "Firebug"
 
  extension (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:YSlow-example"
 
 \end_inset
@@ -1729,7 +1815,7 @@ about:config
 ) what the domain name of your CDN is, you can even fool YSlow into thinking
  any site is using a CDN: see 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Tricking-YSlow"
 
 \end_inset
@@ -1998,7 +2084,7 @@ and
 
 A screenshot of Hammerhead is provided in figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Hammerhead"
 
 \end_inset
@@ -2480,7 +2566,7 @@ key "Jiffy Firebug Extension"
 
 , see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Jiffy"
 
 \end_inset
@@ -2659,7 +2745,7 @@ It uses the same query string syntax as Jiffy uses to perform logging, which
 \begin_layout Itemize
 It has its own Firebug extension, see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Episodes"
 
 \end_inset
@@ -2790,7 +2876,7 @@ There is one more tool that jumps out for real, practical use: Episodes.
 I have created this integration as part of my bachelor thesis, see section
  
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sec:Episodes.module"
 
 \end_inset
@@ -2806,7 +2892,7 @@ reference "sec:Episodes.module"
 \end_layout
 
 \begin_layout Section
-The State of Drupal's page loading performance
+The state of Drupal's page loading performance
 \begin_inset CommandInset label
 LatexCommand label
 name "sec:The-State-of-Drupal"
@@ -2847,7 +2933,7 @@ key "drupal-performance-article"
 The essence of the article is that Drupal does some things right already,
  but many more not yet.
  The things Drupal did wrong then — and still does wrong today because nothing
- has changed in this area, yet:
+ has changed in this area — yet:
 \end_layout
 
 \begin_layout Itemize
@@ -3310,7 +3396,7 @@ For a visual example of all the above, see figure
 
 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Results-of-Episodes-module-in-Firebug"
 
 \end_inset
@@ -3544,7 +3630,7 @@ hook_init()
 \family default
  tag that is necessary to make Episodes work (see section 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sub:Episodes.module:reusable"
 
 \end_inset
@@ -3745,14 +3831,14 @@ can
 \begin_layout Itemize
 And of course a configuration UI (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Episodes-module-settings-form"
 
 \end_inset
 
  and figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Episodes-module-behaviors-settings-form"
 
 \end_inset
@@ -4036,7 +4122,7 @@ Filters
 \begin_layout Itemize
 And of course again a configuration UI (see figure 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "fig:Episodes-Server-module-settings-form"
 
 \end_inset
@@ -4407,19 +4493,6 @@ Unfortunately for me, Steve Souders is a very busy man, speaking at many
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-Wait for Steve's further feedback.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
 
@@ -4453,7 +4526,7 @@ As explained in section
 
 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sec:Key-Properties-CDN"
 
 \end_inset
@@ -4681,7 +4754,7 @@ Judge for yourself how easy it is by looking at listing
 
 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "lst:sample-config-file"
 
 \end_inset
@@ -5682,7 +5755,7 @@ toryChanges.
  is not directly accessible from within Python.
  This was already mentioned in 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sub:daemon:Goals"
 
 \end_inset
@@ -6125,7 +6198,7 @@ Upon completion, a callback will be called.
 
 An example can found in listing 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "lst:Processors-YUICompressor"
 
 \end_inset
@@ -6465,7 +6538,7 @@ This processor is useful if you want to ensure that files have unique filenames,
 
 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sec:The-State-of-Drupal"
 
 \end_inset
@@ -7038,7 +7111,7 @@ RequestToRequeueException
 \family default
  exception will be raised (see section 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sub:daemon:modules:processor.py"
 
 \end_inset
@@ -7065,7 +7138,7 @@ name "sub:daemon:modules:yui_compressor.py"
 \begin_layout Standard
 This is the processor module that could be seen in listing 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "lst:Processors-YUICompressor"
 
 \end_inset
@@ -7196,9 +7269,9 @@ Transporter
 \begin_inset Newline newline
 \end_inset
 
-A sample transporter can found in listing 
+A sample transporter can be found in listing 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "lst:Transporters-TransporterFTP"
 
 \end_inset
@@ -7634,7 +7707,7 @@ So I clearly managed to make a big shortcut (for simplicity of the argument,
  itself) to achieve my goal: supporting CDNs that rely on FTP or origin
  pulling (see section 
 \begin_inset CommandInset ref
-LatexCommand vref
+LatexCommand ref
 reference "sec:Key-Properties-CDN"
 
 \end_inset
@@ -7840,9 +7913,6 @@ The patches were submitted on May 14, 2009.
  The first and third patch were committed on May 17, 2009.
  The second patch needs a bit more work (more configurable, less hard coded,
  which it already was though).
- The fact that another new storage system was also added (Apache CouchDB)
- seems to indicate that I made a good choice: this project seems to be pretty
- active and is gaining attention.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -8987,19 +9057,6 @@ Ability to limit CPU usage by more than just the number of simultaneous
 Store characteristics of the operations, such as TTS (Time-To-Sync), so
  that you can analyze this data to configure the daemon to better suit your
  needs.
-\end_layout
-
-\begin_layout Itemize
-Allow server-specific processor chains (i.e.
- run the processor chain once for each server the file will be synced to).
- This allows you to have CSS files that contain URLs rewritten to that specific
- server.
- Right now, you can only have 
-\emph on
-one 
-\emph default
-processor chain and therefor the CSS file will always reference the same
- URLs, which may refer to another server.
 \end_layout
 
 \begin_layout Itemize
@@ -10364,6 +10421,7 @@ As a back-up plan in case there would not be much feedback from companies
 status collapsed
 
 \begin_layout Plain Layout
+
 DriverPacks.net
 \end_layout
 
@@ -10646,6 +10704,7 @@ static.driverpacks.net
 status collapsed
 
 \begin_layout Plain Layout
+
 cdn.driverpacks.net
 \end_layout
 
@@ -10657,6 +10716,7 @@ cdn.driverpacks.net
 status collapsed
 
 \begin_layout Plain Layout
+
 e1h21.simplecdn.net
 \end_layout
 
@@ -11025,6 +11085,7 @@ The CSS and JavaScript of the
 status collapsed
 
 \begin_layout Plain Layout
+
 delicious.com
 \end_layout
 
@@ -11042,6 +11103,7 @@ reference "fig:DriverPacks.net-homepage."
 status collapsed
 
 \begin_layout Plain Layout
+
 DriverPacks.net
 \end_layout
 
@@ -11054,6 +11116,7 @@ DriverPacks.net
 status collapsed
 
 \begin_layout Plain Layout
+
 delicious.com
 \end_layout
 
@@ -11074,6 +11137,7 @@ Finally, I also modified the loading of the image necessary for the
 status collapsed
 
 \begin_layout Plain Layout
+
 whos.amung.us
 \end_layout
 
@@ -11144,6 +11208,7 @@ reference "fig:Episodes-analysis:-overall."
 status collapsed
 
 \begin_layout Plain Layout
+
 DriverPacks.net
 \end_layout
 
@@ -11207,6 +11272,7 @@ This means episode measurements have been collected since the beginning
 status collapsed
 
 \begin_layout Plain Layout
+
 DriverPacks.net
 \end_layout
 
@@ -11365,6 +11431,7 @@ It is likely that this is because whereas Dutch visitors previously had
 status collapsed
 
 \begin_layout Plain Layout
+
 delicious.com
 \end_layout
 
@@ -11377,6 +11444,7 @@ delicious.com
 status collapsed
 
 \begin_layout Plain Layout
+
 delicious.com
 \end_layout
 
