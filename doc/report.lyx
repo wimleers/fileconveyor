@@ -4,6 +4,13 @@
 \begin_header
 \textclass article
 \begin_preamble
+\pagenumbering{roman}
+\let\myTOC\tableofcontents
+\renewcommand\tableofcontents{%
+\myTOC
+\clearpage
+\pagenumbering{arabic}
+}
 \setcounter{page}{0}
 \end_preamble
 \use_default_options true
@@ -225,30 +232,10 @@ thispagestyle{empty}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Section*
 \begin_inset Newpage clearpage
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset toc
-LatexCommand tableofcontents
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
 Abstract
 \end_layout
 
@@ -318,7 +305,7 @@ Finally, a test case was built.
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Section*
 Preface
 \end_layout
 
@@ -353,7 +340,6 @@ I would also like to thank Rambla and SimpleCDN for providing free CDN accounts
 \begin_layout Standard
 Finally, I would like to thank my parents and my brother, whose support
  has been invaluable.
- 
 \end_layout
 
 \begin_layout Standard
@@ -363,7 +349,7 @@ Finally, I would like to thank my parents and my brother, whose support
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Section*
 Dutch summary/Nederlandstalige samenvatting
 \end_layout
 
@@ -810,6 +796,22 @@ n.
  de mechanismen die standaard in Drupal aanwezig zijn, resulteerde de integratie
  met een CDN (via de CDN integratie module en de daemon) in een duidelijke
  algemene wereldwijde verbetering van de page loading performance.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
