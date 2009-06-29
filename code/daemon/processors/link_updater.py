@@ -97,7 +97,7 @@ class CSSURLUpdater(Processor):
 
         # Resolve paths that are relative to the document root.
         if urlstring.startswith(self.base_path):
-            base_path_exists = os.path.exists(os.path.join(self.document_root, self.base_path))
+            base_path_exists = os.path.exists(os.path.join(self.document_root, self.base_path[1:]))
 
             if not base_path_exists:
                 # Strip the entire base path: this is a logical base path,
