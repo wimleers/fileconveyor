@@ -56,17 +56,18 @@ class Config(object):
         # Globally ignored directories.
         self.ignored_dirs = sources.get("ignoredDirs", "")
 
-        # Validate the globally ignored directories by trying to create a
-        # Filter object for it.
-        try:
-            conditions = {"ignoredDirs" : self.ignored_dirs}
-            f = Filter(conditions)
-        except FilterError, e:
-            message = e.message
-            if message == "":
-                message = "none"
-            self.logger.error("Invalid ignoredDirs attribute for the sources node: %s (details: \"%s\")." % (e.__class__.__name__, message))
-            self.errors += 1
+        # If set, validate the globally ignored directories by trying to
+        # create a Filter object for it.
+        if self.ignored_dirs != "":
+            try:
+                conditions = {"ignoredDirs" : self.ignored_dirs}
+                f = Filter(conditions)
+            except FilterError, e:
+                message = e.message
+                if message == "":
+                    message = "none"
+                self.logger.error("Invalid ignoredDirs attribute for the sources node: %s (details: \"%s\")." % (e.__class__.__name__, message))
+                self.errors += 1
 
         for source in sources:
             name          = source.get("name")
