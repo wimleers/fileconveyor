@@ -28,7 +28,7 @@
 \graphics default
 \paperfontsize default
 \spacing single
-\use_hyperref true
+\use_hyperref false
 \pdf_bookmarks false
 \pdf_bookmarksnumbered false
 \pdf_bookmarksopen false
@@ -754,6 +754,7 @@ Deze module is ook klaar voor gebruik in productie.
 De feedback van bedrijven was teleurstellend wat betreft de hoeveelheid
  maar overweldigend positief.
  Op meer positieve feedback zou ik niet gehoopt kunnen hebben.
+ Het potentieel van de daemon werd sterk gewaardeerd.
  De codestructuur van de daemon werd beschreven als 
 \begin_inset Quotes eld
 \end_inset
@@ -772,11 +773,11 @@ zeer duidelijk
 \end_inset
 
 .
- Het zorgde er blijkbaar zelfs voor dat de reviewer er spijt van kreeg dat
- hij zijn bachelor graad niet voltooid heeft.
- Hij was zelfs zo enthousiast dat hij al begonnen was met het schrijven
- van patches voor de daemon, zodat die beter inzetbaar was in zijn infrastructuu
-r.
+ Het zorgde er blijkbaar zelfs voor dat een reviewer er spijt van kreeg
+ dat hij zijn bachelor graad niet voltooid heeft.
+ Deze reviewer was zelfs zo enthousiast dat hij al begonnen was met het
+ schrijven van patches voor de daemon, zodat die beter inzetbaar was in
+ zijn infrastructuur.
  Dit suggereert dat het mogelijk haalbaar is dat de daemon een levendig
  open source project wordt.
 \end_layout
@@ -10746,11 +10747,11 @@ I ensured the daemon's FTP support was compatible with their FTP servers.
 \end_layout
 
 \begin_layout Standard
-There is 
+There are 
 \emph on
-one
+two
 \emph default
- company that did give feedback though.
+ companies that did give feedback though.
  Which is of course still much better than none at all.
 \end_layout
 
@@ -10925,15 +10926,70 @@ I have not started performance tests yet, so I cannot rate it.
 \end_layout
 
 \begin_layout Standard
-So, overall, the impression seems to be very good.
- The documentation in general, setting it up and the configuration file
- were strongly approved by him.
- The code structure even more.
- He did not yet have the time to do real-world tests.
+The second company I got feedback from, is WorkHabit 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "WorkHabit"
+
+\end_inset
+
+.
+ WorkHabit is a company that aims to make scalable Drupal web sites easier.
+\end_layout
+
+\begin_layout Quotation
+WorkHabit is a leading provider of Social Software, Content Distribution,
+ and Cloud Computing solutions that specializes in building sustainable
+ businesses online.
+\end_layout
+
+\begin_layout Standard
+Jonathan Lambert, the CEO, was very enthusiastic about the inotify support
+ of the daemon and the lossless compression of images (by removing metadata
+ and optimizing the way they are stored internally).
+ He also liked the idea to be able to pick from within the CDN integration
+ module for Drupal which server files would be served to a visitor.
 \begin_inset Newline newline
 \end_inset
 
-The trend in his answers suggests that the code structure is sufficiently
+His company has a product which allows customers to use his 
+\begin_inset Quotes eld
+\end_inset
+
+virtual CDN
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This 
+\begin_inset Quotes eld
+\end_inset
+
+virtual CDN
+\begin_inset Quotes erd
+\end_inset
+
+ then uses multiple 
+\emph on
+actual
+\emph default
+ CDNs.
+ This implies that files must be synced to multiple servers and that is
+ where my daemon could be very useful.
+ That is also the use case he is evaluating it for.
+\end_layout
+
+\begin_layout Standard
+So, overall, the impression seems to be very good.
+ The feature set seems to be strongly appreciated.
+ The documentation in general, setting it up and the configuration file
+ were strongly approved.
+ The code structure even more.
+ Neither had the time yet to do real-world tests.
+\begin_inset Newline newline
+\end_inset
+
+The trend in the answers suggests that the code structure is sufficiently
  solid and that it conceptually makes sense; that setup and configuration
  are sufficiently straightforward; all of which hopefully is enough for
  this application to become a healthy open source project.
@@ -12375,6 +12431,7 @@ http://drupal.org/project/cdn
 The feedback from companies was underwhelming in numbers but overwhelming
  in positivity.
  I could not have hoped for more positive feedback.
+ The possibilities the daemon offers were strongly appreciated.
  The code structure of the daemon was described as 
 \begin_inset Quotes eld
 \end_inset
@@ -12393,10 +12450,10 @@ very clear
 \end_inset
 
 .
- It even made the reviewer regret that he did not finish his own bachelor
+ It even made a reviewer regret that he did not finish his own bachelor
  degree.
- The reviewer was even so enthusiastic that he already started writing patches
- for the daemon so that it would better suit his infrastructure.
+ This reviewer was even so enthusiastic that he already started writing
+ patches for the daemon so that it would better suit his infrastructure.
  This suggests that it is feasible that the daemon will become a lively
  open source project.
 \end_layout
@@ -15232,6 +15289,31 @@ status collapsed
 \begin_layout Plain Layout
 
 http://www.android.com/
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "WorkHabit"
+
+\end_inset
+
+
+\emph on
+WorkHabit
+\emph default
+, 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://workhabit.com/
 \end_layout
 
 \end_inset
