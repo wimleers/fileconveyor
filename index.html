@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<title>wimleers/fileconveyor @ GitHub</title>
+	
+	<style type="text/css">
+		body {
+  		margin-top: 1.0em;
+  		background-color: #0e5167;
+		  font-family: "Helvetica,Arial,FreeSans"; 
+  		color: #ffffff;
+    }
+    #container {
+      margin: 0 auto;
+      width: 700px;
+    }
+		h1 { font-size: 3.8em; color: #f1ae98; margin-bottom: 3px; }
+		h1 .small { font-size: 0.4em; }
+		h1 a { text-decoration: none }
+		h2 { font-size: 1.5em; color: #f1ae98; }
+    h3 { text-align: center; color: #f1ae98; }
+    a { color: #f1ae98; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+		pre { background: #000; color: #fff; padding: 15px;}
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+	</style>
+	
+</head>
+
+<body>
+  <a href="http://github.com/wimleers/fileconveyor"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  
+  <div id="container">
+
+    <div class="download">
+      <a href="http://github.com/wimleers/fileconveyor/zipball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
+      <a href="http://github.com/wimleers/fileconveyor/tarball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
+    </div>
+      
+    <h1><a href="http://github.com/wimleers/fileconveyor">fileconveyor</a> 
+      <span class="small">by <a href="http://github.com/wimleers">wimleers</a></span></h1>
+
+    <div class="description">
+      File Conveyor is a daemon written in Python to detect, process and sync files. In particular, it's designed to sync files to CDNs. Amazon S3 & CloudFront and Rackspace Cloud Files, as well as any Origin Pull or FTP Push CDN, are supported.
+    </div>
+
+    <p>This daemon is designed to discover new,
+changed and deleted files via the operating system's built-in file system
+monitor. After discovering the files, they can be optionally be processed by
+a chain of processors – you can easily write new ones yourself. After files
+have been processed, they can also optionally be transported to a server.
+
+Discovery happens through inotify on Linux (with kernel >= 2.6.13), through
+FSEvents on Mac OS X (>= 10.5) and through polling on other operating systems.
+
+Processors are simple Python scripts that can change the file's base name (it
+is impossible to change the path) and apply any sort of processing to the
+file's contents. Examples are image optimization and video transcoding.
+
+Transporters are simple threaded abstractions around Django storage systems.
+
+For a detailed description of the innards of the daemon, see my bachelor
+thesis text (find it via http://wimleers.com/tags/bachelor-thesis).
+
+This application was written as part of the bachelor thesis [1] of Wim Leers
+at Hasselt University [2].
+
+
+[1] http://wimleers.com/tags/bachelor-thesis
+[2] http://uhasselt.be/</p><h2>Dependencies</h2>
+<p><ul>
+<li>Python >= 2.5</li>
+<li>django.storages (included) — homepage: http://code.welldev.org/django-storages/wiki/Home</li>
+<li>boto (included) — homepage: http://code.google.com/p/boto/</li>
+</ul></p>
+<h2>Install</h2>
+<p>See INSTALL.txt.</p>
+<h2>License</h2>
+<p>GPL v2</p>
+<h2>Authors</h2>
+<p>Wim Leers (work@wimleers.com)      </p>
+<h2>Contact</h2>
+<p>Wim Leers (work@wimleers.com)<br/>      </p>
+
+
+    <h2>Download</h2>
+    <p>
+      You can download this project in either
+      <a href="http://github.com/wimleers/fileconveyor/zipball/master">zip</a> or
+      <a href="http://github.com/wimleers/fileconveyor/tarball/master">tar</a> formats.
+    </p>
+    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+      by running:
+      <pre>$ git clone git://github.com/wimleers/fileconveyor</pre>
+    </p>
+      
+    <div class="footer">
+      get the source code on GitHub : <a href="http://github.com/wimleers/fileconveyor">wimleers/fileconveyor</a>
+    </div>
+    
+  </div>
+
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-75075-8");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+</body>
+</html>
