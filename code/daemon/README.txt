@@ -259,6 +259,7 @@ Available settings:
 - secret_access_key
 - bucket_name
 - bucket_prefix
+- distro_domain_name
 
 
 Transporter: Symlink or Copy
