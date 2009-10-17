@@ -1,6 +1,0 @@
-; $Id$
-name = CDN integration
-description = "Integrates this Drupal site with a CDN (Content Delivery Network), by (optionally) automatically synchronizing files to the CDN and rewriting Drupal's file URLs."
-
-core = 6.x
-package = Performance
