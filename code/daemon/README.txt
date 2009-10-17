@@ -262,6 +262,19 @@ Available settings:
 - distro_domain_name
 
 
+
+Transporter: Mosso CloudFiles
+---------------------------------
+Value to enter: "mosso".
+
+Available settings:
+- access_key_id
+- secret_access_key
+- bucket_name
+- bucket_prefix
+- distro_domain_name
+
+
 Transporter: Symlink or Copy
 ----------------------------
 Value to enter: "symlink_or_copy".
@@ -472,6 +485,8 @@ This application depends on various pieces of 3rd party code:
   GPL-compatible.
 - django-storages (dependencies/storages). django-storages is released under
   the modified BSD license, which is GPL-compatible.
+- python-cloudfiles (dependencies/cloudfiles). python-cloudfiles is released
+  under the MIT license, which is GPL-compatible.
 Hence it made sense to release the source code under the GPL.
 
 

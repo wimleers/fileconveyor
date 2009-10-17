@@ -75,14 +75,16 @@ class Transporter(threading.Thread):
                     if action == Transporter.ADD_MODIFY:
                         # Sync the file.
                         f = File(open(src, "rb"))
-                        self.storage.delete(dst)
+                        if self.storage.exists(dst):
+                            self.storage.delete(dst)
                         self.storage.save(dst, f)
                         f.close()
                         # Calculate the URL.
                         url = self.storage.url(dst)
                         url = self.alter_url(url)
                     else:
-                        self.storage.delete(dst)
+                        if self.storage.exists(dst):
+                            self.storage.delete(dst)
                         url = None
 
                     self.logger.debug("The transporter '%s' has synced '%s'." % (self.name, src))
