@@ -57,6 +57,14 @@ Processor module: yui_compressor
   3. rename the executable from e.g. "yuicompressor-2.4.2.jar" to "yuicompressor.jar"
 
 
+Processor module: google_closure_compiler
+-----------------------------------------
+* instructions:
+  1. download from http://closure-compiler.googlecode.com/files/compiler-latest.zip
+  2. copy the executable to the "processors" directory of the daemon
+  3. rename the executable from e.g. "compiler-x.y.z.jar" to "compiler.jar"
+
+
 Processor module: image_optimizer
 ---------------------------------
 You only have to install these libraries if you don't have them already. This

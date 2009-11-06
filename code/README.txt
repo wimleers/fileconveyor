@@ -182,6 +182,17 @@ Available processors:
    Compresses .css and .js files with the YUI Compressor
 
 
+Processor module: google_closure_compiler
+-----------------------------------------
+Warning: this processor is CPU-intensive! Since you typically don't get new
+JS files all the time, it's still fine to use this. But the initial sync may
+cause a lot of JS files to be processed and thereby cause a lot of load!
+
+Available processors:
+1) GoogleClosureCompiler
+   Compresses .js files with the Google Closure Compiler
+
+
 Processor module: link_updater
 ------------------------------
 Warning: this processor is CPU-intensive! Since you typically don't get new
