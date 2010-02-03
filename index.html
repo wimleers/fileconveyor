@@ -5,7 +5,7 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-	<title>wimleers/fileconveyor @ GitHub</title>
+	<title>File Conveyor — fileconveyor.org — github.com/wimleers/fileconveyor</title>
 	
 	<style type="text/css">
 		body {
@@ -21,14 +21,18 @@
 		h1 { font-size: 3.8em; color: #f1ae98; margin-bottom: 3px; }
 		h1 .small { font-size: 0.4em; }
 		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #f1ae98; }
+		h2 { font-size: 1.5em; color: #f1ae98; margin-top: 2em;}
     h3 { text-align: center; color: #f1ae98; }
+    .small { font-size: 0.8em; }
     a { color: #f1ae98; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
+    code, pre { background: #000; color: #fff; }
+    pre { padding: 15px;}
     hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
     .footer { text-align:center; padding-top:30px; font-style: italic; }
+    .arrow { display: block; text-align: center; font-size: 2em;}
+    li { padding: 0.3em;}
 	</style>
 	
 </head>
@@ -45,50 +49,139 @@
         <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
     </div>
       
-    <h1><a href="http://github.com/wimleers/fileconveyor">fileconveyor</a> 
-      <span class="small">by <a href="http://github.com/wimleers">wimleers</a></span></h1>
+    <h1><a href="http://github.com/wimleers/fileconveyor">File&nbsp;Conveyor</a> 
+      <span class="small">by&nbsp;<a href="http://github.com/wimleers">Wim&nbsp;Leers</a></span></h1>
 
     <div class="description">
-      File Conveyor is a daemon written in Python to detect, process and sync files. In particular, it's designed to sync files to CDNs. Amazon S3 & CloudFront and Rackspace Cloud Files, as well as any Origin Pull or FTP Push CDN, are supported.
+      <p>File Conveyor is a daemon written in Python to detect, process and
+      sync files.<br />
+      <br />
+      Designed to sync files to CDNs. Amazon S3 &amp; CloudFront and Rackspace
+      Cloud Files, as well as any Origin Pull CDN or FTP Push CDN are
+      supported.</p>
     </div>
 
-    <p>This daemon is designed to discover new,
-changed and deleted files via the operating system's built-in file system
-monitor. After discovering the files, they can be optionally be processed by
-a chain of processors – you can easily write new ones yourself. After files
-have been processed, they can also optionally be transported to a server.
-
-Discovery happens through inotify on Linux (with kernel >= 2.6.13), through
-FSEvents on Mac OS X (>= 10.5) and through polling on other operating systems.
-
-Processors are simple Python scripts that can change the file's base name (it
-is impossible to change the path) and apply any sort of processing to the
-file's contents. Examples are image optimization and video transcoding.
-
-Transporters are simple threaded abstractions around Django storage systems.
-
-For a detailed description of the innards of the daemon, see my bachelor
-thesis text (find it via http://wimleers.com/tags/bachelor-thesis).
-
-This application was written as part of the bachelor thesis [1] of Wim Leers
-at Hasselt University [2].
 
 
-[1] http://wimleers.com/tags/bachelor-thesis
-[2] http://uhasselt.be/</p><h2>Dependencies</h2>
-<p><ul>
-<li>Python >= 2.5</li>
-<li>django.storages (included) — homepage: http://code.welldev.org/django-storages/wiki/Home</li>
-<li>boto (included) — homepage: http://code.google.com/p/boto/</li>
-</ul></p>
-<h2>Install</h2>
-<p>See INSTALL.txt.</p>
-<h2>License</h2>
-<p>GPL v2</p>
-<h2>Authors</h2>
-<p>Wim Leers (work@wimleers.com)      </p>
-<h2>Contact</h2>
-<p>Wim Leers (work@wimleers.com)<br/>      </p>
+
+    <h3>What does it do? — In one paragraph</h3>
+    <p>This daemon is designed to discover new, changed and deleted files via
+    the operating system's built-in file system monitor. After discovering the
+    files, they can be optionally be processed by a chain of processors – you
+    can easily write new ones yourself. After files have been processed, they
+    can also be synced (&ldquo;transported&rdquo;) to a server.</p>
+
+
+
+
+    <h3>The 3 stages</h3>
+    <ol>
+      <li>
+        <p><strong><u>Discovery</u></strong> of changes of the filesystem
+        happens <u>instantaneously</u> through inotify on Linux, through
+        FSEvents on Mac OS X and through polling on other operating
+        systems.</p>
+        <span class="arrow">&darr;</span>
+      </li>
+      <li>
+        <p><strong><u>Processors</u></strong> are simple Python scripts that
+        can change the filename and <strong>apply any sort of
+        processing</strong> to the file's contents. E.g.:
+        <ul>
+          <li>image optimization</li>
+          <li>CSS &amp; JS minification</li>
+          <li>video transcoding</li>
+        </ul>
+        <br />
+        A couple of file processors are included by default:
+        <ul>
+          <li><code>filename</code>, which can convert spaces to underscores or
+            dashes</li>
+          <li><code>google_closure_compiler</code>, to compress JS files using
+          <a href="http://code.google.com/closure/compiler/">Google Closure
+          Compiler</a></li>
+          <li><code>image_optimizer</code>, which is capable of optimizing
+          images without losing quality, i.e. it stores images more
+          efficiently (similar to the service that <a
+          href="http://smusmhit.com">smush.it</a> provides).</li>
+          <li><code>link_updater</code>, which should be used to update the
+          URLs in CSS files so that the CSS file refers to the images, fonts
+          &hellip; on the CDN</li>
+          <li><code>unique_filename</code>, to give files a unique name based
+          on its last modification time <span class="small">(<code>mtime</code>)</span> or MD5 hash</li>
+          <li><code>yui_compressor</code>, to compress CSS and JS files using
+          the <a href="http://developer.yahoo.com/yui/compressor/">YUI
+          Compressor</a> </li>
+          <li><em>&hellip; (it's easy to create your own, look at
+          <code>processor_sample</code>!)</em></li>
+        </ul>
+        <br />
+        <a
+        href="http://github.com/wimleers/fileconveyor/blob/master/code/processors/google_closure_compiler.py">Proof
+        of simplicity</a>&nbsp;<span class="small">(Google Closure Compiler
+        Processor)</span></p>
+        <span class="arrow">&darr;</span>
+      </li>
+      <li>
+        <p><strong><u>Transporters</u></strong> are simple threaded
+        abstractions around <a
+        href="http://docs.djangoproject.com/en/dev/howto/custom-file-storage/">Django
+        Custom Storage Systems</a>. Currently, the following transporters (and
+        their corresponding protocols) are available:
+        <ul>
+          <li>Amazon S3</li>
+          <li>Amazon CloudFront</li>
+          <li>FTP</li>
+          <li>RackSpace CloudFiles</li>
+          <li>Symlink or Copy (if a file hasn't been changed by a processor, a
+          symlink to it is created to a given directory, otherwise the changed
+          file is copied &mdash; this makes it possible to use processors in
+          combination with an <em>Origin Pull</em> CDN).</li>
+        </ul>
+        <br />
+        <a
+        href="http://github.com/wimleers/fileconveyor/blob/master/code/transporters/transporter_s3.py">Proof
+        of simplicity</a>&nbsp;<span class="small">(Amazon S3
+        Processor)</span>
+        </p>
+      </li>
+    </ol>
+    <br />
+
+    <p><strong><u>Configuring</u></strong> File Conveyor happens through a
+    simple XML format. After looking at it for a couple of minutes, it should
+    already make sense. <a
+    href="http://github.com/wimleers/fileconveyor/blob/master/code/config.sample.xml">Here's
+    a sample configuration file.</a></p> <br />
+
+    <p>It was originally written by <a href="http://wimleers.com/">Wim
+    Leers</a> as part of his <a
+    href="http://wimleers.com/tags/bachelor-thesis">bachelor thesis</a> at <a
+    href="http://www.uhasselt.be/">Hasselt University</a> in Belgium. For a
+    detailed description of the innards of the daemon, see Wim's <a
+    href="http://wimleers.com/blog/finished-my-bachelor-degree#attachments">bachelor
+    thesis text</a>.</p>
+    <br />
+
+
+
+
+    <h2>Live sites using File Conveyor</h2>
+    <p>
+    <ul>
+      <li><a href="http://driverpacks.net/">driverpacks.net</a> (>1M page views/month)</li>
+    </ul>
+    </p>
+
+
+
+    <h2>CMS support</h2>
+    <p>To further simplify usage of File Conveyor, the following CMSes
+    explicitly support File Conveyor:
+    <ul>
+      <li><a href="http://drupal.org/project/cdn">Drupal — CDN integration module</a></li>
+    </ul>
+    </p>
 
 
     <h2>Download</h2>
@@ -101,11 +194,111 @@ at Hasselt University [2].
       by running:
       <pre>$ git clone git://github.com/wimleers/fileconveyor</pre>
     </p>
-      
+
+
+
+
+    <h2>Requirements</h2>
+    <p>
+      <ul>
+        <li>Python >= 2.5</li>
+        <li>OS:
+          <ul>
+            <li>Linux with kernel >= 2.6.13 (for <a href="http://en.wikipedia.org/wiki/Inotify">inotify</a> support)</li>
+            <li>Mac OS X >= 10.5 (for <a href="http://en.wikipedia.org/wiki/FSEvents">FSEvents</a> support)</li>
+            <li>Windows: untested</li>
+          </ul>
+        </li>
+      </ul>
+    </p>
+
+
+
+
+    <h2>Dependencies</h2>
+    <p>
+      <ul>
+        <li>Transporters<br /><br />
+          <strong>All dependencies are included</strong> in the File Conveyor git repository.<br />
+          Their licenses are all GPL-compatible.
+          <ul>
+            <li><a href="http://code.google.com/p/boto">boto</a> (MIT license)</li>
+            <li><a href="http://django.org/">Django (parts)</a> (modified BSD license)</li>
+            <li><a href="http://code.welldev.org/django-storages/wiki/Home">django.storages</a> (modified BSD license)</li>
+            <li><a href="http://github.com/rackspace/python-cloudfiles">python-cloudfiles</a> (MIT license)</li>
+          </ul>
+          <br />
+          <br />
+        </li>
+        <li>Processors
+          <strong>All dependencies are included</strong> in the File Conveyor git repository.<br />
+          Their licenses are all GPL-compatible.
+
+        </li>
+      </ul>
+    </p>
+
+
+
+
+    <h2>Installation instructions</h2>
+    <p>See <a
+    href="http://github.com/wimleers/fileconveyor/blob/master/code/INSTALL.txt">INSTALL.txt</a>.</p>
+
+
+
+
+    <h2>License</h2>
+    <p>GPL v2</p>                   
+
+
+
+
+    <h2>Authors</h2>
+    <p>
+      <ul>
+        <li>Wim Leers — <a href="http://wimleers.com">http://wimleers.com</a></li>
+        <li>The authors of the many dependencies without whom this never would've been possible!</li>
+      </ul>
+    </p>
+
+
+
+
+    <h2>Contact</h2>
+    <p>Wim Leers — <a
+    href="http://wimleers.com/contact">http://wimleers.com/contact</a> </p>
+
+
+
+
+     <h2>Find out more</h2>
+        <p>
+          <ul>
+            <li><a
+            href="http://wimleers.com/blog/finished-my-bachelor-degree#attachments">The
+            bachelor thesis text</a></li>
+            <li><a
+            href="http://wimleers.com/blog/finished-my-bachelor-degree">Blog
+            post: &ldquo;Finished my bachelor degree!&rdquo;</a></li>
+            <li><a href="http://wimleers.com/talk/fosdem-2009">Presentation:
+            &ldquo;Improving Drupal's page loading performance&rdquo;</a></li>
+            <li><a
+            href="http://wimleers.com/talk/drupalcon-dc-2009">Presentation:
+            &ldquo;Drupal CDN integration: easier, more flexible and
+            faster!&rdquo;</a></li>
+            <li><a
+            href="http://wimleers.com/talk/drupalcon-paris-2009">Presentation:
+            &ldquo;Faster &amp; more flexible CDN integration&rdquo;</a></li>
+
+          </ul>
+        </p>
+
+
+
     <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/wimleers/fileconveyor">wimleers/fileconveyor</a>
+      2009-2010 — Last update: February 3, 2010
     </div>
-    
   </div>
 
   <script type="text/javascript">
