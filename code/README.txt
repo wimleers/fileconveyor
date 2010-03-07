@@ -279,11 +279,9 @@ Transporter: Mosso CloudFiles
 Value to enter: "mosso".
 
 Available settings:
-- access_key_id
-- secret_access_key
-- bucket_name
-- bucket_prefix
-- distro_domain_name
+- username
+- api_key
+- container
 
 
 Transporter: Symlink or Copy
