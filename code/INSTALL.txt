@@ -49,6 +49,8 @@ yet been tested in it.
 | Known problematic set-ups.                                                 |
 ==============================================================================
 
+SQLite + GFS
+------------
 SQLite does not appear to work well when its databases are stored on GFS
 mounts (Global File System):
   http://drupal.org/node/723750#comment-2647816
