@@ -46,6 +46,17 @@ yet been tested in it.
 
 
 ==============================================================================
+| Known problematic set-ups.                                                 |
+==============================================================================
+
+SQLite does not appear to work well when its databases are stored on GFS
+mounts (Global File System):
+  http://drupal.org/node/723750#comment-2647816
+
+
+
+
+==============================================================================
 | Per-processor module additional instructions                               |
 ==============================================================================
 
