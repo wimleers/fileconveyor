@@ -30,6 +30,10 @@ to install pyinotify. But please ensure this version is new enough. On other
 distributions, follow these instructions:
   http://trac.dbzteam.org/pyinotify/wiki/InstallPyinotify
 
+Detailed installation instructions are available for CentOS, contributed by
+Mike Carper:
+  http://drupal.org/node/713190#comment-2594204
+
 
 Mac OS X
 ---------
