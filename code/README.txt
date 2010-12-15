@@ -486,7 +486,8 @@ named "ftp push cdn".
 
 License
 -------
-This application is released under the GPL.
+This application is dual-licensed under the GPL and the UNLICENSE.
+
 This application depends on various pieces of 3rd party code:
 - parts of Django (dependencies/django). Django is released under the modified
   BSD license, which is GPL-compatible.
@@ -496,7 +497,9 @@ This application depends on various pieces of 3rd party code:
   the modified BSD license, which is GPL-compatible.
 - python-cloudfiles (dependencies/cloudfiles). python-cloudfiles is released
   under the MIT license, which is GPL-compatible.
-Hence it made sense to release the source code under the GPL.
+  
+Hence it made sense to initially release the source code under the GPL.
+Clearly, the 3rd party code is not UNLICENSEd; only the newly written code is.
 
 
 Author
