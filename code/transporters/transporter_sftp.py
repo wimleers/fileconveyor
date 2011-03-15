@@ -10,7 +10,7 @@ class TransporterSFTP(Transporter):
 
     name              = 'SFTP'
     valid_settings    = ImmutableSet(["host", "username", "password", "url", "port", "path", "key"])
-    required_settings = ImmutableSet(["host", "url"])
+    required_settings = ImmutableSet(["host", "username", "url"])
 
     def __init__(self, settings, callback, error_callback, parent_logger=None):
         Transporter.__init__(self, settings, callback, error_callback, parent_logger)
@@ -23,13 +23,14 @@ class TransporterSFTP(Transporter):
             self.settings["path"] = ""
 
         # Map the settings to the format expected by FTPStorage.
-        if "username" in configured_settings and "password" in configured_settings:
+        if "password" in configured_settings:
           location = "sftp://" + self.settings["username"] + ":" + self.settings["password"] + "@" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
         else:
-          location = "sftp://" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
+          location = "sftp://" + self.settings["username"] + "@" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
 
         self.storage = SFTPStorage(location, self.settings["url"], self.settings["key"])
+        self.storage._start_connection()
         try:
             self.storage._start_connection()
-        except Exception, e:            
+        except Exception, e:
             raise ConnectionError(e)

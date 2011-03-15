@@ -21,7 +21,7 @@ import errno
 import urlparse
 import paramiko, base64
 from paramiko.sftp import *
-import ftplib
+from binascii import hexlify
 
 try:
     from cStringIO import StringIO
@@ -66,38 +66,49 @@ class SFTPStorage(Storage):
         
         return config
 
+    def _agent_auth(self,transport,username):
+        agent = paramiko.Agent()
+        agent_keys = agent.get_keys()
+        if len(agent_keys) == 0:
+            return
+
+        for key in agent_keys:
+            try:
+                transport.auth_publickey(username, key)
+                # print "Using Key %s" % hexlify(key.get_fingerprint())
+                return
+            except paramiko.SSHException:
+                # print "Error logging in with key %s" % hexlify(key.get_fingerprint())
+                raise
+            except paramiko.AuthenticationException:
+                # print "Not Using Key %s" % hexlify(key.get_fingerprint())
+                raise
+
     def _start_connection(self):
-
-
-#        if (self._config['key'] is not None):
-#	        key = paramiko.RSAKey(filename=self._config['key'])
-#
-#        client = paramiko.SSHClient()
-#        client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
-#        client.connect('ssh.example.com', username='strongbad', password='thecheat')
-#        stdin, stdout, stderr = client.exec_command('ls')
-#        for line in stdout:
-#            print '... ' + line.strip('\n')
-#        client.close()
-
         # Check if connection is still alive and if not, drop it.
         if self._connection is not None:
             try:
                 self._connection.getcwd()
-            except ftplib.all_errors, e:
+            except paramiko.SSHException, e:
                 self._connection = None
         
         # Real reconnect
         if self._connection is None:
             try:
                 t = paramiko.Transport((self._config['host'], self._config['port']))
-                t.connect(username=self._config['user'], password=self._config['passwd']) #,hostkey=hostkey
+                t.start_client()
+                self._agent_auth(t, self._config['user'])
+                
+                if not t.is_authenticated():
+                    #Use password auth
+                    t.connect(username=self._config['user'], password=self._config['passwd']) #,hostkey=hostkey
+
                 sftp = paramiko.SFTPClient.from_transport(t)
                 if self._config['path'] != '':
                     sftp.chdir(self._config['path'])
 
                 self._connection = sftp
-            except ftplib.all_errors, e:
+            except paramiko.SSHException, e:
                 raise SSFTPStorageException('Connection or login error using data %s' % repr(self._config))
 
     def disconnect(self):
@@ -114,7 +125,7 @@ class SFTPStorage(Storage):
                 try:
                     self._connection.mkdir(path_part)
                     self._connection.chdir(path_part)
-                except ftplib.all_errors, e:
+                except paramiko.SSHException, e:
                     raise SFTPStorageException('Cannot create directory chain %s' % path)
         self._connection.chdir(pwd)
         return
@@ -130,7 +141,7 @@ class SFTPStorage(Storage):
                 fr.write(content)
             finally:
                 self._connection.chdir(pwd)
-        except ftplib.all_errors, e:
+        except paramiko.SSHException, e:
             raise SFTPStorageException('Error writing file %s' % name)
 
     def _open(self, name, mode='rb'):
@@ -145,7 +156,7 @@ class SFTPStorage(Storage):
             memory_file.write(self._connection.open(os.path.basename(name)).read())
             self._connection.chdir(pwd)
             return memory_file
-        except ftplib.all_errors, e:
+        except paramiko.SSHException, e:
             raise SFTPStorageException('Error reading file %s' % name)
         
     def _save(self, name, content):
@@ -173,7 +184,7 @@ class SFTPStorage(Storage):
                 elif words[0][0] == '-':
                     files[words[-1]] = int(words[-5]);
             return dirs, files
-        except ftplib.all_errors, msg:
+        except paramiko.SSHException, msg:
             raise SFTPStorageException('Error getting listing for %s' % path)
 
     def listdir(self, path):
