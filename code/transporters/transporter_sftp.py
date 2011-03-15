@@ -28,7 +28,11 @@ class TransporterSFTP(Transporter):
         else:
           location = "sftp://" + self.settings["username"] + "@" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
 
-        self.storage = SFTPStorage(location, self.settings["url"], self.settings["key"])
+        key = None
+        if "key" in configured_settings:
+            key = self.settings["key"]
+
+        self.storage = SFTPStorage(location, self.settings["url"], key)
         self.storage._start_connection()
         try:
             self.storage._start_connection()

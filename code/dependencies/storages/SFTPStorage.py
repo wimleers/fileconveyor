@@ -1,3 +1,4 @@
+import os.path
 import StringIO
 # FTP storage class for Django pluggable storage system.
 # Author: Rafal Jonca <jonca.rafal@gmail.com>
@@ -22,6 +23,7 @@ import urlparse
 import paramiko, base64
 from paramiko.sftp import *
 from binascii import hexlify
+import getpass
 
 try:
     from cStringIO import StringIO
@@ -83,6 +85,17 @@ class SFTPStorage(Storage):
             except paramiko.AuthenticationException:
                 # print "Not Using Key %s" % hexlify(key.get_fingerprint())
                 raise
+            
+    def _key_auth(self,transport,username,key_path):
+        if os.path.exists(key_path) == False:
+            raise IOError("Unable to continue, key file %s does not exist" % key_path)
+        try:
+            key = paramiko.RSAKey.from_private_key_file(key_path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass('RSA key password for %s: ' % key_path)
+            key = paramiko.RSAKey.from_private_key_file(key_path, password)
+            
+        transport.auth_publickey(username, key)
 
     def _start_connection(self):
         # Check if connection is still alive and if not, drop it.
@@ -97,7 +110,14 @@ class SFTPStorage(Storage):
             try:
                 t = paramiko.Transport((self._config['host'], self._config['port']))
                 t.start_client()
-                self._agent_auth(t, self._config['user'])
+
+                if self._config['key'] != None:
+                    self._key_auth(t, self._config['user'], self._config['key'])
+                    if not t.is_authenticated():
+                        raise SFTPStorageException('Unable to connect with key')
+
+                if not t.is_authenticated():
+                    self._agent_auth(t, self._config['user'])
                 
                 if not t.is_authenticated():
                     #Use password auth
