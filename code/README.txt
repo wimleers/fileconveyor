@@ -244,6 +244,21 @@ Available settings:
 - host
 - username
 - password
+- url
+- port
+- path
+- key
+
+
+Transporter: SFTP (sftp)
+------------------------
+Value to enter: "sftp".
+
+Available settings:
+- host
+- username
+- password
+- url
 - port
 - path
 

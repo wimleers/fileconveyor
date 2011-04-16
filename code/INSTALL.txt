@@ -121,3 +121,21 @@ Processor module: link_updater
 * instructions:
  1) download the Python Egg from http://code.google.com/p/cssutils/
  2) easy_install cssutils-<VERSION>-py<PYTHON VERSION>.egg
+
+
+==============================================================================
+| Per-transporter module additional instructions                             |
+==============================================================================
+
+Transporter module: sftp
+------------------------
+This transporter requires the Python module "paramiko" to be installed.
+
+* homepage: http://www.lag.net/paramiko/
+* instructions:
+	- Debian/Ubuntu: sudo apt-get install python-paramiko
+	- Other:
+		1. download 1.7.4 or newer from http://www.lag.net/paramiko/download/
+		2. extract
+		3. cd to the extracted folder (where setup.py lives)
+		2. easy_install ./
