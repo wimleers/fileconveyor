@@ -1,28 +1,13 @@
-import os.path
-import StringIO
-# FTP storage class for Django pluggable storage system.
-# Author: Rafal Jonca <jonca.rafal@gmail.com>
-# License: MIT
-# Comes from http://www.djangosnippets.org/snippets/1269/
-#
-# Usage:
-#
-# Add below to settings.py:
-# FTP_STORAGE_LOCATION = '[a]ftp://<user>:<pass>@<host>:<port>/[path]'
-#
-# In models.py you can write:
-# from FTPStorage import FTPStorage
-# fs = FTPStorage()
-# class FTPTest(models.Model):
-#     file = models.FileField(upload_to='a/b/c/', storage=fs)
+# SFTP storage class for Django Storages
+# Author: Jacob Singh
+# License MIT
+# Based on Rafal Jonca's snippet at http://www.djangosnippets.org/snippets/1269/
 
-import pprint
 import os
 import errno
 import urlparse
-import paramiko, base64
+import paramiko
 from paramiko.sftp import *
-from binascii import hexlify
 import getpass
 
 try:
