@@ -36,7 +36,7 @@ class CSSURLUpdater(Processor):
 
         # We don't rename the file, so we can use the default output file.
 
-        parser = CSSParser(log=None, loglevel=logging.critical)
+        parser = CSSParser(log=None, loglevel=logging.CRITICAL)
         sheet = parser.parseFile(self.input_file)
 
         # Step 1: ensure the file has URLs. If it doesn't, we can stop the
