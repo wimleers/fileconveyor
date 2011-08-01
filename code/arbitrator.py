@@ -994,5 +994,5 @@ if __name__ == '__main__':
     except ArbitratorError, e:
         print e.__class__, e
     else:
-        t = DaemonThreadRunner(arbitrator, "daemon")
+        t = DaemonThreadRunner(arbitrator, PID_FILE)
         t.start()

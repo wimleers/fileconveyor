@@ -75,7 +75,21 @@ Stopping the daemon
 -------------------
 The daemon listens to standard signals to know when it should end, like the
 Apache HTTP server does too. Send the TERMinate signal to terminate it:
-  kill -TERM `cat /path/to/daemon/daemon.pid`
+  kill -TERM `cat ~/.fileconveyor.pid`
+
+You can configure File Conveyor to store the PID file in the more typical
+/var/run location on *nix:
+* You can change the PID_FILE setting in settings.py to 
+/var/run/fileconveyor.pid. However, this requires File Conveyor to be run with
+root permissions (/var/run requires root permissions).
+* Alternatively, you can create a new directory in /var/run which then no
+longer requires root permissions. This can be achieved through these commands:
+ 1. sudo mkdir /var/run/fileconveyor`
+ 2. sudo chown fileconveyor-user /var/run/fileconveyor
+ 3. sudo chown 700 /var/run/fileconveyor
+Then, you can change the PID_FILE setting in settings.py to
+/var/run/fileconveyor/fileconveyor.pid, and you won't need to run File 
+Conveyor with root permissions anymore.
 
 
 The daemon's behavior

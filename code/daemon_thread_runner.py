@@ -20,13 +20,10 @@ class DaemonThreadRunner(object):
     pidfile_check_interval = 60
     pidfile_permissions    = 0600
 
-    def __init__(self, thread, pidfilename):
-        if not pidfilename.endswith(".pid"):
-            pidfilename = pidfilename + ".pid"
-
+    def __init__(self, thread, pidfile):
         self.thread             = thread
         self.running            = False
-        self.pidfile            = os.path.join(os.getcwd(), pidfilename)
+        self.pidfile            = os.path.expanduser(pidfile)
         self.last_pidfile_check = 0
 
         # Configure signal handler.

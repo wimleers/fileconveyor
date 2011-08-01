@@ -8,6 +8,7 @@ import logging
 
 
 LOG_FILE = './daemon.log'
+PID_FILE = '~/.fileconveyor.pid'
 PERSISTENT_DATA_DB = './persistent_data.db'
 SYNCED_FILES_DB = './synced_files.db'
 WORKING_DIR = '/tmp/daemon'
