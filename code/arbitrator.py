@@ -11,7 +11,12 @@ from UserList import UserList
 import os.path
 
 
-sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
+# Insert the dependencies directory (which includes copies of parts of Django
+# and a full, yet extend, copy django-storages) at the beginning of sys.path,
+# to prevent File Conveyor from using the code of a possible Django
+# installation on this system.
+sys.path.insert(1, os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
+
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'processors')))
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'transporters')))
 
