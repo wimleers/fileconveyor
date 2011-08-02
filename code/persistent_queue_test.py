@@ -72,5 +72,34 @@ class TestConditions(unittest.TestCase):
         self.assertEqual(items, received_items, "The original list and the list that was retrieved from the queue are equal")
 
 
+    def testUniquenessAndUpdating(self):
+        # Inserting the same item twice should not be allowed
+        pq = PersistentQueue(self.table, self.db)
+        item = "some item"
+        pq.put(item)
+        pq.put("some other item")
+        self.assertRaises(AlreadyExists, pq.put, item)
+
+        # Empty the queue again.
+        while not pq.empty():
+            pq.get()
+
+        # Inserting the same item twice but with different keys should be
+        # allowed.
+        pq = PersistentQueue(self.table, self.db)
+        pq.put(item, "some key")
+        pq.put(item, "some other key")
+
+        # It should be impossible to update when a non-existing key is given.
+        self.assertRaises(UpdateForNonExistingKey, pq.update, "new value", "some key that does not exist")
+
+        # It should be possible to update an item in the queue, given its
+        # key.
+        pq.update("yarhar", "some key")
+        self.assertEquals(pq.qsize(), 2)
+        self.assertEquals(pq.get(), "yarhar")
+        self.assertEquals(pq.get(), item)
+
+
 if __name__ == "__main__":
     unittest.main()
