@@ -14,6 +14,7 @@ from pyinotify import WatchManager, \
                       ProcessEvent
 import time
 import os
+import stat
 
 
 
@@ -36,8 +37,11 @@ class FSMonitorInotify(FSMonitor):
 
     def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
         FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile)
-        self.wm = None
-        self.notifier = None
+        self.wm             = None
+        self.notifier       = None
+        self.pathscanner_files_created  = []
+        self.pathscanner_files_modified = []
+        self.pathscanner_files_deleted  = []
 
 
     def __fsmonitor_event_to_inotify_event(self, event_mask):
@@ -123,8 +127,16 @@ class FSMonitorInotify(FSMonitor):
             self.__remove_dir(path)
 
 
+    def __process_pathscanner_updates(self, update_list, callback):
+        self.lock.acquire()
+        if len(update_list) > 0:
+            callback(update_list)
+            del update_list[:] # Clear the list with updates.
+        self.lock.release()
+
+
     def __process_queues(self):
-        # Process add queue.
+        # Process "add monitored path" queue.
         self.lock.acquire()
         if not self.add_queue.empty():
             (path, event_mask) = self.add_queue.get()
@@ -133,7 +145,7 @@ class FSMonitorInotify(FSMonitor):
         else:
             self.lock.release()
 
-        # Process remove queue.
+        # Process "remove monitored path" queue.
         self.lock.acquire()
         if not self.remove_queue.empty():
             path = self.add_queue.get()
@@ -142,31 +154,68 @@ class FSMonitorInotify(FSMonitor):
         else:
             self.lock.release()
 
+        # These calls to PathScanner is what ensures that FSMonitor.db
+        # remains up-to-date. (These lists of files to add, update and delete
+        # from the DB are applied to PathScanner.)
+        self.__process_pathscanner_updates(self.pathscanner_files_created,  self.pathscanner.add_files   )
+        self.__process_pathscanner_updates(self.pathscanner_files_modified, self.pathscanner.update_files)
+        self.__process_pathscanner_updates(self.pathscanner_files_deleted,  self.pathscanner.delete_files)
+
 
 class FSMonitorInotifyProcessEvent(ProcessEvent):
     def __init__(self, fsmonitor):
         ProcessEvent.__init__(self)
         self.fsmonitor_ref = fsmonitor
 
+    def __update_pathscanner_db(self, pathname, event_type):
+        """use PathScanner.(add|update|delete)_files() to queue updates for
+        PathScanner's DB
+        """
+        (path, filename) = os.path.split(pathname)
+        if event_type == FSMonitor.DELETED:
+            # Build tuple for deletion of row in PathScanner's DB.
+            t = (path, filename)
+            self.fsmonitor_ref.pathscanner_files_deleted.append(t)
+        else:
+            # Build tuple for PathScanner's DB of the form (path, filename,
+            # mtime), with mtime = -1 when it's a directory.
+            st = os.stat(pathname)
+            is_dir = stat.S_ISDIR(st.st_mode)
+            if not is_dir:
+                mtime = st[stat.ST_MTIME]
+                t = (path, filename, mtime)
+            else:
+                t = (path, filename, -1)
+
+            # Update PathScanner's DB.
+            if event_type == FSMonitor.CREATED:
+                self.fsmonitor_ref.pathscanner_files_created.append(t)
+            else:
+                self.fsmonitor_ref.pathscanner_files_modified.append(t)
+
     def process_IN_CREATE(self, event):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.CREATED)
+        self.__update_pathscanner_db(event.pathname, FSMonitor.CREATED)
 
     def process_IN_DELETE(self, event):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.DELETED)
+        self.__update_pathscanner_db(event.pathname, FSMonitor.DELETED)
 
     def process_IN_MODIFY(self, event):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
+        self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_ATTRIB(self, event):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         FSMonitor.trigger_event(self.fsmonitor_ref, event.path, event.pathname, FSMonitor.MODIFIED)
+        self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
 
     def process_IN_MOVE_SELF(self, event):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):

@@ -219,8 +219,12 @@ class FSMonitorFSEvents(FSMonitor):
                 FSMonitor.trigger_event(self, monitored_path, event_path, FSMonitor.MONITORED_DIR_MOVED)
 
             elif eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs:
+                # This call to PathScanner is what ensures that FSMonitor.db
+                # remains up-to-date.
                 result = self.pathscanner.scan_tree(event_path)
                 FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
             else:
+                # This call to PathScanner is what ensures that FSMonitor.db
+                # remains up-to-date.
                 result = self.pathscanner.scan(event_path)
                 FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)

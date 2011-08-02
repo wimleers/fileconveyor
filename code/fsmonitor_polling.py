@@ -109,5 +109,7 @@ class FSMonitorPolling(FSMonitor):
 
         # Scan all paths.
         for monitored_path in self.monitored_paths.keys():
+            # These calls to PathScanner is what ensures that FSMonitor.db
+            # remains up-to-date.
             for event_path, result in self.pathscanner.scan_tree(monitored_path):
                 FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
