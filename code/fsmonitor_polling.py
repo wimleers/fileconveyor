@@ -31,20 +31,21 @@ class FSMonitorPolling(FSMonitor):
 
     def __add_dir(self, path, event_mask):
         """override of FSMonitor.__add_dir()"""
-        # Perform an initial scan of the directory structure. If this has
-        # already been done, then it will return immediately.
-        if self.persistent:
-            if self.trigger_events_for_initial_scan:
-                self.pathscanner.initial_scan(path)
-            else:
-                FSMonitor.generate_missed_events(self, path, event_mask)
 
+        # Immediately start monitoring this directory.
         self.monitored_paths[path] = MonitoredPath(path, event_mask, None)
         self.monitored_paths[path].monitoring = True
 
-        # Generate the missed events.
         if self.persistent:
+            # Generate the missed events. This implies that events that
+            # occurred while File Conveyor was offline (or not yet in use)
+            # will *always* be generated, whether this is the first run or the
+            # thousandth.
             FSMonitor.generate_missed_events(self, path)
+        else:
+            # Perform an initial scan of the directory structure. If this has
+            # already been done, then it will return immediately.
+            self.pathscanner.initial_scan(path)
 
         return self.monitored_paths[path]
 

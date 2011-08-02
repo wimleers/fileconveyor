@@ -60,14 +60,8 @@ class FSMonitorFSEvents(FSMonitor):
 
     def __add_dir(self, path, event_mask):
         """override of FSMonitor.__add_dir()"""
-        if self.trigger_events_for_initial_scan and self.persistent:
-            FSMonitor.generate_missed_events(self, path, event_mask)
-        else:
-            # Perform an initial scan of the directory structure. If this has
-            # already been done, then it will return immediately.
-            self.pathscanner.initial_scan(path)
 
-        # Use the FSEvents API to monitor a directory.
+        # Immediately start monitoring this directory.
         streamRef = FSEventStreamCreate(kCFAllocatorDefault,
                                         self.__fsevents_callback,
                                         path,
@@ -77,13 +71,31 @@ class FSMonitorFSEvents(FSMonitor):
                                         self.__class__.flags)
         # Debug output.
         #FSEventStreamShow(streamRef)
-
+        # Verify that FSEvents is able to monitor this directory.
         if streamRef is None:
             raise MonitorError, "Could not monitor %s" % path
             return None
         else:
             self.monitored_paths[path] = MonitoredPath(path, event_mask, streamRef)
-            return self.monitored_paths[path]
+            # TRICKY: the monitoring has not yet started! This happens in
+            # FSMonitorEvents.__process_queues(), which is called on every
+            # runloop by FSMonitorEvents.run().
+            self.monitored_paths[path].monitoring = False
+
+        if self.persistent:
+            # Generate the missed events. This implies that events that
+            # occurred while File Conveyor was offline (or not yet in use)
+            # will *always* be generated, whether this is the first run or the
+            # thousandth.
+            # TODO: use FSEvents' sinceWhen parameter instead of the current
+            # inefficient scanning method.
+            FSMonitor.generate_missed_events(self, path)
+        else:
+            # Perform an initial scan of the directory structure. If this has
+            # already been done, then it will return immediately.
+            self.pathscanner.initial_scan(path)
+
+        return self.monitored_paths[path]
 
 
     def __remove_dir(self, path):
@@ -184,12 +196,6 @@ class FSMonitorFSEvents(FSMonitor):
                 raise CouldNotStartError
             else:
                 self.monitored_paths[path].monitoring = True
-
-            # Generate the missed events.
-            # TODO: use FSEvents' sinceWhen parameter instead of the current
-            # inefficient scanning method.
-            if self.persistent:
-                FSMonitor.generate_missed_events(self, path)
 
 
     def __fsevents_callback(self, streamRef, clientCallBackInfo, numEvents, eventPaths, eventFlags, eventIDs):

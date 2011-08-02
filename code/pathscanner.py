@@ -47,6 +47,7 @@ class PathScanner(object):
         """prepare the database (create the table structure)"""
 
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(path text, filename text, mtime integer)" % (self.table))
+        self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS file_unique_per_path ON %s (path, filename)" % (self.table))
         self.dbcon.commit()
 
 
@@ -123,12 +124,7 @@ class PathScanner(object):
         
         Expected format: a set of (path, filename, mtime) tuples.
         """
-
-        for row in files:
-            self.dbcur.execute("INSERT INTO %s VALUES(?, ?, ?)" % (self.table), row)
-            self.__db_batched_commit()
-        # Commit the remaining rows.
-        self.__db_batched_commit(True)
+        self.update_files(files)
 
 
     def update_files(self, files):
@@ -138,8 +134,11 @@ class PathScanner(object):
         """
 
         for row in files:
-            (path, filename, mtime) = row
-            self.dbcur.execute("UPDATE %s SET mtime=? WHERE path=? AND filename=?" % (self.table), (mtime, path, filename))
+            # Use INSERT OR REPLACE to let the OS's native file system monitor
+            # (inotify on Linux, FSEvents on OS X) run *while* missed events
+            # are being generated.
+            # See https://github.com/wimleers/fileconveyor/issues/69.
+            self.dbcur.execute("INSERT OR REPLACE INTO %s VALUES(?, ?, ?)" % (self.table), row)
             self.__db_batched_commit()
         # Commit the remaining rows.
         self.__db_batched_commit(True)
