@@ -27,9 +27,9 @@ class DaemonThreadRunner(object):
         self.last_pidfile_check = 0
 
         # Configure signal handler.
-        signal.signal(signal.SIGINT,  self.handle_interrupt)
-        signal.signal(signal.SIGTSTP, self.handle_interrupt)
-        signal.signal(signal.SIGTERM, self.handle_interrupt)
+        signal.signal(signal.SIGINT,  self.handle_signal)
+        signal.signal(signal.SIGTSTP, self.handle_signal)
+        signal.signal(signal.SIGTERM, self.handle_signal)
 
 
     def start(self):
@@ -50,7 +50,7 @@ class DaemonThreadRunner(object):
             os.remove(self.pidfile)
 
 
-    def handle_interrupt(self, signalNumber, frame):
+    def handle_signal(self, signalNumber, frame):
         self.thread.stop()
         self.thread.join()
         self.running = False
