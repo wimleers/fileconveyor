@@ -353,13 +353,13 @@ class Arbitrator(threading.Thread):
                 old_event = item[1]
                 merged_event = FSMonitor.MERGE_EVENTS[old_event][event]
                 if merged_event is not None:
-                    self.logger.info("Pipeline queue: merging events for '%s': %s + %s = %s." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
                     self.pipeline_queue.update(item=(input_file, merged_event), key=input_file)
+                    self.logger.info("Pipeline queue: merged events for '%s': %s + %s = %s." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
                 # The events being merged cancel each other out, thus remove
                 # the file from the pipeline queue.
                 else:
                     self.pipeline_queue.remove_item_for_key(key=input_file)
-                    self.logger.info("Pipeline queue: merging events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
+                    self.logger.info("Pipeline queue: merged events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
             self.logger.debug("Discover queue -> pipeline queue: '%s'." % (input_file))
         self.lock.release()
 
