@@ -361,6 +361,13 @@ Constants in Arbitrator.py
 The following constants can be tweaked to change where the daemon stores its
 files, or to change its behavior.
 
+RESTART_AFTER_UNHANDLED_EXCEPTION = True
+  Whether File Conveyor should restart itself after it encountered an
+  unhandled exception (i.e., a bug).
+RESTART_INTERVAL = 10
+  After how much time File Conveyor should restart itself, after it has
+  encountered an unhandled exception. Thus, this setting only has an effect
+  when RESTART_AFTER_UNHANDLED_EXCEPTION == True.
 LOG_FILE = './daemon.log'
   The log file.
 PERSISTENT_DATA_DB = './persistent_data.db'

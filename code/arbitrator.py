@@ -9,6 +9,7 @@ import sys
 import sqlite3
 from UserList import UserList
 import os.path
+import signal
 
 
 # Insert the dependencies directory (which includes copies of parts of Django
@@ -74,7 +75,7 @@ class Arbitrator(threading.Thread):
     PROCESSED_FOR_ANY_SERVER = None
 
 
-    def __init__(self, configfile="config.xml"):
+    def __init__(self, configfile="config.xml", restart=False):
         threading.Thread.__init__(self)
         self.lock = threading.Lock()
         self.die = False
@@ -95,7 +96,9 @@ class Arbitrator(threading.Thread):
         consoleHandler.setFormatter(formatter)
         self.logger.addHandler(fileHandler)
         self.logger.addHandler(consoleHandler)
-        self.logger.warning("Arbitrator is initializing.")
+        if restart:
+            self.logger.warning("File Conveyor has restarted itself!")
+        self.logger.warning("File Conveyor is initializing.")
 
         # Load config file.
         self.configfile = configfile
@@ -286,20 +289,25 @@ class Arbitrator(threading.Thread):
         self.clean_up_working_dir()
 
         self.logger.warning("Fully up and running now.")
-        while not self.die:
-            self.__process_discover_queue()
-            self.__process_pipeline_queue()
-            self.__process_filter_queue()
-            self.__process_process_queue()
-            self.__process_transport_queues()
-            self.__process_db_queue()
-            self.__process_retry_queue()
-            self.__allow_retry()
+        try:
+            while not self.die:
+                self.__process_discover_queue()
+                self.__process_pipeline_queue()
+                self.__process_filter_queue()
+                self.__process_process_queue()
+                self.__process_transport_queues()
+                self.__process_db_queue()
+                self.__process_retry_queue()
+                self.__allow_retry()
 
-            # Processing the queues 5 times per second is more than sufficient
-            # because files are modified, processed and transported much
-            # slower than that.
-            time.sleep(0.2)
+                # Processing the queues 5 times per second is more than sufficient
+                # because files are modified, processed and transported much
+                # slower than that.
+                time.sleep(0.2)
+        except Exception as e:
+            self.logger.exception("Unhandled exception of type '%s' detected, arguments: '%s'." % (e.__class__.__name__, e.args))
+            self.logger.error("Stopping File Conveyor to ensure the application is stopped in a clean manner.")
+            os.kill(os.getpid(), signal.SIGTERM)
         self.logger.warning("Stopping.")
 
         # Stop the FSMonitor and wait for its thread to end.
@@ -331,7 +339,14 @@ class Arbitrator(threading.Thread):
         num_synced_files = self.dbcur.fetchone()[0]
         self.logger.warning("synced files DB contains metadata for %d synced files." % (num_synced_files))
 
+        # Clean up working directory.
         self.clean_up_working_dir()
+
+        # Final message, then remove all loggers.
+        self.logger.warning("File Conveyor has shut down.")
+        while len(self.logger.handlers):
+            self.logger.removeHandler(self.logger.handlers[0])
+        logging.shutdown()
 
 
     def __process_discover_queue(self):
@@ -996,6 +1011,14 @@ class Arbitrator(threading.Thread):
 
 
     def stop(self):
+        # Everybody dies only once.
+        self.lock.acquire()
+        if self.die:
+            self.lock.release()
+            return
+        self.lock.release()
+
+        # Die.
         self.logger.warning("Signaling to stop.")
         self.lock.acquire()
         self.die = True
@@ -1011,11 +1034,30 @@ class Arbitrator(threading.Thread):
         self.logger.info("Cleaned up the working directory '%s'." % (WORKING_DIR))
 
 
-if __name__ == '__main__':
+def run_file_conveyor(restart=False):
     try:
-        arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"))
+        arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"), restart)
     except ArbitratorError, e:
         print e.__class__, e
+        del arbitrator
     else:
         t = DaemonThreadRunner(arbitrator, PID_FILE)
         t.start()
+        del t
+        del arbitrator
+
+
+if __name__ == '__main__':
+    if not RESTART_AFTER_UNHANDLED_EXCEPTION:
+        run_file_conveyor()
+    else:
+        run_file_conveyor()
+        # Don't restart File Conveyor, but actually quit it when it's stopped
+        # by the user in the console. See DaemonThreadRunner.handle_signal()
+        # for details.
+        while True and not DaemonThreadRunner.stopped_in_console:
+            # Make sure there's always a PID file, even when File Conveyor
+            # technically isn't running.
+            DaemonThreadRunner.write_pid_file(os.path.expanduser(PID_FILE))
+            time.sleep(RESTART_INTERVAL)
+            run_file_conveyor(restart=True)

@@ -7,6 +7,8 @@ __license__ = "GPL"
 import logging
 
 
+RESTART_AFTER_UNHANDLED_EXCEPTION = True
+RESTART_INTERVAL = 10
 LOG_FILE = './daemon.log'
 PID_FILE = '~/.fileconveyor.pid'
 PERSISTENT_DATA_DB = './persistent_data.db'
