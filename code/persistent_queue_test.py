@@ -101,5 +101,31 @@ class TestConditions(unittest.TestCase):
         self.assertEquals(pq.get(), item)
 
 
+    def testFileConveyorUseCase(self):
+        pq = PersistentQueue(self.table)
+        events = [
+            ('/foo/bar', 'CREATED'),
+            ('/foo/baz', 'CREATED'),
+            ('/foo/bar', 'MODIFIED'),
+            ('/yar/har', 'CREATED'),
+            ('/foo/bar', 'DELETED'),
+            ('/foo/baz', 'DELETED')
+        ]
+
+        for i in xrange(len(events)):
+            item = pq.get_item_for_key(events[i][0])
+            if item is None:
+                pq.put(events[i], events[i][0])
+            else:
+                if item[1] == 'CREATED' and events[i][1] == 'DELETED':
+                    pq.remove_item_for_key(events[i][0])
+                else:
+                    pq.update(events[i], events[i][0])
+
+        self.assertEquals(pq.qsize(), 2)
+        self.assertEquals(pq.get(), events[4])
+        self.assertEquals(pq.get(), events[3])
+
+
 if __name__ == "__main__":
     unittest.main()

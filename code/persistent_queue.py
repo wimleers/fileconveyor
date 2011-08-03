@@ -5,7 +5,10 @@ for a partial in-memory cache (to allow for peeking).
 
 Each item in the queue is assigned a key of your choosing (if none is given,
 the item itself becomes the key). By using this key, one can then later update
-the item in the queue (i.e. without changing the order of the queue).
+the item in the queue (i.e. without changing the order of the queue), remove
+the item from the queue, or even just get the item from the queue to perform
+"smart" updates (i.e. based on the current value of the item corresponding to
+the key).
 
 This class is thread-safe.
 """
@@ -141,12 +144,44 @@ class PersistentQueue(object):
             return item
 
 
-    def update(self, item, key):
-        self.lock.acquire()
-
-        # Update the item in the queue
+    def get_item_for_key(self, key):
+        """necessary to be able to do smart update()s"""
         md5 = PersistentQueue.__hash_key(key)
+        self.lock.acquire()
+        self.dbcur.execute("SELECT item FROM %s WHERE key = ?" % (self.table), (md5, ))
+        self.lock.release()
 
+        result = self.dbcur.fetchone()
+        if result is None:
+            return None
+        else:
+            return result[0]
+
+
+    def remove_item_for_key(self, key):
+        """necessary to be able to do smart update()s"""
+        md5 = PersistentQueue.__hash_key(key)
+        self.lock.acquire()
+        self.dbcur.execute("SELECT id FROM %s WHERE key = ?" % (self.table), (md5, ))
+        result = self.dbcur.fetchone()
+        if result is None:
+            self.lock.release()
+        else:
+            id = result[0]
+            self.dbcur.execute("DELETE FROM %s WHERE key = ?" % (self.table), (md5, ))
+            self.dbcon.commit()
+            self.size -= 1
+            if id >= self.lowest_id_in_queue and id <= self.highest_id_in_queue:
+                # Refresh the memory queue, because the updated item was in the
+                # memory queue.
+                self.__update_memory_queue(refresh=True)
+            self.lock.release()
+
+
+    def update(self, item, key):
+        """update an item in the queue"""
+        md5 = PersistentQueue.__hash_key(key)
+        self.lock.acquire()
         self.dbcur.execute("SELECT id FROM %s WHERE key = ?" % (self.table), (md5, ))
         result = self.dbcur.fetchone()
 
