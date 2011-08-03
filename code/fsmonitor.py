@@ -71,6 +71,9 @@ class FSMonitor(threading.Thread):
         "DROPPED_EVENTS"      : 0x00000016,
     }
 
+    # Will be filled at the end of this .py file.
+    EVENTNAMES = {}
+    MERGE_EVENTS = {}
 
     def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
         self.persistent                      = persistent
@@ -218,11 +221,32 @@ def get_fsmonitor():
     return __get_class_reference("fsmonitor_polling", "FSMonitorPolling")
 
 
-# Make EVENTS' members directly accessible through the class dictionary.
+# Make EVENTS' members directly accessible through the class dictionary. Also
+# fill the FSMonitor.EVENTNAMES dictionary.
 for name, mask in FSMonitor.EVENTS.iteritems():
     setattr(FSMonitor, name, mask)
+    FSMonitor.EVENTNAMES[mask] = name
 
-
+# Fill the FSMonitor.MERGE_EVENTS nested dictionary.
+# Key at level 1: old event. Key at level 2: new event. Value: merged event.
+# A value (merged event) of None means that the events have canceled each
+# other out, i.e. that nothing needs to happen (this is only the case when a
+# file is deleted immediately after it has been created).
+# Some of these combinations (marked with a #!) should not logically happen,
+# but all possible cases are listed anyway, for maximum robustness. They may
+# still happen due to bugs in the operating system's API, for example.
+FSMonitor.MERGE_EVENTS[FSMonitor.CREATED] = {}
+FSMonitor.MERGE_EVENTS[FSMonitor.CREATED][FSMonitor.CREATED]   = FSMonitor.CREATED  #!
+FSMonitor.MERGE_EVENTS[FSMonitor.CREATED][FSMonitor.MODIFIED]  = FSMonitor.CREATED
+FSMonitor.MERGE_EVENTS[FSMonitor.CREATED][FSMonitor.DELETED]   = None
+FSMonitor.MERGE_EVENTS[FSMonitor.MODIFIED] = {}
+FSMonitor.MERGE_EVENTS[FSMonitor.MODIFIED][FSMonitor.CREATED]  = FSMonitor.MODIFIED #!
+FSMonitor.MERGE_EVENTS[FSMonitor.MODIFIED][FSMonitor.MODIFIED] = FSMonitor.MODIFIED
+FSMonitor.MERGE_EVENTS[FSMonitor.MODIFIED][FSMonitor.DELETED]  = FSMonitor.DELETED
+FSMonitor.MERGE_EVENTS[FSMonitor.DELETED] = {}
+FSMonitor.MERGE_EVENTS[FSMonitor.DELETED][FSMonitor.CREATED]   = FSMonitor.MODIFIED
+FSMonitor.MERGE_EVENTS[FSMonitor.DELETED][FSMonitor.MODIFIED]  = FSMonitor.MODIFIED #!
+FSMonitor.MERGE_EVENTS[FSMonitor.DELETED][FSMonitor.DELETED]   = FSMonitor.DELETED  #!
 
 
 if __name__ == "__main__":

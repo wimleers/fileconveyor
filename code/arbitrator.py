@@ -342,8 +342,23 @@ class Arbitrator(threading.Thread):
 
             # Discover queue -> pipeline queue.
             (input_file, event) = self.discover_queue.get()
-            self.pipeline_queue.put((input_file, event))
-
+            item = self.pipeline_queue.get_item_for_key(key=input_file)
+            # If the file does not yet exist in the pipeline queue, put() it.
+            if item is None:
+                self.pipeline_queue.put(item=(input_file, event), key=input_file)
+            # Otherwise, merge the events, to prevent unnecessary actions.
+            # See https://github.com/wimleers/fileconveyor/issues/68.
+            else:
+                old_event = item[1]
+                merged_event = FSMonitor.MERGE_EVENTS[old_event][event]
+                if merged_event is not None:
+                    self.logger.info("Pipeline queue: merging events for '%s': %s + %s = %s." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
+                    self.pipeline_queue.update(item=(input_file, merged_event), key=input_file)
+                # The events being merged cancel each other out, thus remove
+                # the file from the pipeline queue.
+                else:
+                    self.pipeline_queue.remove_item_for_key(key=input_file)
+                    self.logger.info("Pipeline queue: merging events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
             self.logger.debug("Discover queue -> pipeline queue: '%s'." % (input_file))
         self.lock.release()
 
