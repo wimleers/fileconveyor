@@ -150,6 +150,7 @@ class FSMonitor(threading.Thread):
         # Database.
         if self.dbcur is None:
             self.dbcon = sqlite3.connect(self.dbfile)
+            self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
             self.dbcur = self.dbcon.cursor()
         # PathScanner.
         if self.persistent == True and self.dbcur is not None:

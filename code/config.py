@@ -31,7 +31,20 @@ class Config(object):
         self.logger       = logging.getLogger(".".join([parent_logger, "Config"]))
         self.errors       = 0
 
-        self.source_name_regex = re.compile('^[a-zA-Z0-9-_]*$')
+        self.source_name_regex = re.compile('^[a-zA-Z0-9-_]*$', re.UNICODE)
+
+
+    @classmethod
+    def __ensure_unicode(cls, string):
+        # If the string is already in Unicode, there's nothing we need to do.
+        if type(string) == type(u'.'):
+            return string
+        # Otherwise, decode it from UTF-8 (which is config.xml's encoding).
+        elif type(string) == type('.'):
+            return string.decode('utf-8')
+        # Finally, we may not really be receiving a string.
+        else:
+            return string
 
 
     def load(self, filename):
@@ -54,7 +67,7 @@ class Config(object):
         sources = root.find("sources")
 
         # Globally ignored directories.
-        self.ignored_dirs = sources.get("ignoredDirs", "")
+        self.ignored_dirs = Config.__ensure_unicode(sources.get("ignoredDirs", ""))
 
         # If set, validate the globally ignored directories by trying to
         # create a Filter object for it.
@@ -70,10 +83,10 @@ class Config(object):
                 self.errors += 1
 
         for source in sources:
-            name          = source.get("name")
-            scan_path     = source.get("scanPath")
-            document_root = source.get("documentRoot")
-            base_path     = source.get("basePath")
+            name          = Config.__ensure_unicode(source.get("name"))
+            scan_path     = Config.__ensure_unicode(source.get("scanPath"))
+            document_root = Config.__ensure_unicode(source.get("documentRoot"))
+            base_path     = Config.__ensure_unicode(source.get("basePath"))
 
             self.sources[name] = {
                 "name"          : name,
@@ -108,11 +121,11 @@ class Config(object):
         servers_node = root.find("servers")
         for server_node in servers_node:
             settings = {}
-            name           = server_node.get("name")
-            transporter    = server_node.get("transporter")
+            name           = Config.__ensure_unicode(server_node.get("name"))
+            transporter    = Config.__ensure_unicode(server_node.get("transporter"))
             maxConnections = server_node.get("maxConnections", 0)
             for setting in server_node.getchildren():
-                settings[setting.tag] = setting.text
+                settings[setting.tag] = Config.__ensure_unicode(setting.text)
             self.servers[name] = {
                 "maxConnections" : int(maxConnections),
                 "transporter"    : transporter,
@@ -123,8 +136,8 @@ class Config(object):
     def __parse_rules(self, root):
         rules_node = root.find("rules")
         for rule_node in rules_node:
-            for_source = rule_node.get("for")
-            label      = rule_node.get("label")
+            for_source = Config.__ensure_unicode(rule_node.get("for"))
+            label      = Config.__ensure_unicode(rule_node.get("label"))
 
             # 1: filter (optional)
             conditions = None
@@ -152,7 +165,7 @@ class Config(object):
             if not self.rules.has_key(for_source):
                 self.rules[for_source] = []
             self.rules[for_source].append({
-                "label"           : label,
+                "label"           : Config.__ensure_unicode(label),
                 "filterConditions": conditions,
                 "processorChain"  : processor_chain,
                 "destinations"    : destinations,
@@ -164,11 +177,11 @@ class Config(object):
         for condition_node in filter_node.getchildren():
             if condition_node.tag == "size":
                 conditions[condition_node.tag] = {
-                    "conditionType" : condition_node.get("conditionType"),
-                    "treshold"      : condition_node.text,
+                    "conditionType" : Config.__ensure_unicode(condition_node.get("conditionType")),
+                    "treshold"      : Config.__ensure_unicode(condition_node.text),
                 }
             else:
-                conditions[condition_node.tag] = condition_node.text
+                conditions[condition_node.tag] = Config.__ensure_unicode(condition_node.text)
 
         # Validate the conditions by trying to create a Filter object with it.
         try:
@@ -186,14 +199,14 @@ class Config(object):
     def __parse_processor_chain(self, processor_chain_node, rule_label):
         processor_chain = []
         for processor_node in processor_chain_node.getchildren():
-            processor_chain.append(processor_node.get("name"))
+            processor_chain.append(Config.__ensure_unicode(processor_node.get("name")))
         return processor_chain
 
 
     def __parse_destination(self, destination_node, rule_label):
         destination = {}
-        destination["server"] = destination_node.get("server")
-        destination["path"]   = destination_node.get("path", None)
+        destination["server"] = Config.__ensure_unicode(destination_node.get("server"))
+        destination["path"]   = Config.__ensure_unicode(destination_node.get("path", None))
 
         # Validate "server" attribute.
         if destination["server"] is None:

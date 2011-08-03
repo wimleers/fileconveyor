@@ -204,7 +204,7 @@ class FSMonitorFSEvents(FSMonitor):
         monitored_path = clientCallBackInfo
 
         for i in range(numEvents):
-            event_path = eventPaths[i]
+            event_path = eventPaths[i].decode('utf-8')
             self.latest_event_id = eventIDs[i]
 
             # Strip trailing slash

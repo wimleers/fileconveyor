@@ -44,9 +44,9 @@ class Filter(object):
         "ignoredDirs" : '\*"/\\\[\]:;\|=,<>',   # / and \ are disallowed
     }
     patterns = {
-        "paths"       : re.compile('^(?:([^' + forbidden_characters["paths"]       + ']+):)*[^' + forbidden_characters["paths"]       + ']+$'),
-        "extensions"  : re.compile('^(?:([^' + forbidden_characters["extensions"]  + ']+):)*[^' + forbidden_characters["extensions"]  + ']+$'),
-        "ignoredDirs" : re.compile('^(?:([^' + forbidden_characters["ignoredDirs"] + ']+):)*[^' + forbidden_characters["ignoredDirs"] + ']+$'),
+        "paths"       : re.compile('^(?:([^' + forbidden_characters["paths"]       + ']+):)*[^' + forbidden_characters["paths"]       + ']+$', re.UNICODE),
+        "extensions"  : re.compile('^(?:([^' + forbidden_characters["extensions"]  + ']+):)*[^' + forbidden_characters["extensions"]  + ']+$', re.UNICODE),
+        "ignoredDirs" : re.compile('^(?:([^' + forbidden_characters["ignoredDirs"] + ']+):)*[^' + forbidden_characters["ignoredDirs"] + ']+$', re.UNICODE),
     }
 
 
@@ -79,7 +79,7 @@ class Filter(object):
 
         # Precompile the pattern condition, if there is one.
         if (self.conditions.has_key("pattern")):
-            self.pattern = re.compile(self.conditions["pattern"])
+            self.pattern = re.compile(self.conditions["pattern"], re.UNICODE)
 
         self.initialized = True
 
@@ -110,7 +110,7 @@ class Filter(object):
             if conditions["pattern"] is None:
                 raise InvalidPatternConditionError
             try:
-                re.compile(conditions["pattern"])
+                re.compile(conditions["pattern"], re.UNICODE)
             except re.error:
                 raise InvalidPatternConditionError
 

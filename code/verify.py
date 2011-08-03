@@ -8,6 +8,7 @@ num_files_checked = 0
 num_files_invalid = 0
 
 dbcon = sqlite3.connect(SYNCED_FILES_DB)
+dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
 dbcur = dbcon.cursor()
 num_files = dbcur.execute("SELECT COUNT(*) FROM synced_files").fetchone()[0]
 dbcur.execute("SELECT input_file, url, server FROM synced_files ORDER BY server")

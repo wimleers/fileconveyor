@@ -15,6 +15,7 @@ from pyinotify import WatchManager, \
 import time
 import os
 import stat
+import sys
 
 
 
@@ -166,10 +167,21 @@ class FSMonitorInotify(FSMonitor):
         self.__process_pathscanner_updates(self.pathscanner_files_deleted,  self.pathscanner.delete_files)
 
 
+
+
 class FSMonitorInotifyProcessEvent(ProcessEvent):
+
+
+    # On Linux, you can choose which encoding is used for your file system's
+    # file names. Hence, we better detect the file system's encoding so we
+    # know what to decode from in __ensure_unicode(). 
+    encoding = sys.getfilesystemencoding()
+
+
     def __init__(self, fsmonitor):
         ProcessEvent.__init__(self)
         self.fsmonitor_ref = fsmonitor
+
 
     def __update_pathscanner_db(self, pathname, event_type):
         """use PathScanner.(add|update|delete)_files() to queue updates for
@@ -197,47 +209,66 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
             else:
                 self.fsmonitor_ref.pathscanner_files_modified.append(t)
 
+
+    @classmethod
+    def __ensure_unicode(cls, event):
+        event.path = event.path.decode(cls.encoding)
+        event.pathname = event.pathname.decode(cls.encoding)
+        return event
+
+
     def process_IN_CREATE(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         self.__update_pathscanner_db(event.pathname, FSMonitor.CREATED)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.CREATED)
 
+
     def process_IN_DELETE(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         self.__update_pathscanner_db(event.pathname, FSMonitor.DELETED)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DELETED)
 
+
     def process_IN_MODIFY(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED)
+
 
     def process_IN_ATTRIB(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED)
 
+
     def process_IN_MOVE_SELF(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MONITORED_DIR_MOVED)
 
+
     def process_IN_Q_OVERFLOW(self, event):
+        event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
         FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DROPPED_EVENTS)
 
+
     def process_default(self, event):
         # Event not supported!
         pass
-        

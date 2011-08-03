@@ -36,6 +36,7 @@ class PersistentList(object):
     def __prepare_db(self, dbfile):
         sqlite3.register_converter("pickle", cPickle.loads)
         self.dbcon = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
         self.dbcur = self.dbcon.cursor()
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle)" % (self.table))
         self.dbcon.commit()
@@ -60,7 +61,8 @@ class PersistentList(object):
 
     def append(self, item):
         # Insert the item into the database.
-        self.dbcur.execute("INSERT INTO %s (item) VALUES(?)" % (self.table), (cPickle.dumps(item), ))
+        pickled_item = cPickle.dumps(item, cPickle.HIGHEST_PROTOCOL)
+        self.dbcur.execute("INSERT INTO %s (item) VALUES(?)" % (self.table), (sqlite3.Binary(pickled_item), ))
         self.dbcon.commit()
         id = self.dbcur.lastrowid
         # Insert the item into the in-memory list.

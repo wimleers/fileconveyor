@@ -66,6 +66,7 @@ class PersistentQueue(object):
     def __prepare_db(self, dbfile):
         sqlite3.register_converter("pickle", cPickle.loads)
         self.dbcon = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
         self.dbcur = self.dbcon.cursor()
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle, key CHAR(32))" % (self.table))
         self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS unique_key ON %s (key)" % (self.table))
@@ -98,7 +99,8 @@ class PersistentQueue(object):
         md5 = PersistentQueue.__hash_key(key)
         self.lock.acquire()
         try:
-            self.dbcur.execute("INSERT INTO %s (item, key) VALUES(?, ?)" % (self.table), (cPickle.dumps(item), md5))
+            pickled_item = cPickle.dumps(item, cPickle.HIGHEST_PROTOCOL)
+            self.dbcur.execute("INSERT INTO %s (item, key) VALUES(?, ?)" % (self.table), (sqlite3.Binary(pickled_item), md5))
         except sqlite3.IntegrityError:
             self.lock.release()
             raise AlreadyExists
@@ -190,7 +192,8 @@ class PersistentQueue(object):
             raise UpdateForNonExistingKey
         else:
             id = result[0]
-            self.dbcur.execute("UPDATE %s SET item = ? WHERE key = ?" % (self.table), (cPickle.dumps(item), md5))
+            pickled_item = cPickle.dumps(item, cPickle.HIGHEST_PROTOCOL)
+            self.dbcur.execute("UPDATE %s SET item = ? WHERE key = ?" % (self.table), (sqlite3.Binary(pickled_item), md5))
             self.dbcon.commit()
 
         if result is not None and id >= self.lowest_id_in_queue and id <= self.highest_id_in_queue:
@@ -206,7 +209,7 @@ class PersistentQueue(object):
         """calculate the md5 hash of the key"""
         if not isinstance(key, types.StringTypes):
             key = str(key)
-        md5 = hashlib.md5(key).hexdigest()
+        md5 = hashlib.md5(key.encode('utf-8')).hexdigest().decode('ascii')
         return md5
 
 
@@ -252,6 +255,7 @@ class PersistentDataManager(object):
 
     def __prepare_db(self, dbfile):
         self.dbcon = sqlite3.connect(dbfile)
+        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
         self.dbcur = self.dbcon.cursor()
 
 

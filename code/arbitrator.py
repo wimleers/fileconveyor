@@ -252,6 +252,7 @@ class Arbitrator(threading.Thread):
 
         # Create connection to synced files DB.
         self.dbcon = sqlite3.connect(SYNCED_FILES_DB)
+        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
         self.dbcur = self.dbcon.cursor()
         self.dbcur.execute("CREATE TABLE IF NOT EXISTS synced_files(input_file text, transported_file_basename text, url text, server text)")
         self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS file_unique_per_server ON synced_files (input_file, server)")

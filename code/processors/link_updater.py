@@ -54,6 +54,7 @@ class CSSURLUpdater(Processor):
         # Step 3: verify that each of these files has been synced.
         synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
         self.dbcon = sqlite3.connect(synced_files_db)
+        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
         self.dbcur = self.dbcon.cursor()
         all_synced = True
         for urlstring in getUrls(sheet):

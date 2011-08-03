@@ -300,6 +300,7 @@ if __name__ == "__main__":
     # Sample usage
     path = "/Users/wimleers/Downloads"
     db = sqlite3.connect("pathscanner.db")
+    db.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
     ignored_dirs = ["CVS", ".svn"]
     scanner = PathScanner(db, ignored_dirs)
     # Force a rescan
