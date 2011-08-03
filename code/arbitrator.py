@@ -897,8 +897,15 @@ class Arbitrator(threading.Thread):
             # Ignore directories (we cannot test deleted files to see if they
             # are directories, because they obviously don't exist anymore).
             if touched:
-                if stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
-                    return
+                try:
+                    if stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
+                        return
+                except OSError as e:
+                    # The file (or directory, we can't be sure at this point)
+                    # does no longer exist (despite the os.path.exists() check
+                    # above!): it must *just* have been deleted.
+                    if e.errno == os.errno.ENOENT:
+                        return
 
             # Map FSMonitor's variable names to ours.
             input_file = event_path
