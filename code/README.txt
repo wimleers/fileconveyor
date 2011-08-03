@@ -37,6 +37,11 @@ my bachelor thesis text instead. If neither of that is sufficient, then please
 contact me.
 
 
+Upgrading
+---------
+If you're upgrading from a previous version of File Conveyor, please run
+upgrade.py.
+
 
 
 ==============================================================================
