@@ -76,7 +76,7 @@ class Arbitrator(threading.Thread):
 
 
     def __init__(self, configfile="config.xml", restart=False):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="ArbitratorThread")
         self.lock = threading.Lock()
         self.die = False
         self.processorchains_running = 0

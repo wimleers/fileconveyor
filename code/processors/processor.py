@@ -142,7 +142,7 @@ class ProcessorChain(threading.Thread):
 
         self.parent_logger_for_processor = ".".join([parent_logger, "ProcessorChain"]);
 
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="ProcessorChainThread")
 
 
     def run(self):

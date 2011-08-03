@@ -56,7 +56,7 @@ class Transporter(threading.Thread):
         # Validate settings.
         self.validate_settings()
 
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="TransporterThread")
 
 
     def run(self):

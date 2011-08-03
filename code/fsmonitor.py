@@ -89,7 +89,7 @@ class FSMonitor(threading.Thread):
         self.add_queue                       = Queue.Queue()
         self.remove_queue                    = Queue.Queue()
         self.die                             = False
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="FSMonitorThread")
 
 
     def run(self):
