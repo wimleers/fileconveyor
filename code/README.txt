@@ -395,9 +395,11 @@ CALLBACKS_CONSOLE_OUTPUT = False
   Controls whether output will be generated for each callback. (There are
   callbacks for the file system monitor, processor chains and transporters.)
 CONSOLE_LOGGER_LEVEL = logging.WARNING
-  Controls the output level of the logging to the console.
+  Controls the output level of the logging to the console. For a full list of
+  possibilities, see http://docs.python.org/release/2.6/library/logging.html#logging-levels.
 FILE_LOGGER_LEVEL = logging.DEBUG
-  Controls the output level of the logging to the log file.
+  Controls the output level of the logging to the console. For a full list of
+  possibilities, see http://docs.python.org/release/2.6/library/logging.html#logging-levels.
 RETRY_INTERVAL = 30
   Sets the interval in which the 'failed files' list is appended to the
   pipeline queue, to retry to sync these failed files.
