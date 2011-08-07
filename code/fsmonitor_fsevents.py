@@ -22,6 +22,7 @@ from FSEvents import kCFAllocatorDefault, \
                      NSAutoreleasePool, \
                      kFSEventStreamEventIdSinceNow, \
                      kFSEventStreamCreateFlagWatchRoot, \
+                     kFSEventStreamEventFlagNone, \
                      kFSEventStreamEventFlagMustScanSubDirs, \
                      kFSEventStreamEventFlagUserDropped, \
                      kFSEventStreamEventFlagKernelDropped, \
@@ -52,8 +53,9 @@ class FSMonitorFSEvents(FSMonitor):
     flags = kFSEventStreamCreateFlagWatchRoot
 
 
-    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+        self.logger.info("FSMonitor class used: FSMonitorFSEvents.")
         self.latest_event_id = None
         self.auto_release_pool = None
 
@@ -200,6 +202,7 @@ class FSMonitorFSEvents(FSMonitor):
 
     def __fsevents_callback(self, streamRef, clientCallBackInfo, numEvents, eventPaths, eventFlags, eventIDs):
         """private callback function for use with FSEventStreamCreate"""
+        discovered_through = "FSEvents"
         # Details of the used flags can be found in FSEvents.h.
         monitored_path = clientCallBackInfo
 
@@ -212,25 +215,41 @@ class FSMonitorFSEvents(FSMonitor):
                 event_path = event_path[:-1]
 
             if FSMonitor.is_in_ignored_directory(self, event_path):
+                self.logger.debug("Event occurred at '%s', but is inside ignored directory." % (event_path))
                 return
 
             # Trigger the appropriate events.
             if eventFlags[i] & kFSEventStreamEventFlagUserDropped:
-                FSMonitor.trigger_event(self, monitored_path, None, FSMonitor.DROPPED_EVENTS)
+                self.logger.debug("FSEvents in user space  dropped events for monitored path '%s'." % (monitored_path))
+                FSMonitor.trigger_event(self, monitored_path, None, FSMonitor.DROPPED_EVENTS, discovered_through)
 
             elif eventFlags[i] & kFSEventStreamEventFlagKernelDropped:
-                FSMonitor.trigger_event(self, monitored_path, None, FSMonitor.DROPPED_EVENTS)
+                self.logger.debug("FSEvents in kernel space  dropped events for monitored path '%s'." % (monitored_path))
+                FSMonitor.trigger_event(self, monitored_path, None, FSMonitor.DROPPED_EVENTS, discovered_through)
 
             elif eventFlags[i] & kFSEventStreamEventFlagRootChanged:
-                FSMonitor.trigger_event(self, monitored_path, event_path, FSMonitor.MONITORED_DIR_MOVED)
+                self.logger.debug("FSEvents reports that the monitored directory '%s' has been moved." % (monitored_path))
+                FSMonitor.trigger_event(self, monitored_path, event_path, FSMonitor.MONITORED_DIR_MOVED, discovered_through)
+
+            elif eventFlags[i] == kFSEventStreamEventFlagNone:
+                # There was some change in the directory at the specific path
+                # supplied in this event.
+                result = self.pathscanner.scan(event_path)
+                self.logger.debug("FSEvents reports that event(s) have occurred inside '%s'. Starting the scan to trigger the corresponding file-specific events." % (event_path))
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through)
 
             elif eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs:
+                # There was some change in the directory and one of its
+                # subdirectories supplied in this event.                
                 # This call to PathScanner is what ensures that FSMonitor.db
                 # remains up-to-date.
                 result = self.pathscanner.scan_tree(event_path)
-                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
+                self.logger.debug("FSEvents reports that event(s) have occurred inside subdirectories of '%s'. Starting the scan to trigger the corresponding file-specific events." % (event_path))
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through)
+
             else:
                 # This call to PathScanner is what ensures that FSMonitor.db
                 # remains up-to-date.
                 result = self.pathscanner.scan(event_path)
-                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
+                self.logger.debug("FSEvents reports that some non-standard event(s) have occurred inside '%s'. Starting the scan to trigger the corresponding file-specific events." % (event_path))
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through)

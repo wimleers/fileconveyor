@@ -25,8 +25,9 @@ class FSMonitorPolling(FSMonitor):
     interval = 10
 
 
-    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+        self.logger.info("FSMonitor class used: FSMonitorPolling.")
 
 
     def __add_dir(self, path, event_mask):
@@ -109,8 +110,9 @@ class FSMonitorPolling(FSMonitor):
             self.lock.release()
 
         # Scan all paths.
+        discovered_through = "polling"
         for monitored_path in self.monitored_paths.keys():
             # These calls to PathScanner is what ensures that FSMonitor.db
             # remains up-to-date.
             for event_path, result in self.pathscanner.scan_tree(monitored_path):
-                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result)
+                FSMonitor.trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through)

@@ -266,8 +266,7 @@ class Arbitrator(threading.Thread):
 
         # Initialize the FSMonitor.
         fsmonitor_class = get_fsmonitor()
-        self.logger.info("Setup: using the %s FSMonitor class." % (fsmonitor_class))
-        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True, self.config.ignored_dirs.split(":"), "fsmonitor.db")
+        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True, self.config.ignored_dirs.split(":"), "fsmonitor.db", "Arbitrator")
         self.logger.warning("Setup: initialized FSMonitor.")
 
         # Monitor all sources' scan paths.
@@ -375,7 +374,7 @@ class Arbitrator(threading.Thread):
                 else:
                     self.pipeline_queue.remove_item_for_key(key=input_file)
                     self.logger.info("Pipeline queue: merged events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
-            self.logger.debug("Discover queue -> pipeline queue: '%s'." % (input_file))
+            self.logger.info("Discover queue -> pipeline queue: '%s'." % (input_file))
         self.lock.release()
 
 
@@ -897,14 +896,15 @@ class Arbitrator(threading.Thread):
         return dst
 
 
-    def fsmonitor_callback(self, monitored_path, event_path, event):
+    def fsmonitor_callback(self, monitored_path, event_path, event, discovered_through):
         # Map FSMonitor's variable names to ours.
         input_file = event_path
 
         if CALLBACKS_CONSOLE_OUTPUT:
             print """FSMONITOR CALLBACK FIRED:
                     input_file='%s'
-                    event=%d""" % (input_file, event)
+                    event=%d"
+                    discovered_through=%s""" % (input_file, event, discovered_through)
 
         # The file may have already been deleted!
         deleted = event == FSMonitor.DELETED

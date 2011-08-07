@@ -51,6 +51,7 @@ import sqlite3
 import threading
 import Queue
 import os
+import logging
 from pathscanner import PathScanner
 
 
@@ -75,7 +76,7 @@ class FSMonitor(threading.Thread):
     EVENTNAMES = {}
     MERGE_EVENTS = {}
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
         self.persistent                      = persistent
         self.trigger_events_for_initial_scan = trigger_events_for_initial_scan
         self.monitored_paths                 = {}
@@ -89,6 +90,7 @@ class FSMonitor(threading.Thread):
         self.add_queue                       = Queue.Queue()
         self.remove_queue                    = Queue.Queue()
         self.die                             = False
+        self.logger                          = logging.getLogger(".".join([parent_logger, "FSMonitor"]))
         threading.Thread.__init__(self, name="FSMonitorThread")
 
 
@@ -113,6 +115,7 @@ class FSMonitor(threading.Thread):
         self.lock.acquire()
         self.remove_queue.put(path)
         self.lock.release()
+        self.logger.info("Queued '%s' to stop being watched.")
 
 
     def __remove_dir(self, path):
@@ -121,8 +124,10 @@ class FSMonitor(threading.Thread):
 
     def generate_missed_events(self, path, event_mask=None):
         """generate the missed events for a persistent DB"""
+        self.logger.info("Generating missed events for '%s' (event mask: %s)." % (path, event_mask))
         for event_path, result in self.pathscanner.scan_tree(path):
-            self.trigger_events_for_pathscanner_result(path, event_path, result, event_mask)
+            self.trigger_events_for_pathscanner_result(path, event_path, result, "generate_missed_events", event_mask)
+        self.logger.info("Done generating missed events for '%s' (event mask: %s)." % (path, event_mask))
 
 
     def stop(self):
@@ -137,12 +142,14 @@ class FSMonitor(threading.Thread):
         """
         if self.persistent:
             self.pathscanner.purge_path(path)
+            self.logger.info("Purged information for monitored path '%s'." % (path))
 
 
-    def trigger_event(self, monitored_path, event_path, event):
+    def trigger_event(self, monitored_path, event_path, event, discovered_through):
         """trigger one of the standardized events"""
         if callable(self.callback):
-            self.callback(monitored_path, event_path, event)
+            self.logger.info("Detected '%s' event for '%s' through %s (for monitored path '%s')." % (FSMonitor.EVENTNAMES[event], event_path, discovered_through, monitored_path))
+            self.callback(monitored_path, event_path, event, discovered_through)
 
 
     def setup(self):
@@ -157,19 +164,19 @@ class FSMonitor(threading.Thread):
             self.pathscanner = PathScanner(self.dbcon, self.ignored_dirs, "pathscanner")
 
 
-    def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, event_mask=None):
+    def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through=None, event_mask=None):
         """trigger events for pathscanner result"""
         if event_mask is None:
             event_mask = self.monitored_paths[monitored_path].event_mask
         if event_mask & FSMonitor.CREATED:
             for filename in result["created"]:
-                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.CREATED)
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.CREATED, discovered_through)
         if event_mask & FSMonitor.MODIFIED:
             for filename in result["modified"]:
-                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.MODIFIED)                
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.MODIFIED, discovered_through)
         if event_mask & FSMonitor.DELETED:
             for filename in result["deleted"]:
-                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.DELETED)
+                self.trigger_event(monitored_path, os.path.join(event_path, filename), self.DELETED, discovered_through)
 
 
     def is_in_ignored_directory(self, path):

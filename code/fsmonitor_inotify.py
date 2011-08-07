@@ -36,8 +36,9 @@ class FSMonitorInotify(FSMonitor):
     }
 
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db"):
-        FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile)
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
+        FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+        self.logger.info("FSMonitor class used: FSMonitorInotify.")
         self.wm             = None
         self.notifier       = None
         self.pathscanner_files_created  = []
@@ -180,7 +181,8 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
 
     def __init__(self, fsmonitor):
         ProcessEvent.__init__(self)
-        self.fsmonitor_ref = fsmonitor
+        self.fsmonitor_ref      = fsmonitor
+        self.discovered_through = "inotify"
 
 
     def __update_pathscanner_db(self, pathname, event_type):
@@ -222,8 +224,9 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_CREATE event has occurred for '%s'." % (event.pathname))
         self.__update_pathscanner_db(event.pathname, FSMonitor.CREATED)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.CREATED)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.CREATED, self.discovered_through)
 
 
     def process_IN_DELETE(self, event):
@@ -231,8 +234,9 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_DELETE event has occurred for '%s'." % (event.pathname))
         self.__update_pathscanner_db(event.pathname, FSMonitor.DELETED)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DELETED)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DELETED, self.discovered_through)
 
 
     def process_IN_MODIFY(self, event):
@@ -240,8 +244,9 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_MODIFY event has occurred for '%s'." % (event.pathname))
         self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED, self.discovered_through)
 
 
     def process_IN_ATTRIB(self, event):
@@ -249,26 +254,30 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_ATTRIB event has occurred for '%s'." % (event.pathname))
         self.__update_pathscanner_db(event.pathname, FSMonitor.MODIFIED)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MODIFIED, self.discovered_through)
 
 
     def process_IN_MOVE_SELF(self, event):
         event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_MOVE_SELF event has occurred for '%s'." % (event.pathname))
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MONITORED_DIR_MOVED)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.MONITORED_DIR_MOVED, self.discovered_through)
 
 
     def process_IN_Q_OVERFLOW(self, event):
         event = self.__ensure_unicode(event)
         if FSMonitor.is_in_ignored_directory(self.fsmonitor_ref, event.path):
             return
+        self.fsmonitor_ref.logger.debug("inotify reports that an IN_Q_OVERFLOW event has occurred for '%s'." % (event.pathname))
         monitored_path = self.fsmonitor_ref.inotify_path_to_monitored_path(event.path)
-        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DROPPED_EVENTS)
+        FSMonitor.trigger_event(self.fsmonitor_ref, monitored_path, event.pathname, FSMonitor.DROPPED_EVENTS, self.discovered_through)
 
 
     def process_default(self, event):
         # Event not supported!
+        self.fsmonitor_ref.logger.debug("inotify reports that an unsupported event (mask: %d, %s) has occurred for '%s'." % (event.mask, event.maskname, event.pathname))
         pass
