@@ -61,10 +61,12 @@ class AdvancedQueue(UserList):
 
 # Define exceptions.
 class ArbitratorError(Exception): pass
-class ConfigError(ArbitratorError): pass
-class ProcessorAvailabilityTestError(ArbitratorError): pass
-class TransporterAvailabilityTestError(ArbitratorError): pass
-class ServerConnectionTestError(ArbitratorError): pass
+class ArbitratorInitError(ArbitratorError): pass
+class ConfigError(ArbitratorInitError): pass
+class ProcessorAvailabilityTestError(ArbitratorInitError): pass
+class TransporterAvailabilityTestError(ArbitratorInitError): pass
+class ServerConnectionTestError(ArbitratorInitError): pass
+class FSMonitorInitError(ArbitratorInitError): pass
 
 
 class Arbitrator(threading.Thread):
@@ -756,7 +758,7 @@ class Arbitrator(threading.Thread):
                 self.lock.acquire()
                 self.files_in_pipeline.remove((input_file, event))
                 self.lock.release()
-                self.logger.warning("Synced: '%s'." % (input_file))
+                self.logger.warning("Synced: '%s' (%s)." % (input_file, FSMonitor.EVENTNAMES[event]))
 
         processed += 1
 
@@ -1037,8 +1039,10 @@ class Arbitrator(threading.Thread):
 def run_file_conveyor(restart=False):
     try:
         arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"), restart)
+    except ArbitratorInitError, e:
+        print e.__class__.__name__, e
     except ArbitratorError, e:
-        print e.__class__, e
+        print e.__class__.__name__, e
         del arbitrator
     else:
         t = DaemonThreadRunner(arbitrator, PID_FILE)
