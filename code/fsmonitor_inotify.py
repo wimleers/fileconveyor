@@ -11,7 +11,8 @@ from fsmonitor import *
 import pyinotify
 from pyinotify import WatchManager, \
                       ThreadedNotifier, \
-                      ProcessEvent
+                      ProcessEvent, \
+                      WatchManagerError
 import time
 import os
 import stat
@@ -69,14 +70,18 @@ class FSMonitorInotify(FSMonitor):
 
         # Immediately start monitoring this directory.
         event_mask_inotify = self.__fsmonitor_event_to_inotify_event(event_mask)
-        wdd = self.wm.add_watch(path, event_mask_inotify, proc_fun=self.process_event, rec=True, auto_add=True)
-        # Verify that inotify is able to monitor this directory.
-        if wdd is None:
-            raise MonitorError, "Could not monitor %s" % path
-            return None
-        else:
-            self.monitored_paths[path] = MonitoredPath(path, event_mask, wdd)
-            self.monitored_paths[path].monitoring = True
+        try:
+            wdd = self.wm.add_watch(path, event_mask_inotify, proc_fun=self.process_event, rec=True, auto_add=True, quiet=False)
+        except WatchManagerError, e:
+            raise FSMonitorError, "Could not monitor '%s', reason: %s" % (path, e)
+        # Verify that inotify is able to monitor this directory and all of its
+        # subdirectories.
+        for monitored_path in wdd:
+            if wdd[monitored_path] < 0:
+                code = wdd[monitored_path]
+                raise FSMonitorError, "Could not monitor %s (%d)" % (monitored_path, code)
+        self.monitored_paths[path] = MonitoredPath(path, event_mask, wdd)
+        self.monitored_paths[path].monitoring = True
 
         if self.persistent:
             # Generate the missed events. This implies that events that
