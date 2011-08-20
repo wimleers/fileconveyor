@@ -305,7 +305,7 @@ class Arbitrator(threading.Thread):
                 # because files are modified, processed and transported much
                 # slower than that.
                 time.sleep(0.2)
-        except Exception as e:
+        except Exception, e:
             self.logger.exception("Unhandled exception of type '%s' detected, arguments: '%s'." % (e.__class__.__name__, e.args))
             self.logger.error("Stopping File Conveyor to ensure the application is stopped in a clean manner.")
             os.kill(os.getpid(), signal.SIGTERM)
@@ -918,7 +918,7 @@ class Arbitrator(threading.Thread):
                 try:
                     if stat.S_ISDIR(os.stat(event_path)[stat.ST_MODE]):
                         return
-                except OSError as e:
+                except OSError, e:
                     # The file (or directory, we can't be sure at this point)
                     # does no longer exist (despite the os.path.exists() check
                     # above!): it must *just* have been deleted.
