@@ -16,21 +16,19 @@ import signal
 # and a full, yet extend, copy django-storages) at the beginning of sys.path,
 # to prevent File Conveyor from using the code of a possible Django
 # installation on this system.
-sys.path.insert(1, os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
-
-sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'processors')))
-sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'transporters')))
+FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(1, os.path.abspath(os.path.join(FILE_CONVEYOR_PATH, 'dependencies')))
 
 
-from settings import *
-from config import *
-from persistent_queue import *
-from persistent_list import *
-from fsmonitor import *
-from filter import *
-from processors.processor import *
-from transporters.transporter import *
-from daemon_thread_runner import *
+from fileconveyor.settings import *
+from fileconveyor.config import *
+from fileconveyor.persistent_queue import *
+from fileconveyor.persistent_list import *
+from fileconveyor.fsmonitor import *
+from fileconveyor.filter import *
+from fileconveyor.processors.processor import *
+from fileconveyor.transporters.transporter import *
+from fileconveyor.daemon_thread_runner import *
 
 
 # Copied from django.utils.functional
@@ -130,7 +128,7 @@ class Arbitrator(threading.Thread):
             for rule in self.config.rules[source]:
                 if not rule["processorChain"] is None:
                     for processor in rule["processorChain"]:
-                        (modulename, classname) = processor.split(".")
+                        (modulename, classname) = processor.rsplit(".", 1)
                         try:
                             module = __import__(modulename, globals(), locals(), [classname])
                             processor_class = getattr(module, classname)
@@ -147,7 +145,7 @@ class Arbitrator(threading.Thread):
         transporters_not_found = 0
         for server in self.config.servers.keys():
             transporter_name = self.config.servers[server]["transporter"]
-            modulename = "transporters.transporter_" + transporter_name
+            modulename = transporter_name
             try:
                 module = __import__(modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
                 classname = module.TRANSPORTER_CLASS
@@ -469,7 +467,7 @@ class Arbitrator(threading.Thread):
                             per_server = False
                             for processor_classname in rule["processorChain"]:
                                 # Get a reference to this processor class.
-                                (modulename, classname) = processor_classname.split(".")
+                                (modulename, classname) = processor_classname.rsplit(".", 1)
                                 module = __import__(modulename, globals(), locals(), [classname])
                                 processor_class = getattr(module, classname)
                                 if getattr(processor_class, 'different_per_server', False) == True:
@@ -859,7 +857,7 @@ class Arbitrator(threading.Thread):
         settings = self.config.servers[server]["settings"]
 
         # Determine which class to import.
-        transporter_modulename = "transporters.transporter_" + transporter_name
+        transporter_modulename = transporter_name
         _temp = __import__(transporter_modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
         transporter_classname = _temp.TRANSPORTER_CLASS
 
@@ -1038,7 +1036,7 @@ class Arbitrator(threading.Thread):
 
 def run_file_conveyor(restart=False):
     try:
-        arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"), restart)
+        arbitrator = Arbitrator(os.path.join(FILE_CONVEYOR_PATH, "config.xml"), restart)
     except ArbitratorInitError, e:
         print e.__class__.__name__, e
     except ArbitratorError, e:

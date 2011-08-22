@@ -8,11 +8,11 @@
 
   <!-- Servers -->
   <servers>
-    <server name="origin pull cdn" transporter="symlink_or_copy">
+    <server name="origin pull cdn" transporter="fileconveyor.transporters.transporter_symlink_or_copy">
       <location>/htdocs/static.example.com</location>
       <url>http://localhost/static.example.com/</url>
     </server>
-    <server name="ftp push cdn" transporter="ftp" maxConnections="5">
+    <server name="ftp push cdn" transporter="fileconveyor.transporters.transporter_ftp" maxConnections="5">
       <host>localhost</host>
       <username>daemontest</username>
       <password>daemontest</password>
@@ -28,11 +28,11 @@
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
       </filter>
       <processorChain>
-        <processor name="image_optimizer.KeepFilename" />
-        <processor name="yui_compressor.YUICompressor" />
-        <processor name="google_closure_compiler.GoogleClosureCompiler" />
-        <processor name="link_updater.CSSURLUpdater" />
-        <processor name="unique_filename.Mtime" />
+        <processor name="fileconveyor.processors.image_optimizer.KeepFilename" />
+        <processor name="fileconveyor.processors.yui_compressor.YUICompressor" />
+        <processor name="fileconveyor.processors.google_closure_compiler.GoogleClosureCompiler" />
+        <processor name="fileconveyor.processors.link_updater.CSSURLUpdater" />
+        <processor name="fileconveyor.processors.unique_filename.Mtime" />
       </processorChain>
       <destinations>
         <destination server="origin pull cdn" path="static" />
