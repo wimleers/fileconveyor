@@ -3,6 +3,9 @@ import os.path
 from setuptools import setup, find_packages
 
 
+VERSION = '0.1-dev'
+
+
 def read_relative_file(filename):
     """Returns contents of the given file.
     Filename argument must be relative to this module.
@@ -13,7 +16,7 @@ def read_relative_file(filename):
 
 setup(
     name='fileconveyor',
-    version='0.1-dev',
+    version=VERSION,
     url='http://fileconveyor.org',
     download_url='https://github.com/wimleers/fileconveyor',
     author='Wim Leers',
