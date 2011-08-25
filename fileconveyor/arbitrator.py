@@ -128,15 +128,8 @@ class Arbitrator(threading.Thread):
             for rule in self.config.rules[source]:
                 if not rule["processorChain"] is None:
                     for processor in rule["processorChain"]:
-                        (modulename, classname) = processor.rsplit(".", 1)
-                        try:
-                            module = __import__(modulename, globals(), locals(), [classname])
-                            processor_class = getattr(module, classname)
-                        except ImportError:
-                            self.logger.error("The Processor module '%s' could not be found." % (modulename))
-                            processors_not_found += 1
-                        except AttributeError:
-                            self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+                        processor_class = self._import_processor(processor)
+                        if not processor_class:
                             processors_not_found += 1
         if processors_not_found > 0:
             raise ProcessorAvailabilityTestError("Consult the log file for details")
@@ -467,9 +460,7 @@ class Arbitrator(threading.Thread):
                             per_server = False
                             for processor_classname in rule["processorChain"]:
                                 # Get a reference to this processor class.
-                                (modulename, classname) = processor_classname.rsplit(".", 1)
-                                module = __import__(modulename, globals(), locals(), [classname])
-                                processor_class = getattr(module, classname)
+                                processor_class = self._import_processor(processor_classname)
                                 if getattr(processor_class, 'different_per_server', False) == True:
                                     # This processor would create different
                                     # output per server, but will it also
@@ -1032,6 +1023,27 @@ class Arbitrator(threading.Thread):
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
         self.logger.info("Cleaned up the working directory '%s'." % (WORKING_DIR))
+
+    def _import_processor(self, processor):
+        """Imports processor module and class, returns class.
+
+        Input value can be:
+
+        * a full/absolute class path, like
+          "fileconveyor.processors.image_optimizer.KeepFilename"
+        * a class path relative to fileconveyor.processors, like
+          "image_optimizer.KeepFilename"
+        """
+        processor_class = None
+        (modulename, classname) = processor.rsplit(".", 1)
+        try:
+            module = __import__(modulename, globals(), locals(), [classname])
+            processor_class = getattr(module, classname)
+        except ImportError:
+            self.logger.error("The Processor module '%s' could not be found." % (modulename))
+        except AttributeError:
+            self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+        return processor_class
 
 
 def run_file_conveyor(restart=False):
