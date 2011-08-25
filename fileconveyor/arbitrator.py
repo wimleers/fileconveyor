@@ -1040,6 +1040,10 @@ class Arbitrator(threading.Thread):
             module = __import__(modulename, globals(), locals(), [classname])
             processor_class = getattr(module, classname)
         except ImportError:
+            # try to import a fileconveyor bundled with fileconveyor
+            default_namespace = 'fileconveyor.processors.'
+            if not processor.startswith(default_namespace):
+                return self._import_processor('%s%s' % (default_namespace, processor))
             self.logger.error("The Processor module '%s' could not be found." % (modulename))
         except AttributeError:
             self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))

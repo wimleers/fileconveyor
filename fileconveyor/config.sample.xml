@@ -29,10 +29,12 @@
       </filter>
       <processorChain>
         <processor name="fileconveyor.processors.image_optimizer.KeepFilename" />
-        <processor name="fileconveyor.processors.yui_compressor.YUICompressor" />
-        <processor name="fileconveyor.processors.google_closure_compiler.GoogleClosureCompiler" />
-        <processor name="fileconveyor.processors.link_updater.CSSURLUpdater" />
-        <processor name="fileconveyor.processors.unique_filename.Mtime" />
+        <!-- Namespace "fileconveyor.processors" is optional for processors
+        bundled with fileconveyor. -->
+        <processor name="yui_compressor.YUICompressor" />
+        <processor name="google_closure_compiler.GoogleClosureCompiler" />
+        <processor name="link_updater.CSSURLUpdater" />
+        <processor name="unique_filename.Mtime" />
       </processorChain>
       <destinations>
         <destination server="origin pull cdn" path="static" />
