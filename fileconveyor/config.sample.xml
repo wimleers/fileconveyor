@@ -12,7 +12,9 @@
       <location>/htdocs/static.example.com</location>
       <url>http://localhost/static.example.com/</url>
     </server>
-    <server name="ftp push cdn" transporter="fileconveyor.transporters.transporter_ftp" maxConnections="5">
+    <!-- Prefix "fileconveyor.transporters.transporter_" is optional for 
+    transporters bundled with fileconveyor. -->
+    <server name="ftp push cdn" transporter="ftp" maxConnections="5">
       <host>localhost</host>
       <username>daemontest</username>
       <password>daemontest</password>

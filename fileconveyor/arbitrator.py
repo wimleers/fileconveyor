@@ -1050,9 +1050,9 @@ class Arbitrator(threading.Thread):
             transporter_class = getattr(module, classname)
         except ImportError:
             # try to import a transporter bundled with fileconveyor
-            #default_prefix = 'fileconveyor.transporters.transporter_'
-            #if not processor.startswith(default_prefix):
-            #    return self._import_transporter('%s%s' % (default_prefix, module_name))
+            default_prefix = 'fileconveyor.transporters.transporter_'
+            if not module_name.startswith(default_prefix):
+                return self._import_transporter('%s%s' % (default_prefix, module_name))
             self.logger.error("The Transporter module '%s' could not be found." % (module_name))
         except AttributeError:
             self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
