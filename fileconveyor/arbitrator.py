@@ -837,15 +837,7 @@ class Arbitrator(threading.Thread):
 
         transporter_name = self.config.servers[server]["transporter"]
         settings = self.config.servers[server]["settings"]
-
-        # Determine which class to import.
-        transporter_modulename = transporter_name
-        _temp = __import__(transporter_modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
-        transporter_classname = _temp.TRANSPORTER_CLASS
-
-        # Get a reference to that class.
-        module = __import__(transporter_modulename, globals(), locals(), [transporter_classname])
-        transporter_class = getattr(module, transporter_classname)
+        transporter_class = self._import_transporter(transporter_name)
 
         # Attempt to create an instance of the transporter.
         try:
@@ -1050,7 +1042,7 @@ class Arbitrator(threading.Thread):
         * a module path relative to fileconveyor.transporters, like
           "symlink_or_copy"
         """
-        transporter_class = None    
+        transporter_class = None
         try:
             module = __import__(module_name, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
             classname = module.TRANSPORTER_CLASS
