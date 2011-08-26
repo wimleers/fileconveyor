@@ -138,17 +138,8 @@ class Arbitrator(threading.Thread):
         transporters_not_found = 0
         for server in self.config.servers.keys():
             transporter_name = self.config.servers[server]["transporter"]
-            modulename = transporter_name
-            try:
-                module = __import__(modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
-                classname = module.TRANSPORTER_CLASS
-                module = __import__(modulename, globals(), locals(), [classname])
-                transporter_class = getattr(module, classname)
-            except ImportError:
-                self.logger.error("The Transporter module '%s' could not be found." % (modulename))
-                transporters_not_found += 1
-            except AttributeError:
-                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (modulename, classname))
+            transporter_class = self._import_transporter(transporter_name)
+            if not transporter_class:
                 transporters_not_found += 1
         if transporters_not_found > 0:
             raise TransporterAvailabilityTestError("Consult the log file for details")
@@ -1040,7 +1031,7 @@ class Arbitrator(threading.Thread):
             module = __import__(modulename, globals(), locals(), [classname])
             processor_class = getattr(module, classname)
         except ImportError:
-            # try to import a fileconveyor bundled with fileconveyor
+            # try to import a processor bundled with fileconveyor
             default_namespace = 'fileconveyor.processors.'
             if not processor.startswith(default_namespace):
                 return self._import_processor('%s%s' % (default_namespace, processor))
@@ -1048,6 +1039,32 @@ class Arbitrator(threading.Thread):
         except AttributeError:
             self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
         return processor_class
+
+    def _import_transporter(self, module_name):
+        """Imports transporter module and class, returns class.
+
+        Input value can be:
+
+        * a full/absolute module path, like
+          "fileconveyor.transporters.transporter_symlink_or_copy"
+        * a module path relative to fileconveyor.transporters, like
+          "symlink_or_copy"
+        """
+        transporter_class = None    
+        try:
+            module = __import__(module_name, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
+            classname = module.TRANSPORTER_CLASS
+            module = __import__(module_name, globals(), locals(), [classname])
+            transporter_class = getattr(module, classname)
+        except ImportError:
+            # try to import a transporter bundled with fileconveyor
+            #default_prefix = 'fileconveyor.transporters.transporter_'
+            #if not processor.startswith(default_prefix):
+            #    return self._import_transporter('%s%s' % (default_prefix, module_name))
+            self.logger.error("The Transporter module '%s' could not be found." % (module_name))
+        except AttributeError:
+            self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
+        return transporter_class
 
 
 def run_file_conveyor(restart=False):
