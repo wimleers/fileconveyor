@@ -1018,21 +1018,30 @@ class Arbitrator(threading.Thread):
           "image_optimizer.KeepFilename"
         """
         processor_class = None
-        (modulename, classname) = processor.rsplit(".", 1)
-        try:
-            module = __import__(modulename, globals(), locals(), [classname])
-            processor_class = getattr(module, classname)
-        except ImportError:
-            # try to import a processor bundled with fileconveyor
-            default_namespace = 'fileconveyor.processors.'
-            if not processor.startswith(default_namespace):
-                return self._import_processor('%s%s' % (default_namespace, processor))
-            self.logger.error("The Processor module '%s' could not be found." % (modulename))
-        except AttributeError:
-            self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+        module = None
+        alternatives = [processor]
+        default_prefix = 'fileconveyor.processors.'
+        if not processor.startswith(default_prefix):
+            alternatives.append('%s%s' % (default_prefix, processor))
+        for processor_name in alternatives:
+            (modulename, classname) = processor_name.rsplit(".", 1)
+            try:
+                module = __import__(modulename, globals(), locals(), [classname])
+            except ImportError:
+                pass
+        if not module:
+            msg = "The processor module '%s' could not be found." % processor
+            if len(alternatives) > 1:
+                msg = '%s Tried (%s)' % (msg, ', '.join(alternatives))
+            self.logger.error(msg)
+        else:
+            try:
+                processor_class = getattr(module, classname)
+            except AttributeError:
+                self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
         return processor_class
 
-    def _import_transporter(self, module_name):
+    def _import_transporter(self, transporter):
         """Imports transporter module and class, returns class.
 
         Input value can be:
@@ -1043,19 +1052,28 @@ class Arbitrator(threading.Thread):
           "symlink_or_copy"
         """
         transporter_class = None
-        try:
-            module = __import__(module_name, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
-            classname = module.TRANSPORTER_CLASS
-            module = __import__(module_name, globals(), locals(), [classname])
-            transporter_class = getattr(module, classname)
-        except ImportError:
-            # try to import a transporter bundled with fileconveyor
-            default_prefix = 'fileconveyor.transporters.transporter_'
-            if not module_name.startswith(default_prefix):
-                return self._import_transporter('%s%s' % (default_prefix, module_name))
-            self.logger.error("The Transporter module '%s' could not be found." % (module_name))
-        except AttributeError:
-            self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
+        module = None
+        alternatives = [transporter]
+        default_prefix = 'fileconveyor.transporters.transporter_'
+        if not transporter.startswith(default_prefix):
+            alternatives.append('%s%s' % (default_prefix, transporter))
+        for module_name in alternatives:
+            try:
+                module = __import__(module_name, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
+            except ImportError:
+                pass
+        if not module:
+            msg = "The transporter module '%s' could not be found." % transporter
+            if len(alternatives) > 1:
+                msg = '%s Tried (%s)' % (msg, ', '.join(alternatives))
+            self.logger.error(msg)
+        else:
+            try:
+                classname = module.TRANSPORTER_CLASS
+                module = __import__(module_name, globals(), locals(), [classname])
+                transporter_class = getattr(module, classname)
+            except AttributeError:
+                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
         return transporter_class
 
 
