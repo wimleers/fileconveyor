@@ -34,5 +34,6 @@ setup(
     install_requires=[
         'setuptools',
         'cssutils',
+        'boto==1.6b',
     ],
 )
