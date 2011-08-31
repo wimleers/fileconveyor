@@ -35,5 +35,6 @@ setup(
         'setuptools',
         'cssutils',
         'boto==1.6b',
+        'python-cloudfiles>=1.4.0',
     ],
 )
