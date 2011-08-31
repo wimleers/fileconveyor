@@ -36,5 +36,6 @@ setup(
         'cssutils',
         'boto==1.6b',
         'python-cloudfiles>=1.4.0',
+        'django>=1.0.2,<1.1',
     ],
 )
