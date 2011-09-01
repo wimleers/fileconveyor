@@ -1,5 +1,6 @@
 from transporter import *
-from storages.mosso import *
+from storages.backends.mosso import CloudFilesStorage
+import cloudfiles
 
 
 TRANSPORTER_CLASS = "TransporterMosso"

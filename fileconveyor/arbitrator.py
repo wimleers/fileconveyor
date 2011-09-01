@@ -12,12 +12,13 @@ import os.path
 import signal
 
 
-# Insert the dependencies directory (which includes copies of parts of Django
-# and a full, yet extend, copy django-storages) at the beginning of sys.path,
-# to prevent File Conveyor from using the code of a possible Django
-# installation on this system.
 FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(1, os.path.abspath(os.path.join(FILE_CONVEYOR_PATH, 'dependencies')))
+
+
+# HACK to make sure that Django-related libraries can be loaded: include dummy
+# settings if necessary.
+if not 'DJANGO_SETTINGS_MODULE' in os.environ:
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'fileconveyor.django_settings'
 
 
 from fileconveyor.settings import *
