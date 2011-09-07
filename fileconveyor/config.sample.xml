@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <!-- Sources -->
+  <sources ignoredDirs="CVS:.svn">
+    <source name="drupal" scanPath="/htdocs/drupal" documentRoot="/htdocs" basePath="/drupal/" />
+    <source name="downloads" scanPath="/Users/wimleers/Downloads" />
+  </sources>
+
+  <!-- Servers -->
+  <servers>
+    <server name="origin pull cdn" transporter="fileconveyor.transporters.transporter_symlink_or_copy">
+      <location>/htdocs/static.example.com</location>
+      <url>http://localhost/static.example.com/</url>
+    </server>
+    <!-- Prefix "fileconveyor.transporters.transporter_" is optional for 
+    transporters bundled with fileconveyor. -->
+    <server name="ftp push cdn" transporter="ftp" maxConnections="5">
+      <host>localhost</host>
+      <username>daemontest</username>
+      <password>daemontest</password>
+      <url>http://localhost/daemontest/</url>
+    </server>
+  </servers>
+
+  <!-- Rules -->
+  <rules>
+    <rule for="drupal" label="CSS, JS, images and Flash">
+      <filter>
+        <paths>misc:profiles:modules:themes:sites/all:sites/default</paths>
+        <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
+      </filter>
+      <processorChain>
+        <processor name="fileconveyor.processors.image_optimizer.KeepFilename" />
+        <!-- Namespace "fileconveyor.processors" is optional for processors
+        bundled with fileconveyor. -->
+        <processor name="yui_compressor.YUICompressor" />
+        <processor name="google_closure_compiler.GoogleClosureCompiler" />
+        <processor name="link_updater.CSSURLUpdater" />
+        <processor name="unique_filename.Mtime" />
+      </processorChain>
+      <destinations>
+        <destination server="origin pull cdn" path="static" />
+        <destination server="ftp push cdn" path="static" />
+      </destinations>
+    </rule>
+
+    <rule for="drupal" label="Videos">
+      <filter>
+        <paths>modules:misc</paths>
+        <extensions>flv:mov:avi:wmv</extensions>
+        <size conditionType="minimum">1000000</size>
+      </filter>
+      <processorChain>
+        <processor name="unique_filename.MD5" />
+      </processorChain>
+      <destinations>
+        <destination server="ftp push cdn" path="videos" />
+      </destinations>
+    </rule>
+
+    <rule for="downloads" label="Mirror 720P videos">
+      <filter>
+        <extensions>mov:avi:mkv</extensions>
+        <pattern>.*/([a-zA-Z\-_ ])+720([a-zA-Z\-_ ])*\.[a-zA-Z]{3}$</pattern>
+      </filter>
+      <destinations>
+        <destination server="origin pull cdn" path="mirror" />
+        <destination server="ftp push cdn" path="mirror" />
+      </destinations>
+    </rule>
+  </rules>
+</config>
