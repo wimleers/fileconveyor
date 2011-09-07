@@ -154,7 +154,7 @@ class ProcessorChain(threading.Thread):
             processor_classname = self.processors.pop(0)
 
             # Get a reference to that class.
-            (modulename, classname) = processor_classname.split(".")
+            (modulename, classname) = processor_classname.rsplit(".", 1)
             module = __import__(modulename, globals(), locals(), [classname])
             processor_class = getattr(module, classname)
 

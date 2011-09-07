@@ -136,15 +136,33 @@ that each synced file actually exists.
 
 Addressing processors
 ---------------------
+
+General use case
+''''''''''''''''
+
 You can address a specific processor by first specifying its processor module
 and then the exact processor name (which is its class name):
-  ProcessorModuleName.ProcessorName
+  full.processor.module.name.ProcessorClassName
 E.g.:
+- fileconveyor.processors.unique_filename.MD5
+- fileconveyor.processors.image_optimizer.KeepMetadata
+- fileconveyor.processors.yui_compressor.YUICompressor
+- fileconveyor.processors.link_updater.CSSURLUpdater
+
+It works with third-party processors too!
+
+Shortcut for processors bundled with fileconveyor
+'''''''''''''''''''''''''''''''''''''''''''''''''
+
+For fileconveyor's internal processors, the prefix "fileconveyor.processors."
+can be ignored. So you can use this alternative in configuration file:
+
 - unique_filename.MD5
 - image_optimizer.KeepMetadata
 - yui_compressor.YUICompressor
 - link_updater.CSSURLUpdater
 
+It doesn't work with third-party processors.
 
 Processor module: filename
 --------------------------
@@ -254,6 +272,45 @@ Available processors:
 ==============================================================================
 | Transporters                                                               |
 ==============================================================================
+
+Configuration
+-------------
+
+General use case
+''''''''''''''''
+
+In configuration file, you can address a specific transporter by specifying its
+module. The transporter's class name is guessed via the TRANSPORTER_CLASS
+variable in the module:
+  full.transporter.module.name
+E.g.:
+- fileconveyor.transporters.transporter_cf
+- fileconveyor.transporters.transporter_ftp
+- fileconveyor.transporters.transporter_mosso
+- fileconveyor.transporters.transporter_s3
+- fileconveyor.transporters.transporter_sftp
+- fileconveyor.transporters.transporter_symlink_or_copy
+
+It works with third-party processors too!
+
+Note: the module **must** declare a TRANSPORTER_CLASS variable. It also means
+that a transporter module can contain only one transporter class.
+
+Shortcut for transporters bundled with fileconveyor
+'''''''''''''''''''''''''''''''''''''''''''''''''''
+
+For fileconveyor's internal transporters, the prefix
+"fileconveyor.transporters.transporter_" can be ignored. So you can use this
+alternative in configuration file:
+
+- cf
+- ftp
+- mosso
+- s3
+- sftp
+- symlink_or_copy
+
+It doesn't work with third-party transporters.
 
 Transporter: FTP (ftp)
 ----------------------
