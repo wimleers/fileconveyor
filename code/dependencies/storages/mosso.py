@@ -4,14 +4,15 @@ Created by Rich Leland <rich@richleland.com>.
 """
 import re
 
-from mimetypes import guess_type
+import mimetypes
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.files.storage import Storage
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.text import get_valid_filename
 
+import httplib, urllib
 
 try:
     import cloudfiles
@@ -72,7 +73,7 @@ class CloudFilesStorage(Storage):
 
     def _open(self, name, mode='rb'):
         """
-        Not sure if this is the proper way to execute this. Would love input.
+        Return the CloudFilesStorageFile.
         """
         return File(self._get_cloud_obj(name).read())
 
@@ -83,15 +84,21 @@ class CloudFilesStorage(Storage):
         when requested via public URI.
         """
         content.open()
-        if hasattr(content, 'chunks'):
-            content_str = ''.join(chunk for chunk in content.chunks())
-        else:
-            content_str = content.read()
         cloud_obj = self.container.create_object(name)
-        cloud_obj.content_type = guess_type(name)[0] or "application/x-octet-stream"
-        #cloud_obj.content_type = content.content_type
-        cloud_obj.send(content_str)
+        if hasattr(content.file, 'size'):
+            cloud_obj.size = content.file.size
+        else:
+            cloud_obj.size = content.size
+        # If the content type is available, pass it in directly rather than
+        # getting the cloud object to try to guess.
+        if hasattr(content.file, 'content_type'):
+            cloud_obj.content_type = content.file.content_type
+        else:
+            mime_type, encoding = mimetypes.guess_type(name)
+            cloud_obj.content_type = mime_type
+        cloud_obj.send(content)
         content.close()
+
         return name
     
     def delete(self, name):
@@ -102,8 +109,8 @@ class CloudFilesStorage(Storage):
 
     def exists(self, name):
         """
-        Returns True if a file referened by the given name already exists in the
-        storage system, or False if the name is available for a new file.
+        Returns True if a file referenced by the given name already exists in
+        the storage system, or False if the name is available for a new file.
         """
         try:
             self._get_cloud_obj(name)
@@ -122,7 +129,7 @@ class CloudFilesStorage(Storage):
         """
         Returns the total size, in bytes, of the file specified by name.
         """
-        return self._get_cloud_obj(name).size()
+        return self._get_cloud_obj(name).size
 
     def url(self, name):
         """
