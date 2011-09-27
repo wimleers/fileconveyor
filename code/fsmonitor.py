@@ -90,6 +90,8 @@ class FSMonitor(threading.Thread):
         self.add_queue                       = Queue.Queue()
         self.remove_queue                    = Queue.Queue()
         self.die                             = False
+        if parent_logger is None:
+            parent_logger = ""
         self.logger                          = logging.getLogger(".".join([parent_logger, "FSMonitor"]))
         threading.Thread.__init__(self, name="FSMonitorThread")
 
