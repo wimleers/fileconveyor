@@ -44,12 +44,13 @@ class Base(Processor):
 class SpacesToUnderscores(Base):
   """replaces spaces in the filename with underscores ("_")"""
 
-  def __init__(self, input_file, working_dir="/tmp"):
+  def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp", search=[], replace=[]):
       Base.__init__(self,
                     input_file,
                     original_file,
                     document_root,
                     base_path,
+                    process_for_server,
                     parent_logger,
                     working_dir,
                     [" "],
@@ -60,12 +61,13 @@ class SpacesToUnderscores(Base):
 class SpacesToDashes(Base):
     """replaces spaces in the filename with dashes ("-")"""
 
-    def __init__(self, input_file, working_dir="/tmp"):
+    def __init__(self, input_file, original_file, document_root, base_path, process_for_server, parent_logger, working_dir="/tmp", search=[], replace=[]):
         Base.__init__(self,
                       input_file,
                       original_file,
                       document_root,
                       base_path,
+                      process_for_server,
                       parent_logger,
                       working_dir,
                       [" "],
