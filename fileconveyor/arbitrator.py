@@ -20,15 +20,15 @@ FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(1, os.path.abspath(os.path.join(FILE_CONVEYOR_PATH, 'dependencies')))
 
 
-from fileconveyor.settings import *
-from fileconveyor.config import *
-from fileconveyor.persistent_queue import *
-from fileconveyor.persistent_list import *
-from fileconveyor.fsmonitor import *
-from fileconveyor.filter import *
-from fileconveyor.processors.processor import *
-from fileconveyor.transporters.transporter import *
-from fileconveyor.daemon_thread_runner import *
+from settings import *
+from config import *
+from persistent_queue import *
+from persistent_list import *
+from fsmonitor import *
+from filter import *
+from processors.processor import *
+from transporters.transporter import Transporter
+from daemon_thread_runner import *
 
 
 # Copied from django.utils.functional
@@ -1007,20 +1007,21 @@ class Arbitrator(threading.Thread):
                 os.rmdir(os.path.join(root, name))
         self.logger.info("Cleaned up the working directory '%s'." % (WORKING_DIR))
 
+
     def _import_processor(self, processor):
         """Imports processor module and class, returns class.
 
         Input value can be:
 
         * a full/absolute class path, like
-          "fileconveyor.processors.image_optimizer.KeepFilename"
+          "MyProcessorPackage.SomeProcessorClass"
         * a class path relative to fileconveyor.processors, like
           "image_optimizer.KeepFilename"
         """
         processor_class = None
         module = None
         alternatives = [processor]
-        default_prefix = 'fileconveyor.processors.'
+        default_prefix = 'processors.' # Not 'fileconveyor.processors.'!
         if not processor.startswith(default_prefix):
             alternatives.append('%s%s' % (default_prefix, processor))
         for processor_name in alternatives:
@@ -1041,20 +1042,21 @@ class Arbitrator(threading.Thread):
                 self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
         return processor_class
 
+
     def _import_transporter(self, transporter):
         """Imports transporter module and class, returns class.
 
         Input value can be:
 
         * a full/absolute module path, like
-          "fileconveyor.transporters.transporter_symlink_or_copy"
+          "MyTransporterPackage.SomeTransporterClass"
         * a module path relative to fileconveyor.transporters, like
           "symlink_or_copy"
         """
         transporter_class = None
         module = None
         alternatives = [transporter]
-        default_prefix = 'fileconveyor.transporters.transporter_'
+        default_prefix = 'transporters.transporter_' # Not 'fileconveyor.transporters.transporter_'!
         if not transporter.startswith(default_prefix):
             alternatives.append('%s%s' % (default_prefix, transporter))
         for module_name in alternatives:

@@ -8,12 +8,10 @@
 
   <!-- Servers -->
   <servers>
-    <server name="origin pull cdn" transporter="fileconveyor.transporters.transporter_symlink_or_copy">
+    <server name="origin pull cdn" transporter="symlink_or_copy">
       <location>/htdocs/static.example.com</location>
       <url>http://localhost/static.example.com/</url>
     </server>
-    <!-- Prefix "fileconveyor.transporters.transporter_" is optional for 
-    transporters bundled with fileconveyor. -->
     <server name="ftp push cdn" transporter="ftp" maxConnections="5">
       <host>localhost</host>
       <username>daemontest</username>
@@ -30,9 +28,7 @@
         <extensions>ico:js:css:gif:png:jpg:jpeg:svg:swf</extensions>
       </filter>
       <processorChain>
-        <processor name="fileconveyor.processors.image_optimizer.KeepFilename" />
-        <!-- Namespace "fileconveyor.processors" is optional for processors
-        bundled with fileconveyor. -->
+        <processor name="image_optimizer.KeepFilename" />
         <processor name="yui_compressor.YUICompressor" />
         <processor name="google_closure_compiler.GoogleClosureCompiler" />
         <processor name="link_updater.CSSURLUpdater" />
