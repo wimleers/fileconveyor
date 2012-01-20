@@ -16,21 +16,19 @@ import signal
 # and a full, yet extend, copy django-storages) at the beginning of sys.path,
 # to prevent File Conveyor from using the code of a possible Django
 # installation on this system.
-sys.path.insert(1, os.path.abspath(os.path.join(sys.path[0], 'dependencies')))
-
-sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'processors')))
-sys.path.append(os.path.abspath(os.path.join(sys.path[0], 'transporters')))
+FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(1, os.path.abspath(os.path.join(FILE_CONVEYOR_PATH, 'dependencies')))
 
 
-from settings import *
-from config import *
-from persistent_queue import *
-from persistent_list import *
-from fsmonitor import *
-from filter import *
-from processors.processor import *
-from transporters.transporter import *
-from daemon_thread_runner import *
+from fileconveyor.settings import *
+from fileconveyor.config import *
+from fileconveyor.persistent_queue import *
+from fileconveyor.persistent_list import *
+from fileconveyor.fsmonitor import *
+from fileconveyor.filter import *
+from fileconveyor.processors.processor import *
+from fileconveyor.transporters.transporter import *
+from fileconveyor.daemon_thread_runner import *
 
 
 # Copied from django.utils.functional
@@ -130,15 +128,8 @@ class Arbitrator(threading.Thread):
             for rule in self.config.rules[source]:
                 if not rule["processorChain"] is None:
                     for processor in rule["processorChain"]:
-                        (modulename, classname) = processor.split(".")
-                        try:
-                            module = __import__(modulename, globals(), locals(), [classname])
-                            processor_class = getattr(module, classname)
-                        except ImportError:
-                            self.logger.error("The Processor module '%s' could not be found." % (modulename))
-                            processors_not_found += 1
-                        except AttributeError:
-                            self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+                        processor_class = self._import_processor(processor)
+                        if not processor_class:
                             processors_not_found += 1
         if processors_not_found > 0:
             raise ProcessorAvailabilityTestError("Consult the log file for details")
@@ -147,17 +138,8 @@ class Arbitrator(threading.Thread):
         transporters_not_found = 0
         for server in self.config.servers.keys():
             transporter_name = self.config.servers[server]["transporter"]
-            modulename = "transporters.transporter_" + transporter_name
-            try:
-                module = __import__(modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
-                classname = module.TRANSPORTER_CLASS
-                module = __import__(modulename, globals(), locals(), [classname])
-                transporter_class = getattr(module, classname)
-            except ImportError:
-                self.logger.error("The Transporter module '%s' could not be found." % (modulename))
-                transporters_not_found += 1
-            except AttributeError:
-                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (modulename, classname))
+            transporter_class = self._import_transporter(transporter_name)
+            if not transporter_class:
                 transporters_not_found += 1
         if transporters_not_found > 0:
             raise TransporterAvailabilityTestError("Consult the log file for details")
@@ -469,9 +451,7 @@ class Arbitrator(threading.Thread):
                             per_server = False
                             for processor_classname in rule["processorChain"]:
                                 # Get a reference to this processor class.
-                                (modulename, classname) = processor_classname.split(".")
-                                module = __import__(modulename, globals(), locals(), [classname])
-                                processor_class = getattr(module, classname)
+                                processor_class = self._import_processor(processor_classname)
                                 if getattr(processor_class, 'different_per_server', False) == True:
                                     # This processor would create different
                                     # output per server, but will it also
@@ -857,15 +837,7 @@ class Arbitrator(threading.Thread):
 
         transporter_name = self.config.servers[server]["transporter"]
         settings = self.config.servers[server]["settings"]
-
-        # Determine which class to import.
-        transporter_modulename = "transporters.transporter_" + transporter_name
-        _temp = __import__(transporter_modulename, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
-        transporter_classname = _temp.TRANSPORTER_CLASS
-
-        # Get a reference to that class.
-        module = __import__(transporter_modulename, globals(), locals(), [transporter_classname])
-        transporter_class = getattr(module, transporter_classname)
+        transporter_class = self._import_transporter(transporter_name)
 
         # Attempt to create an instance of the transporter.
         try:
@@ -1035,10 +1007,79 @@ class Arbitrator(threading.Thread):
                 os.rmdir(os.path.join(root, name))
         self.logger.info("Cleaned up the working directory '%s'." % (WORKING_DIR))
 
+    def _import_processor(self, processor):
+        """Imports processor module and class, returns class.
+
+        Input value can be:
+
+        * a full/absolute class path, like
+          "fileconveyor.processors.image_optimizer.KeepFilename"
+        * a class path relative to fileconveyor.processors, like
+          "image_optimizer.KeepFilename"
+        """
+        processor_class = None
+        module = None
+        alternatives = [processor]
+        default_prefix = 'fileconveyor.processors.'
+        if not processor.startswith(default_prefix):
+            alternatives.append('%s%s' % (default_prefix, processor))
+        for processor_name in alternatives:
+            (modulename, classname) = processor_name.rsplit(".", 1)
+            try:
+                module = __import__(modulename, globals(), locals(), [classname])
+            except ImportError:
+                pass
+        if not module:
+            msg = "The processor module '%s' could not be found." % processor
+            if len(alternatives) > 1:
+                msg = '%s Tried (%s)' % (msg, ', '.join(alternatives))
+            self.logger.error(msg)
+        else:
+            try:
+                processor_class = getattr(module, classname)
+            except AttributeError:
+                self.logger.error("The Processor module '%s' was found, but its Processor class '%s' could not be found."  % (modulename, classname))
+        return processor_class
+
+    def _import_transporter(self, transporter):
+        """Imports transporter module and class, returns class.
+
+        Input value can be:
+
+        * a full/absolute module path, like
+          "fileconveyor.transporters.transporter_symlink_or_copy"
+        * a module path relative to fileconveyor.transporters, like
+          "symlink_or_copy"
+        """
+        transporter_class = None
+        module = None
+        alternatives = [transporter]
+        default_prefix = 'fileconveyor.transporters.transporter_'
+        if not transporter.startswith(default_prefix):
+            alternatives.append('%s%s' % (default_prefix, transporter))
+        for module_name in alternatives:
+            try:
+                module = __import__(module_name, globals(), locals(), ["TRANSPORTER_CLASS"], -1)
+            except ImportError:
+                pass
+        if not module:
+            msg = "The transporter module '%s' could not be found." % transporter
+            if len(alternatives) > 1:
+                msg = '%s Tried (%s)' % (msg, ', '.join(alternatives))
+            self.logger.error(msg)
+        else:
+            try:
+                classname = module.TRANSPORTER_CLASS
+                module = __import__(module_name, globals(), locals(), [classname])
+                transporter_class = getattr(module, classname)
+            except AttributeError:
+                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
+        return transporter_class
+
 
 def run_file_conveyor(restart=False):
     try:
-        arbitrator = Arbitrator(os.path.join(sys.path[0], "config.xml"), restart)
+        arbitrator = Arbitrator(os.path.join(FILE_CONVEYOR_PATH, "config.xml"), restart)
     except ArbitratorInitError, e:
         print e.__class__.__name__, e
     except ArbitratorError, e:
