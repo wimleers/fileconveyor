@@ -1,5 +1,5 @@
 from transporter import *
-from storages.S3BotoStorage import *
+from storages.backends.s3boto import S3BotoStorage
 
 
 TRANSPORTER_CLASS = "TransporterS3"

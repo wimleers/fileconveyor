@@ -1,5 +1,5 @@
 from transporter import *
-from storages.FTPStorage import *
+from storages.backends.ftp import FTPStorage
 
 
 TRANSPORTER_CLASS = "TransporterFTP"

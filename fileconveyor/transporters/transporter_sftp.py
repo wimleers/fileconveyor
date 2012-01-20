@@ -1,5 +1,5 @@
 from transporter import *
-from storages.SFTPStorage import *
+from storages.backends.sftpstorage import SFTPStorage
 
 
 TRANSPORTER_CLASS = "TransporterSFTP"

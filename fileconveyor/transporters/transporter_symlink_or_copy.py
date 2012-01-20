@@ -1,5 +1,5 @@
 from transporter import *
-from storages.SymlinkOrCopyStorage import *
+from storages.backends.symlinkorcopy import SymlinkOrCopyStorage
 
 
 TRANSPORTER_CLASS = "TransporterSymlinkOrCopy"

@@ -4,7 +4,6 @@ import os.path
 import time
 import subprocess
 import tempfile
-sys.path.append(os.path.abspath('../dependencies'))
 
 
 from transporter_ftp import *
