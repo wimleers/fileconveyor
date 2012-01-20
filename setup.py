@@ -37,7 +37,7 @@ setup(
         'cssutils',
         'boto==1.6b',
         'python-cloudfiles>=1.4.0',
-        'django>=1.0.2,<1.1',
+        'django>=1.3',
         'django-storages>=1.1.3',
     ] + (
         ["pyinotify>0.8.0"] if "linux" in sys.platform else []
