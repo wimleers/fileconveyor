@@ -33,7 +33,13 @@ class S3BotoStorage(Storage):
         self.headers = headers
 
         self.connection = S3Connection(access_key, secret_key)
-        self.bucket = self.connection.create_bucket(bucketprefix + bucket)
+        try:
+            self.bucket = self.connection.get_bucket(bucketprefix + bucket, validate=True)
+        except S3ResponseError, e:
+            if e.code == "NoSuchBucket":
+                self.bucket = self.connection.create_bucket(bucketprefix + bucket, location='EU')
+            else:
+                raise e
         self.bucket.set_acl(self.acl)
     
     def _get_access_keys(self):
