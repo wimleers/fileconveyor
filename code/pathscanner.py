@@ -99,7 +99,7 @@ class PathScanner(object):
         
         Returns False if there is already data available for this path.
         """
-        path = path.decode('utf-8')
+        assert type(path) == type(u'.')
 
         # Check if there really isn't any data available for this path.
         self.dbcur.execute("SELECT COUNT(filename) FROM %s WHERE path=?" % (self.table), (path,))
@@ -112,7 +112,7 @@ class PathScanner(object):
 
     def purge_path(self, path):
         """purge the metadata for a given path and all its subdirectories"""
-        path = path.decode('utf-8')
+        assert type(path) == type(u'.')
 
         self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
         self.dbcur.execute("VACUUM %s" % (self.table))
@@ -178,7 +178,7 @@ class PathScanner(object):
         - Can detect deleted directory trees.
         """
 
-        path = path.decode('utf-8')
+        assert type(path) == type(u'.')
         # Fetch the old metadata from the DB.
         self.dbcur.execute("SELECT filename, mtime FROM %s WHERE path=?" % (self.table), (path, ))
         old_files = {}
@@ -220,7 +220,7 @@ class PathScanner(object):
 
     def scan_tree(self, path):
         """scan a directory tree for changes"""
-        path = path.decode('utf-8')
+        assert type(path) == type(u'.')
 
         # Scan the current directory for changes.
         result = self.scan(path)
