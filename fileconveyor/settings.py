@@ -9,11 +9,11 @@ import logging
 
 RESTART_AFTER_UNHANDLED_EXCEPTION = True
 RESTART_INTERVAL = 10
-LOG_FILE = './daemon.log'
+LOG_FILE = './fileconveyor.log'
 PID_FILE = '~/.fileconveyor.pid'
 PERSISTENT_DATA_DB = './persistent_data.db'
 SYNCED_FILES_DB = './synced_files.db'
-WORKING_DIR = '/tmp/daemon'
+WORKING_DIR = '/tmp/fileconveyor'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
 MAX_SIMULTANEOUS_TRANSPORTERS = 10

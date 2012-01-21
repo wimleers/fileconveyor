@@ -391,7 +391,7 @@ RESTART_INTERVAL = 10
   After how much time File Conveyor should restart itself, after it has
   encountered an unhandled exception. Thus, this setting only has an effect
   when RESTART_AFTER_UNHANDLED_EXCEPTION == True.
-LOG_FILE = './daemon.log'
+LOG_FILE = './fileconveyor.log'
   The log file.
 PERSISTENT_DATA_DB = './persistent_data.db'
   Where to store persistent data (pipeline queue, 'files in pipeline' list and
@@ -399,7 +399,7 @@ PERSISTENT_DATA_DB = './persistent_data.db'
 SYNCED_FILES_DB = './synced_files.db'
   Where to store the input_file, transported_file_basename, url and server for
   each synced file.
-WORKING_DIR = '/tmp/daemon'
+WORKING_DIR = '/tmp/fileconveyor'
   The working directory.
 MAX_FILES_IN_PIPELINE = 50
   The maximum number of files in the pipeline. Should be high enough in order
