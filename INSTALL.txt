@@ -1,13 +1,42 @@
 Installation process
 --------------------
-The installation process is as simple as extracting the archive or checking
-out the code from SVN to wherever you want. You may have to perform additional
-setup steps depending on the operating system you're running though.
-Each processor may also require additional setup. See below for the
-installation instructions of the included processors.
+The installation process is as installing `git` and `pip`, after which you
+will only need to perform a single command:
 
-Make sure you've got Python 2.5 (or newer) installed. If you've got an older
-version, you can install Python 2.5 next to it.
+    pip install -e git+https://github.com/wimleers/fileconveyor@master#egg=fileconveyor
+
+This automatically also installs all Python dependencies.
+However, some processors also require non-Python dependencies. For details on
+those, please see below.
+
+
+Notes: 
+- Make sure you've got Python 2.5 (or newer) installed. If you've got an older
+  version, you can install Python 2.5 next to it.
+- 
+- Installing `pip`: http://www.pip-installer.org/en/latest/installing.html; or
+    curl http://python-distribute.org/distribute_setup.py | python
+    curl https://raw.github.com/pypa/pip/master/contrib/get-pip.py | python
+
+
+
+
+Upgrade process
+---------------
+The upgrade process is very similar to the installation process:
+1. stop File Conveyor (see README)
+2. copy your config.xml and all .db files to a safe location
+3. delete File Conveyor
+4. re-install File Conveyor with `pip`
+5. copy back your config.xml and all .db files.
+6. start File Conveyor again; it will resume from where it has left off
+
+The essence is this: as long as you have your config.xml and all .db files,
+you haven't lost anything!
+
+One exception: upgrading from a version of File Conveyor of before August 2011
+requires running an upgrade script: `fileconveyor/upgrade.py` (a DB schema
+change was introduced).
 
 
 
@@ -18,21 +47,7 @@ version, you can install Python 2.5 next to it.
 
 Linux
 -----
-Linux is fully supported and requires additional setup.
-On Linux, it is necessary to install pyinotify if you're running kernel 2.6.13
-or higher. This will allow you to take advantage of inotify to detect changes
-on the file system as opposed to polling.
-You must install version 0.8.0 or better (it has only been tested with 0.9.6
-but the API has remained the same according to the documentation).
-On Debian/Ubuntu, you can run
-  sudo aptitude install python-pyinotify
-to install pyinotify. But please ensure this version is new enough. On other
-distributions, follow these instructions:
-  http://trac.dbzteam.org/pyinotify/wiki/InstallPyinotify
-
-Detailed installation instructions are available for CentOS, contributed by
-Mike Carper:
-  http://drupal.org/node/713190#comment-2594204
+Mac OS X is fully supported and requires no additional setup.
 
 
 Mac OS X
@@ -119,27 +134,3 @@ processor only works on UNIX, at least for now.
       3. make
       4. make install
 
-
-Processor module: link_updater
-------------------------------
-* instructions:
- 1) download the Python Egg from http://code.google.com/p/cssutils/
- 2) easy_install cssutils-<VERSION>-py<PYTHON VERSION>.egg
-
-
-==============================================================================
-| Per-transporter module additional instructions                             |
-==============================================================================
-
-Transporter module: sftp
-------------------------
-This transporter requires the Python module "paramiko" to be installed.
-
-* homepage: http://www.lag.net/paramiko/
-* instructions:
-	- Debian/Ubuntu: sudo apt-get install python-paramiko
-	- Other:
-		1. download 1.7.4 or newer from http://www.lag.net/paramiko/download/
-		2. extract
-		3. cd to the extracted folder (where setup.py lives)
-		2. easy_install ./
