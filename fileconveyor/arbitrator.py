@@ -197,6 +197,7 @@ class Arbitrator(threading.Thread):
                         "filter"         : filter,
                         "processorChain" : rule["processorChain"],
                         "destinations"   : rule["destinations"],
+                        "deletionDelay"  : rule["deletionDelay"],
                     })
                     self.logger.info("Setup: collected all metadata for rule '%s' (source: '%s')." % (rule["label"], source["name"]))
 
@@ -212,6 +213,9 @@ class Arbitrator(threading.Thread):
         self.failed_files = PersistentList("failed_files_list", PERSISTENT_DATA_DB)
         num_failed_files = len(self.failed_files)
         self.logger.warning("Setup: initialized 'failed_files' persistent list, contains %d items." % (num_failed_files))
+        self.files_to_delete = PersistentList("files_to_delete_list", PERSISTENT_DATA_DB)
+        num_files_to_delete = len(self.files_to_delete)
+        self.logger.warning("Setup: initialized 'files_to_delete' persistent list, contains %d items." % (num_files_to_delete))
         self.discover_queue  = Queue.Queue()
         self.filter_queue    = Queue.Queue()
         self.process_queue   = Queue.Queue()
@@ -281,6 +285,7 @@ class Arbitrator(threading.Thread):
                 self.__process_process_queue()
                 self.__process_transport_queues()
                 self.__process_db_queue()
+                self.__process_files_to_delete()
                 self.__process_retry_queue()
                 self.__allow_retry()
 
@@ -317,6 +322,7 @@ class Arbitrator(threading.Thread):
         self.logger.warning("'pipeline' persistent queue contains %d items." % (self.pipeline_queue.qsize()))
         self.logger.warning("'files_in_pipeline' persistent list contains %d items." % (len(self.files_in_pipeline)))
         self.logger.warning("'failed_files' persistent list contains %d items." % (len(self.failed_files)))
+        self.logger.warning("'files_to_delete' persistent list contains %d items." % (len(self.files_to_delete)))
 
         # Log information about the synced files DB.
         self.dbcur.execute("SELECT COUNT(input_file) FROM synced_files")
@@ -409,7 +415,8 @@ class Arbitrator(threading.Thread):
             # Find all rules that apply to the detected file event.
             match_found = False
             file_is_deleted = event == FSMonitor.DELETED
-            
+            current_time = time.time()
+
             for rule in self.rules:
                 # Try to find a rule that matches the file.
                 if input_file.startswith(self.config.sources[rule["source"]]["scan_path"]) and \
@@ -418,6 +425,33 @@ class Arbitrator(threading.Thread):
                    rule["filter"].matches(input_file, file_is_deleted=file_is_deleted)):
                     match_found = True
                     self.logger.info("Filtering: '%s' matches the '%s' rule for the '%s' source!" % (input_file, rule["label"], rule["source"]))
+
+                    # If the file was deleted, and the rule that matches this
+                    # file has a deletionDelay configured, then don't sync
+                    # this file deletion: it was performed by File Conveyor.
+                    # *Except* when the file is still scheduled for deletion:
+                    # that means the file could not have been deleted by File
+                    # Conveyor and hence the deletion should be synced.
+                    if event == FSMonitor.DELETED and rule["deletionDelay"] is not None:
+                        file_still_scheduled_for_deletion = False
+                        scheduled_deletion_time = None
+                        self.lock.acquire()
+                        for (file_to_delete, deletion_time) in self.files_to_delete:
+                            if input_file == file_to_delete:
+                                file_still_scheduled_for_deletion = True
+                                scheduled_deletion_time = deletion_time
+                                break
+                        self.lock.release()
+
+                        # Unschedule deletion.
+                        if file_still_scheduled_for_deletion:
+                            self.lock.acquire()
+                            self.files_to_delete.remove((input_file, scheduled_deletion_time))
+                            self.logger.warning("Unscheduled '%s' for deletion." % (input_file))
+                            self.lock.release()
+                        else:
+                        # A deletion by File Conveyor: don't sync this deletion.
+                            break
 
                     # If the file was deleted, also delete the file on all
                     # servers.
@@ -734,6 +768,22 @@ class Arbitrator(threading.Thread):
                 if touched and not input_file == output_file and os.path.exists(output_file):
                     os.remove(output_file)
 
+                # Syncing is done for this file, now check if the file should
+                # be deleted from the source (except when it was a deletion
+                # that has been synced, then a deletion of the source file
+                # does not make sense, of course).
+                for rule in self.rules:
+                    if event != FSMonitor.DELETED:
+                        if rule["deletionDelay"] > 0:
+                            self.lock.acquire()
+                            self.files_to_delete.append((input_file, time.time() + rule["deletionDelay"]))
+                            self.logger.warning("Scheduled '%s' for deletion in %d seconds, as per the '%s' rule." % (input_file, rule["deletionDelay"], rule["label"]))
+                            self.lock.release()
+                        else:
+                            if os.path.exists(input_file):
+                                os.remove(input_file)
+                            self.logger.warning("Deleted '%s' as per the '%s' rule." % (input_file, rule["label"]))
+
                 # The file went all the way through the pipeline, so now it's safe
                 # to remove it from the persistent 'files_in_pipeline' list.
                 self.lock.acquire()
@@ -742,6 +792,37 @@ class Arbitrator(threading.Thread):
                 self.logger.warning("Synced: '%s' (%s)." % (input_file, FSMonitor.EVENTNAMES[event]))
 
         processed += 1
+
+
+    def __process_files_to_delete(self):
+        processed = 0
+
+        current_time = time.time()
+
+        # Get a list of all files that can be deleted *now*
+        if len(self.files_to_delete) > 0:
+            files_to_delete_now = []
+            self.lock.acquire()
+            for (input_file, deletion_time) in self.files_to_delete:
+                if deletion_time <= current_time:
+                    files_to_delete_now.append((input_file, deletion_time))
+                    # Stop when we reach the batch size.
+                    if len(files_to_delete_now) == QUEUE_PROCESS_BATCH_SIZE:
+                        break
+            self.lock.release()
+
+            # Delete files and remove them from the persistent list.
+            for (input_file, deletion_time) in files_to_delete_now:
+                if os.path.exists(input_file):
+                    os.remove(input_file)
+
+                self.lock.acquire()
+                self.files_to_delete.remove((input_file, deletion_time))
+                self.lock.release()
+
+                self.logger.warning("Deleted '%s', which was scheduled for deletion %d seconds ago." % (input_file, current_time - deletion_time))
+
+                processed += 1
 
 
     def __process_retry_queue(self):

@@ -40,7 +40,9 @@
       </destinations>
     </rule>
 
-    <rule for="drupal" label="Videos">
+    <!-- Automatically delete videos from the source, 60 seconds after they
+         have been synced, because they consume so much disk space. -->
+    <rule for="drupal" label="Videos" fileDeletionDelayAfterSync="60">
       <filter>
         <paths>modules:misc</paths>
         <extensions>flv:mov:avi:wmv</extensions>

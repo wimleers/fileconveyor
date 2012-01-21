@@ -61,6 +61,9 @@ Each rule consists of 3 components:
 - processorChain
 - destinations
 
+A rule can also be configured to delete source files after they have been
+synced to the destination(s).
+
 The filter and processorChain components are optional. You must have at least
 one destination.
 If you want to use the daemon to process files locally, i.e. without

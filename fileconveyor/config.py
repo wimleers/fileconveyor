@@ -136,8 +136,11 @@ class Config(object):
     def __parse_rules(self, root):
         rules_node = root.find("rules")
         for rule_node in rules_node:
-            for_source = Config.__ensure_unicode(rule_node.get("for"))
-            label      = Config.__ensure_unicode(rule_node.get("label"))
+            for_source    = Config.__ensure_unicode(rule_node.get("for"))
+            label         = Config.__ensure_unicode(rule_node.get("label"))
+            deletion_delay = rule_node.get("fileDeletionDelayAfterSync", None)
+            if deletion_delay is not None:
+                deletion_delay = int(deletion_delay)
 
             # 1: filter (optional)
             conditions = None
@@ -166,6 +169,7 @@ class Config(object):
                 self.rules[for_source] = []
             self.rules[for_source].append({
                 "label"           : Config.__ensure_unicode(label),
+                "deletionDelay"   : deletion_delay,
                 "filterConditions": conditions,
                 "processorChain"  : processor_chain,
                 "destinations"    : destinations,
