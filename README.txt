@@ -1,10 +1,10 @@
 Description
 -----------
-This daemon (a good name is yet to be found) is designed to discover new,
-changed and deleted files via the operating system's built-in file system
-monitor. After discovering the files, they can be optionally be processed by
-a chain of processors – you can easily write new ones yourself. After files
-have been processed, they can also optionally be transported to a server.
+File Conveyor is designed to discover new, changed and deleted files via the
+operating system's built-in file system monitor. After discovering the files,
+they can be optionally be processed by a chain of processors – you can easily
+write new ones yourself. After files have been processed, they can also
+optionally be transported to a server.
 
 Discovery happens through inotify on Linux (with kernel >= 2.6.13), through
 FSEvents on Mac OS X (>= 10.5) and through polling on other operating systems.
@@ -15,7 +15,7 @@ file's contents. Examples are image optimization and video transcoding.
 
 Transporters are simple threaded abstractions around Django storage systems.
 
-For a detailed description of the innards of the daemon, see my bachelor
+For a detailed description of the innards of file conveyor, see my bachelor
 thesis text (find it via http://wimleers.com/tags/bachelor-thesis).
 
 This application was written as part of the bachelor thesis [1] of Wim Leers
@@ -48,11 +48,11 @@ upgrade.py.
 | The basics                                                                 |
 ==============================================================================
 
-Configuring the daemon
-----------------------
+Configuring File Conveyor
+-------------------------
 The sample configuration file (config.sample.xml) should be self explanatory.
-Copy this file to config.xml, which is the file the daemon will look for, and
-edit it to suit your needs.
+Copy this file to config.xml, which is the file File Conveyor will look for,
+and edit it to suit your needs.
 For a detailed description, see my bachelor thesis text (look for the
 "Configuration file design" section).
 
@@ -66,22 +66,22 @@ synced to the destination(s).
 
 The filter and processorChain components are optional. You must have at least
 one destination.
-If you want to use the daemon to process files locally, i.e. without
+If you want to use File Conveyor to process files locally, i.e. without
 transporting them to a server, then use the Symlink or Copy transporter (see
 below).
 
 
-Starting the daemon
--------------------
-The daemon must be started by starting its arbitrator (which links everything
-together; it controls the file system monitor, the processor chains, the
-transporters and so on). You can start the arbitrator like this:
-  python /path/to/daemon/arbitrator.py
+Starting File Conveyor
+----------------------
+File Conveyor must be started by starting its arbitrator (which links
+everything together; it controls the file system monitor, the processor
+chains, the transporters and so on). You can start the arbitrator like this:
+  python /path/to/fileconveyor/arbitrator.py
 
 
-Stopping the daemon
--------------------
-The daemon listens to standard signals to know when it should end, like the
+Stopping File Conveyor
+----------------------
+File Conveyor listens to standard signals to know when it should end, like the
 Apache HTTP server does too. Send the TERMinate signal to terminate it:
   kill -TERM `cat ~/.fileconveyor.pid`
 
@@ -100,28 +100,28 @@ Then, you can change the PID_FILE setting in settings.py to
 Conveyor with root permissions anymore.
 
 
-The daemon's behavior
----------------------
-Upon startup, the daemon starts the file system monitor and then performs a
+File Conveyor's behavior
+------------------------
+Upon startup, File Conveyor starts the file system monitor and then performs a
 "manual" scan to detect changes since the last time it ran. If you've got a
 lot of files, this may take a while.
 
-Just for fun, type the following while the daemon is syncing:
+Just for fun, type the following while File Conveyor is syncing:
   killall -9 python
-Now the daemon is dead. Upon starting it again, you should see something like:
+Now File Conveyor is dead. Upon starting it again, you should see something like:
   2009-05-17 03:52:13,454 - Arbitrator                - WARNING  - Setup: initialized 'pipeline' persistent queue, contains 2259 items.
   2009-05-17 03:52:13,455 - Arbitrator                - WARNING  - Setup: initialized 'files_in_pipeline' persistent list, contains 47 items.
   2009-05-17 03:52:13,455 - Arbitrator                - WARNING  - Setup: initialized 'failed_files' persistent list, contains 0 items.
   2009-05-17 03:52:13,671 - Arbitrator                - WARNING  - Setup: moved 47 items from the 'files_in_pipeline' persistent list into the 'pipeline' persistent queue.
   2009-05-17 03:52:13,672 - Arbitrator                - WARNING  - Setup: moved 0 items from the 'failed_files' persistent list into the 'pipeline' persistent queue.
-As you can see, 47 items were still in the pipeline when the daemon was
+As you can see, 47 items were still in the pipeline when File Conveyor was
 killed. They're now simply added to the pipeline queue again and they will be
 processed once again.
 
 
 The initial sync
 ----------------
-To get a feeling of the daemon's speed, you may want to run it in the console
+To get a feeling of File Conveyor's speed, you may want to run it in the console
 and look at its output.
 
 
@@ -356,8 +356,8 @@ You can either use the S3Fox Firefox add-on to create a distribution or use
 the included Python function to do so. In the latter case, do the following:
 
 >>> import sys
->>> sys.path.append('/path/to/daemon/transporters')
->>> sys.path.append('/path/to/daemon/dependencies')
+>>> sys.path.append('/path/to/fileconveyor/transporters')
+>>> sys.path.append('/path/to/fileconveyor/dependencies')
 >>> from transporter_cf import create_distribution
 >>> create_distribution("access_key_id", "secret_access_key", "bucketname.s3.amazonaws.com")
 Created distribution
@@ -381,8 +381,8 @@ Created distribution
 
 Constants in Arbitrator.py
 --------------------------
-The following constants can be tweaked to change where the daemon stores its
-files, or to change its behavior.
+The following constants can be tweaked to change where File Conveyor stores
+its files, or to change its behavior.
 
 RESTART_AFTER_UNHANDLED_EXCEPTION = True
   Whether File Conveyor should restart itself after it encountered an
@@ -406,8 +406,8 @@ MAX_FILES_IN_PIPELINE = 50
   to prevent transporters from idling too long.
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
   The maximum number of processor chains that may be executed simultaneously.
-  If you've got CPU intensive processors and if you're running the daemon on
-  the web server, you'll want to keep this very low, probably at 1.
+  If you've got CPU intensive processors and if you're running File Conveyor
+  on the web server, you'll want to keep this very low, probably at 1.
 MAX_SIMULTANEOUS_TRANSPORTERS = 10
   The maximum number of transporters that may be running simultaneously. This
   effectively caps the number of simultaneous connections. It can also be used
@@ -459,10 +459,10 @@ persistent data structure:
 
 Simple count queries show how many items there are in each persistent data
 structure. In this case for example, there are 2560 files waiting to enter the
-pipeline, 50 were in the pipeline at the time of stopping the daemon (these
-will be added to the queue again once we restart the daemon) and 0 files are
-in the list of failed files. Files end up in there when their processor chain
-or (one of) their transporters fails.
+pipeline, 50 were in the pipeline at the time of stopping File Conveyor (these
+will be added to the queue again once we restart File Conveyor) and 0 files
+are in the list of failed files. Files end up in there when their processor
+chain or (one of) their transporters fails.
   sqlite> SELECT COUNT(*) FROM pipeline_queue;
   2560
   sqlite> SELECT COUNT(*) FROM pipeline_list;
@@ -487,9 +487,9 @@ The Python object stored in there is the same for all three tables: a tuple of
 the filename (as a string) and the event (as an integer). The event is one of
 FSMonitor.CREATED, FSMonitor.MODIFIED, FSMonitor.DELETED.
 
-This file is what tracks the curent state of the daemon. Thanks to this file,
-it is possible for the daemon to crash and not lose any data.
-Deleting this file would cause the daemon to lose all of its current work.
+This file is what tracks the curent state of File Conveyor. Thanks to this file,
+it is possible for File Conveyor to crash and not lose any data.
+Deleting this file would cause File Conveyor to lose all of its current work.
 Only new (as in: after the file was deleted) changes in the file system would
 be picked up. Changes that still had to be synced, would be forgotten.
 
@@ -506,7 +506,7 @@ This file is what tracks the current state of the directory tree associated
 with each source. When an operating system's file system monitor is used, this
 database will be updated through its callbacks. When no such file system
 monitor is available, it will be updated through polling.
-Deleting this file would cause the daemon to have to sync all files again.
+Deleting this file would cause File Conveyor to have to sync all files again.
 
 
 Understanding synced_files.db
@@ -553,19 +553,11 @@ named "ftp push cdn".
 License
 -------
 This application is dual-licensed under the GPL and the UNLICENSE.
-
-This application depends on various pieces of 3rd party code:
-- parts of Django (dependencies/django). Django is released under the modified
-  BSD license, which is GPL-compatible.
-- boto (dependencies/boto). boto is released under the MIT license, which is
-  GPL-compatible.
-- django-storages (dependencies/storages). django-storages is released under
-  the modified BSD license, which is GPL-compatible.
-- python-cloudfiles (dependencies/cloudfiles). python-cloudfiles is released
-  under the MIT license, which is GPL-compatible.
   
-Hence it made sense to initially release the source code under the GPL.
-Clearly, the 3rd party code is not UNLICENSEd; only the newly written code is.
+Due to the dependencies that were initially included within File Conveyor,
+which were all subject to GPL-compatible licenses, it made sense to initially
+release the source code under the GPL.
+Then, it was decided the UNLICENSE was a better fit.
 
 
 Author
