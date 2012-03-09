@@ -38,14 +38,14 @@
 </head>
 
 <body>
-  <a href="http://github.com/wimleers/fileconveyor"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  <a href="https://github.com/wimleers/fileconveyor"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 
   <div id="container">
 
     <div class="download">
-      <a href="http://github.com/wimleers/fileconveyor/zipball/master">
+      <a href="https://github.com/wimleers/fileconveyor/zipball/master">
         <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/wimleers/fileconveyor/tarball/master">
+      <a href="https://github.com/wimleers/fileconveyor/tarball/master">
         <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
     </div>
       
@@ -115,7 +115,7 @@
           <li><code>image_optimizer</code>, which is capable of optimizing
           images without losing quality, i.e. it stores images more
           efficiently (similar to the service that <a
-          href="http://smusmhit.com">smush.it</a> provides).</li>
+          href="http://smushit.com">smush.it</a> provides).</li>
           <li><code>link_updater</code>, which should be used to update the
           URLs in CSS files so that the CSS file refers to the images, fonts
           &hellip; on the CDN</li>
@@ -129,7 +129,7 @@
         </ul>
         <br />
         <a
-        href="http://github.com/wimleers/fileconveyor/blob/master/code/processors/google_closure_compiler.py">Proof
+        href="https://github.com/wimleers/fileconveyor/blob/master/fileconveyor/processors/google_closure_compiler.py">Proof
         of simplicity</a>&nbsp;<span class="small">(Google Closure Compiler
         Processor)</span></p>
         <span class="arrow">&darr;</span>
@@ -153,7 +153,7 @@
         </ul>
         <br />
         <a
-        href="http://github.com/wimleers/fileconveyor/blob/master/code/transporters/transporter_s3.py">Proof
+        href="https://github.com/wimleers/fileconveyor/blob/master/fileconveyor/transporters/transporter_s3.py">Proof
         of simplicity</a>&nbsp;<span class="small">(Amazon S3
         Processor)</span>
         </p>
@@ -164,7 +164,7 @@
     <p><strong><u>Configuring</u></strong> File Conveyor happens through a
     simple XML format. After looking at it for a couple of minutes, it should
     already make sense. <a
-    href="http://github.com/wimleers/fileconveyor/blob/master/code/config.sample.xml">Here's
+    href="https://github.com/wimleers/fileconveyor/blob/master/fileconveyor/config.sample.xml">Here's
     a sample configuration file.</a></p> <br />
 
     <p>It was originally written by <a href="http://wimleers.com/">Wim
@@ -200,12 +200,12 @@
     <h2>Download</h2>
     <p>
       You can download this project in either
-      <a href="http://github.com/wimleers/fileconveyor/zipball/master">zip</a> or
-      <a href="http://github.com/wimleers/fileconveyor/tarball/master">tar</a> formats.
+      <a href="https://github.com/wimleers/fileconveyor/zipball/master">zip</a> or
+      <a href="https://github.com/wimleers/fileconveyor/tarball/master">tar</a> formats.
     </p>
     <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
       by running:
-      <pre>$ git clone git://github.com/wimleers/fileconveyor</pre>
+      <pre>$ git clone git://github.com/wimleers/fileconveyor.git</pre>
     </p>
 
 
@@ -241,7 +241,7 @@
           <br />
         </li>
         <li>Transporters<br /><br />
-          <strong>All dependencies are included</strong> in the File Conveyor git repository.<br />
+          <strong>All dependencies are downloaded & installed automatically by <tt>pip</tt>.</strong><br />
           Their licenses are all GPL-compatible.
           <ul>
             <li><a href="http://code.google.com/p/boto">boto</a> (MIT license)</li>
@@ -258,7 +258,10 @@
 
     <h2>Installation instructions</h2>
     <p>See <a
-    href="http://github.com/wimleers/fileconveyor/blob/master/code/INSTALL.txt">INSTALL.txt</a>.</p>
+    href="https://github.com/wimleers/fileconveyor">INSTALL.txt</a>.</p>
+    <p>Or, if you have <a href="http://pip-installer.org/">pip</a> installed, you can do this:
+      <pre>pip install -e git+https://github.com/wimleers/fileconveyor@master#egg=fileconveyor</pre>   
+    </p>
 
 
 
@@ -312,7 +315,7 @@
 
 
     <div class="footer">
-      2009—2011 — Last update: July 11, 2011
+      2009—2012 — Last update: March 9, 2012
     </div>
   </div>
 
