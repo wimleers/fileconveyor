@@ -1,15 +1,13 @@
 from transporter import *
-from storages.backends.mosso import CloudFilesStorage
-import cloudfiles
+from cumulus.storage import CloudFilesStorage
 
 
-TRANSPORTER_CLASS = "TransporterMosso"
+TRANSPORTER_CLASS = "TransporterCumulus"
 
 
-class TransporterMosso (Transporter):
+class TransporterCumulus (Transporter):
 
-
-    name              = 'mosso'
+    name              = 'cumulus'
     valid_settings    = ImmutableSet(["username", "api_key", "container"])
     required_settings = ImmutableSet(["username", "api_key", "container"])
 
