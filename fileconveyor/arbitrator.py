@@ -774,7 +774,9 @@ class Arbitrator(threading.Thread):
                 # does not make sense, of course).
                 for rule in self.rules:
                     if event != FSMonitor.DELETED:
-                        if rule["deletionDelay"] > 0:
+                        if rule["deletionDelay"] is None:
+                            self.logger.warning("Not going to delete '%s'." % (input_file))
+                        elif rule["deletionDelay"] > 0:
                             self.lock.acquire()
                             self.files_to_delete.append((input_file, time.time() + rule["deletionDelay"]))
                             self.logger.warning("Scheduled '%s' for deletion in %d seconds, as per the '%s' rule." % (input_file, rule["deletionDelay"], rule["label"]))
