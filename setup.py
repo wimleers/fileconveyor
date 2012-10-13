@@ -1,4 +1,8 @@
 # coding=utf-8
+
+# Python 2.5 compatibility.
+from __future__ import with_statement
+
 import os.path
 import sys
 from setuptools import setup, find_packages
