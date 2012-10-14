@@ -28,7 +28,7 @@ from persistent_list import *
 from fsmonitor import *
 from filter import *
 from processors.processor import *
-from transporters.transporter import Transporter
+from transporters.transporter import Transporter, ConnectionError
 from daemon_thread_runner import *
 
 
