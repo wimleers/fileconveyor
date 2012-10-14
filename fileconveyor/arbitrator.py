@@ -775,7 +775,7 @@ class Arbitrator(threading.Thread):
                 for rule in self.rules:
                     if event != FSMonitor.DELETED:
                         if rule["deletionDelay"] is None:
-                            self.logger.warning("Not going to delete '%s'." % (input_file))
+                            self.logger.debug("Not going to delete '%s'." % (input_file))
                         elif rule["deletionDelay"] > 0:
                             self.lock.acquire()
                             self.files_to_delete.append((input_file, time.time() + rule["deletionDelay"]))
