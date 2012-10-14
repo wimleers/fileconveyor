@@ -8,7 +8,7 @@ import sys
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1-dev'
+VERSION = '0.2-dev'
 
 
 def read_relative_file(filename):
