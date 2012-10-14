@@ -267,7 +267,7 @@ Addressing transporters
 You can address a specific transporter by only specifying its module:
 - cf
 - ftp
-- mosso
+- cloudfiles
 - s3
 - sftp
 - symlink_or_copy
@@ -331,9 +331,9 @@ Available settings:
 
 
 
-Transporter: Mosso CloudFiles
----------------------------------
-Value to enter: "mosso".
+Transporter: Rackspace Cloud Files
+----------------------------------
+Value to enter: "cloudfiles".
 
 Available settings:
 - username

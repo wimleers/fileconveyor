@@ -2,12 +2,12 @@ from transporter import *
 from cumulus.storage import CloudFilesStorage
 
 
-TRANSPORTER_CLASS = "TransporterCumulus"
+TRANSPORTER_CLASS = "TransporterCloudFiles"
 
 
-class TransporterCumulus (Transporter):
+class TransporterCloudFiles(Transporter):
 
-    name              = 'cumulus'
+    name              = 'Cloud Files'
     valid_settings    = ImmutableSet(["username", "api_key", "container"])
     required_settings = ImmutableSet(["username", "api_key", "container"])
 
