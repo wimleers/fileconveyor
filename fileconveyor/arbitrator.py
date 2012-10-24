@@ -364,7 +364,7 @@ class Arbitrator(threading.Thread):
                 # the file from the pipeline queue.
                 else:
                     self.pipeline_queue.remove_item_for_key(key=input_file)
-                    self.logger.info("Pipeline queue: merged events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event], FSMonitor.EVENTNAMES[merged_event]))
+                    self.logger.info("Pipeline queue: merged events for '%s': %s + %s cancel each other out, thus removed this file." % (input_file, FSMonitor.EVENTNAMES[old_event], FSMonitor.EVENTNAMES[event]))
             self.logger.info("Discover queue -> pipeline queue: '%s'." % (input_file))
         self.lock.release()
 

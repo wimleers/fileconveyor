@@ -1,3 +1,9 @@
+# 0.3-dev
+
+Critical bugfix for a tiny bug with big consequences.
+
+* Critical bug: #112: When a newly created file is deleted before it was synced, File Conveyor crashes on a logging statement
+
 # 0.2-dev — October 15, 2012
 
 Critical bugfixes. Prevent file loss and makes Rackspace Cloud Files operational again.
