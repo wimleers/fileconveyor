@@ -1,4 +1,8 @@
-# 0.3-dev
+# 0.4-dev
+
+Nothing yet!
+
+# 0.3-dev — October 24, 2012
 
 Critical bugfix for a tiny bug with big consequences.
 
