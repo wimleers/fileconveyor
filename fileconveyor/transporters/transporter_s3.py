@@ -29,10 +29,10 @@ class TransporterS3(Transporter):
         # Map the settings to the format expected by S3Storage.
         try:
             self.storage = S3BotoStorage(
-                self.settings["bucket_name"],
-                self.settings["bucket_prefix"],
-                self.settings["access_key_id"],
-                self.settings["secret_access_key"],
+                self.settings["bucket_name"].encode('utf-8'), 
+                self.settings["access_key_id"].encode('utf-8'),
+                self.settings["secret_access_key"].encode('utf-8'),
+                "public-read",
                 "public-read",
                 self.__class__.headers
             )
