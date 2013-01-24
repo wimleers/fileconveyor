@@ -29,10 +29,16 @@ class TransporterCF(TransporterS3):
         return TransporterS3.__init__(self, settings, callback, error_callback, parent_logger)
 
     def alter_url(self, url):
-        return url.replace(
-            self.settings["bucket_prefix"] + self.settings["bucket_name"] + ".s3.amazonaws.com",
-            self.settings["distro_domain_name"]
-        )
+        if self.settings["use_secure_urls"].lower() == "true":
+            return url.replace(
+                self.settings["bucket_prefix"] + self.settings["bucket_name"] + ".s3.amazonaws.com",
+                self.settings["secure_distro_domain_name"]
+            )
+        else:
+            return url.replace(
+                self.settings["bucket_prefix"] + self.settings["bucket_name"] + ".s3.amazonaws.com",
+                self.settings["distro_domain_name"]
+            )
 
 
 def create_distribution(access_key_id, secret_access_key, origin, comment="", cnames=None):
