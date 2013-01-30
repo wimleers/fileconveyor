@@ -16,6 +16,7 @@ class TransporterCF(TransporterS3):
 
     def __init__(self, settings, callback, error_callback, parent_logger=None):
         # Fill out defaults if necessary.
+        TransporterS3.__init__(self, settings, callback, error_callback, parent_logger)
         configured_settings = Set(self.settings.keys())
 
         if self.settings["use_secure_urls"].lower() == "true":
