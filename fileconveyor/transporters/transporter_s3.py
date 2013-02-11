@@ -67,7 +67,7 @@ class TransporterS3(Transporter):
                 querystring_auth=USE_QUERYSTRING_AUTH,
                 querystring_expire=self.settings["set_url_expiration"],
                 secure_urls=USE_SECURE_URLS,
-                url_protocol=USE_URL_PROTOCOL
+                #url_protocol=USE_URL_PROTOCOL
             )
         except Exception, e:            
             raise ConnectionError(e)
