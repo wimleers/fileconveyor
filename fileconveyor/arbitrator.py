@@ -1158,8 +1158,13 @@ class Arbitrator(threading.Thread):
                 classname = module.TRANSPORTER_CLASS
                 module = __import__(module_name, globals(), locals(), [classname])
                 transporter_class = getattr(module, classname)
-            except AttributeError:
-                self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
+            except AttributeError:`
+                try:
+                    classname
+                except NameError:
+                    self.logger.error("The Transporter module '%s' was found, but its Transporter class could not be found."  % (module_name))
+                else:
+                    self.logger.error("The Transporter module '%s' was found, but its Transporter class '%s' could not be found."  % (module_name, classname))
         return transporter_class
 
 
