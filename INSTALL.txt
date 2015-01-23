@@ -47,7 +47,7 @@ change was introduced).
 
 Linux
 -----
-Mac OS X is fully supported and requires no additional setup.
+Linux is fully supported and requires no additional setup.
 
 
 Mac OS X
