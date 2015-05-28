@@ -1158,7 +1158,7 @@ class Arbitrator(threading.Thread):
                 classname = module.TRANSPORTER_CLASS
                 module = __import__(module_name, globals(), locals(), [classname])
                 transporter_class = getattr(module, classname)
-            except AttributeError:`
+            except AttributeError:
                 try:
                     classname
                 except NameError:
