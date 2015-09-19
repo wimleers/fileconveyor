@@ -15,6 +15,8 @@ import signal
 FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
+sys.path.append(os.path.dirname(os.path.abspath(os.path.join(FILE_CONVEYOR_PATH))))
+
 # HACK to make sure that Django-related libraries can be loaded: include dummy
 # settings if necessary.
 if not 'DJANGO_SETTINGS_MODULE' in os.environ:

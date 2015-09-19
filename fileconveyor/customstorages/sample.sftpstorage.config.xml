@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- these settings would go in your fileconveyor/config.xml -->
+<config>
+  <!-- Sources -->
+  <sources>
+    <source name="reports" scanPath="/filestoshare/reports" />
+    <source name="images" scanPath="/filestoshare/images" />
+  </sources>
+
+  <!-- Servers -->
+  <servers>
+    <server name="sftp_reports" transporter="sftp">
+      <!-- required: host -->
+      <host>123.45.6.789</host>
+      <!-- required: username on the sftp server -->
+      <username>oliviabenson</username>
+      <!-- password needed if not using key_filename -->
+      <password>Stabl3r</password>
+      <!-- required: path on the ftp server to drop the files -->
+      <root_path>/</root_path>
+      <!-- int: port of sftp server - will default to 22 -->
+      <port>22</port>
+      <!-- float: seconds for timeout - will default to 30 -->
+      <timeout>45.0</timeout>
+    </server>
+
+    <server name="sftp_images" transporter="sftp">
+      <host>123.45.6.789</host>
+      <username>oliviabenson</username>
+      <root_path>/images</root_path>
+      <!-- needed if not using password -->
+      <key_filename>/path/to/privatekey</key_filename>
+    </server>
+  </servers>
+
+  <!-- Rules -->
+
+  <rules>
+    <rule for="reports" label="Data Files">
+      <destinations>
+        <destination server="sftp_reports" />
+      </destinations>
+    </rule>
+  <rule for="images" label="Data Files">
+      <destinations>
+        <destination server="sftp_images" />
+      </destinations>
+    </rule>
+  </rules>
+</config>

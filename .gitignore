@@ -2,6 +2,9 @@
 *.egg-info
 dist
 build
-# Python's precompiled files
+#Python's precompiled files
 *.pyc
 *.pyo
+*.log
+*.db
+config.xml

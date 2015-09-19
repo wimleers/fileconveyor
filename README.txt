@@ -292,17 +292,19 @@ Available settings:
 - key
 
 
-Transporter: SFTP (sftp)
+Transporter: SFTP (sftp) - not using django-storages sftp see customstorages folder
 ------------------------
 Value to enter: "sftp".
 
 Available settings:
-- host
-- username
+- host [Required]
+- username [Required]
+- root_path [Required]
 - password
-- url
-- port
-- path
+- key_file [ex: /path/to/privatekey/.ssh/id_rsa]
+- port [int ex: 22]
+- timeout [float ex: 30.0]
+
 
 
 Transporter: Amazon S3

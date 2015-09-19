@@ -1,5 +1,5 @@
 from transporter import *
-from storages.backends.sftpstorage import SFTPStorage
+from customstorages.SFTPStorageFC import SFTPStorageFC
 
 
 TRANSPORTER_CLASS = "TransporterSFTP"
@@ -9,32 +9,31 @@ class TransporterSFTP(Transporter):
 
 
     name              = 'SFTP'
-    valid_settings    = ImmutableSet(["host", "username", "password", "url", "port", "path", "key"])
-    required_settings = ImmutableSet(["host", "username", "url"])
+    valid_settings    = ImmutableSet(["host", "username", "password", "root_path", "port", "timeout", "key_filename"])
+    required_settings = ImmutableSet(["host", "username", "root_path"])
 
     def __init__(self, settings, callback, error_callback, parent_logger=None):
         Transporter.__init__(self, settings, callback, error_callback, parent_logger)
 
-        # Fill out defaults if necessary.
+        # Raise exception when required settings have not been configured.
         configured_settings = Set(self.settings.keys())
-        if not "port" in configured_settings:
-            self.settings["port"] = 22
-        if not "path" in configured_settings:
-            self.settings["path"] = ""
+        if not "username" in configured_settings:
+            raise ImpropertlyConfigured, "username not set" 
+        if not "host" in configured_settings:
+            raise ImpropertlyConfigured, "host not set" 
+        if not "root_path" in configured_settings:
+            raise ImpropertlyConfigured, "path not set" 
+        if not "timeout" in self.settings:
+          self.settings["timeout"] = 30.0
+        if not "port" in self.settings:
+          self.settings["port"] = 22
+        if not "password" in self.settings:
+          self.settings["password"] = None 
+        if not "key_filename" in self.settings:
+          self.settings["key_filename"] = None 
 
-        # Map the settings to the format expected by FTPStorage.
-        if "password" in configured_settings:
-          location = "sftp://" + self.settings["username"] + ":" + self.settings["password"] + "@" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
-        else:
-          location = "sftp://" + self.settings["username"] + "@" + self.settings["host"] + ":" + str(self.settings["port"]) + self.settings["path"]
-
-        key = None
-        if "key" in configured_settings:
-            key = self.settings["key"]
-
-        self.storage = SFTPStorage(location, self.settings["url"], key)
-        self.storage._start_connection()
         try:
-            self.storage._start_connection()
+          self.storage = SFTPStorageFC({'root_path':self.settings['root_path'],'host':self.settings['host'],'username':self.settings['username'],'password':self.settings['password'],'port':self.settings['port'],'timeout':self.settings['timeout'],'key_filename':self.settings['key_filename']})
         except Exception, e:
-            raise ConnectionError(e)
+          raise Exception(e)
+
