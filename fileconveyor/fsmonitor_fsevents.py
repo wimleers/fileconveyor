@@ -53,8 +53,8 @@ class FSMonitorFSEvents(FSMonitor):
     flags = kFSEventStreamCreateFlagWatchRoot
 
 
-    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
-        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None, follow_symlinks=False):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger, follow_symlinks)
         self.logger.info("FSMonitor class used: FSMonitorFSEvents.")
         self.latest_event_id = None
         self.auto_release_pool = None
@@ -188,7 +188,7 @@ class FSMonitorFSEvents(FSMonitor):
             if self.monitored_paths[path].monitoring:
                 continue
             streamRef = self.monitored_paths[path].fsmonitor_ref
-            
+
             # Schedule stream on a loop.
             FSEventStreamScheduleWithRunLoop(streamRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
 
@@ -240,7 +240,7 @@ class FSMonitorFSEvents(FSMonitor):
 
             elif eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs:
                 # There was some change in the directory and one of its
-                # subdirectories supplied in this event.                
+                # subdirectories supplied in this event.
                 # This call to PathScanner is what ensures that FSMonitor.db
                 # remains up-to-date.
                 result = self.pathscanner.scan_tree(event_path)

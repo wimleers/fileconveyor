@@ -39,10 +39,11 @@ setup(
     install_requires=[
         'setuptools',
         'cssutils',
-        'boto==1.6b',
+        'boto==2.38.0',
         'python-cloudfiles>=1.4.0',
         'django>=1.3',
-        'django-cumulus>=1.0.5',
+        'django-cumulus>=1.0.10',
+        'django-storages==1.1.5'
     ] + (
         ["pyinotify>0.8.0"] if "linux" in sys.platform else []
     ),

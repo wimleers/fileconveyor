@@ -18,7 +18,7 @@ FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
 # HACK to make sure that Django-related libraries can be loaded: include dummy
 # settings if necessary.
 if not 'DJANGO_SETTINGS_MODULE' in os.environ:
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'fileconveyor.django_settings'
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'django_settings'
 
 
 from settings import *
@@ -226,7 +226,7 @@ class Arbitrator(threading.Thread):
         self.retry_queue     = Queue.Queue()
         self.remaining_transporters = {}
 
-        # Move files from the 'files_in_pipeline' persistent list to the 
+        # Move files from the 'files_in_pipeline' persistent list to the
         # pipeline queue. This is what prevents files from being dropped from
         # the pipeline!
         pipelined_items = []
@@ -255,7 +255,7 @@ class Arbitrator(threading.Thread):
 
         # Initialize the FSMonitor.
         fsmonitor_class = get_fsmonitor()
-        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True, self.config.ignored_dirs.split(":"), "fsmonitor.db", "Arbitrator")
+        self.fsmonitor = fsmonitor_class(self.fsmonitor_callback, True, True, self.config.ignored_dirs.split(":"), "fsmonitor.db", "Arbitrator", FOLLOW_SYMLINKS)
         self.logger.warning("Setup: initialized FSMonitor.")
 
         # Monitor all sources' scan paths.
@@ -479,7 +479,7 @@ class Arbitrator(threading.Thread):
                     else:
                         # If a processor chain is configured, queue the file
                         # to be processed. Otherwise, immediately queue the
-                        # file to be transported 
+                        # file to be transported
                         if not rule["processorChain"] is None:
                             # Check if there is at least one processor that
                             # will create output that is different per server.
@@ -673,7 +673,7 @@ class Arbitrator(threading.Thread):
             (input_file, event, rule, processed_for_server, output_file, transported_file, url, server) = self.db_queue.get()
             self.lock.release()
 
-            # Commit the result to the database.            
+            # Commit the result to the database.
             remove_server_from_remaining_transporters = True
             transported_file_basename = os.path.basename(output_file)
             if event == FSMonitor.CREATED:
@@ -696,7 +696,7 @@ class Arbitrator(threading.Thread):
                     # the input_file that has been transported.
                     self.dbcur.execute("UPDATE synced_files SET transported_file_basename=?, url=? WHERE input_file=? AND server=?", (transported_file_basename, url, input_file, server))
                     self.dbcon.commit()
-                    
+
                     # If a file was modified that had already been synced
                     # before and now has a different basename for the
                     # transported file than before, we first have to delete
@@ -859,7 +859,7 @@ class Arbitrator(threading.Thread):
         num_failed_files = len(self.failed_files)
         should_retry = self.last_retry + RETRY_INTERVAL < time.time()
         pipeline_queue_almost_empty = self.pipeline_queue < MAX_FILES_IN_PIPELINE
-        
+
         if num_failed_files > 0 and (should_retry or pipeline_queue_almost_empty):
             failed_items = []
 
@@ -869,7 +869,7 @@ class Arbitrator(threading.Thread):
                 failed_items.append(item)
                 self.pipeline_queue.put(item)
                 processed += 1
-            
+
             for item in failed_items:
                 self.failed_files.remove(item)
 

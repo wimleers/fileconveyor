@@ -25,8 +25,8 @@ class FSMonitorPolling(FSMonitor):
     interval = 10
 
 
-    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
-        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+    def __init__(self, callback, persistent=True, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None, follow_symlinks=False):
+        FSMonitor.__init__(self, callback, True, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger, follow_symlinks)
         self.logger.info("FSMonitor class used: FSMonitorPolling.")
 
 

@@ -37,8 +37,8 @@ class FSMonitorInotify(FSMonitor):
     }
 
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
-        FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger)
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None, follow_symlinks=False):
+        FSMonitor.__init__(self, callback, persistent, trigger_events_for_initial_scan, ignored_dirs, dbfile, parent_logger, follow_symlinks)
         self.logger.info("FSMonitor class used: FSMonitorInotify.")
         self.wm             = None
         self.notifier       = None
@@ -180,7 +180,7 @@ class FSMonitorInotifyProcessEvent(ProcessEvent):
 
     # On Linux, you can choose which encoding is used for your file system's
     # file names. Hence, we better detect the file system's encoding so we
-    # know what to decode from in __ensure_unicode(). 
+    # know what to decode from in __ensure_unicode().
     encoding = sys.getfilesystemencoding()
 
 

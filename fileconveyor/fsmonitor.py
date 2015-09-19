@@ -76,11 +76,13 @@ class FSMonitor(threading.Thread):
     EVENTNAMES = {}
     MERGE_EVENTS = {}
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None, follow_symlinks=False):
         self.persistent                      = persistent
         self.trigger_events_for_initial_scan = trigger_events_for_initial_scan
         self.monitored_paths                 = {}
         self.dbfile                          = dbfile
+        self.commit_interval                 = 50
+        self.follow_symlinks                 = follow_symlinks
         self.dbcon                           = None
         self.dbcur                           = None
         self.pathscanner                     = None
@@ -139,7 +141,7 @@ class FSMonitor(threading.Thread):
 
     def purge_dir(self, path):
         """purge the metadata for a monitored directory
-        
+
         Only possible if this is a persistent DB.
         """
         if self.persistent:
@@ -163,7 +165,8 @@ class FSMonitor(threading.Thread):
             self.dbcur = self.dbcon.cursor()
         # PathScanner.
         if self.persistent == True and self.dbcur is not None:
-            self.pathscanner = PathScanner(self.dbcon, self.ignored_dirs, "pathscanner")
+            self.pathscanner = PathScanner(self.dbcon, self.ignored_dirs, "pathscanner",
+                self.commit_interval, self.follow_symlinks)
 
 
     def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through=None, event_mask=None):

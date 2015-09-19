@@ -33,13 +33,14 @@ from sets import Set
 
 class PathScanner(object):
     """scan paths for changes, persistent storage using SQLite"""
-    def __init__(self, dbcon, ignored_dirs=[], table="pathscanner", commit_interval=50):
+    def __init__(self, dbcon, ignored_dirs=[], table="pathscanner", commit_interval=50, follow_symlinks=False):
         self.dbcon                  = dbcon
         self.dbcur                  = dbcon.cursor()
         self.ignored_dirs           = ignored_dirs
         self.table                  = table
         self.uncommitted_statements = 0
         self.commit_interval        = commit_interval
+        self.follow_symlinks        = follow_symlinks
         self.__prepare_db()
 
 
@@ -63,7 +64,7 @@ class PathScanner(object):
 
     def __listdir(self, path):
         """list all the files in a directory
-        
+
         Returns (path, filename, mtime, is_dir) tuples.
         """
 
@@ -81,11 +82,17 @@ class PathScanner(object):
                     # If this is one of the ignored directories, skip it.
                     if filename in self.ignored_dirs:
                         continue
-                    # This is not an ignored directory, but if it's a symlink,
-                    # we will prevent walking the directory tree below it by
-                    # pretending it's just a file.
+                    # This is not an ignored directory, but if it's a symlink
+                    # and you want to process the directory tree you can
+                    # enable or disable through settings. (default: False)
+                    #       FOLLOW_SYMLINKS = False | True
+                    # If FOLLOW_SYMLINKS is set to False then it will pretend
+                    # current symlink directory as a file.
                     else:
-                        is_dir = not os.path.islink(path_to_file)
+                        if self.follow_symlinks:
+                            is_dir = True
+                        else:
+                            is_dir = not os.path.islink(path_to_file)
                 else:
                     is_dir = False
                 row = (path, filename, mtime, is_dir)
@@ -96,7 +103,7 @@ class PathScanner(object):
 
     def initial_scan(self, path):
         """perform the initial scan
-        
+
         Returns False if there is already data available for this path.
         """
         assert type(path) == type(u'.')
@@ -105,7 +112,7 @@ class PathScanner(object):
         self.dbcur.execute("SELECT COUNT(filename) FROM %s WHERE path=?" % (self.table), (path,))
         if self.dbcur.fetchone()[0] > 0:
             return False
-        
+
         for files in self.__walktree(path):
             self.add_files(files)
 
@@ -121,7 +128,7 @@ class PathScanner(object):
 
     def add_files(self, files):
         """add file metadata to the database
-        
+
         Expected format: a set of (path, filename, mtime) tuples.
         """
         self.update_files(files)
@@ -161,16 +168,16 @@ class PathScanner(object):
         """docstring for __db_commit"""
         # Commit to the database in batches, to reduce concurrency: collect
         # self.commit_interval rows, then commit.
-        
+
         self.uncommitted_statements += 1
         if force == True or self.uncommitted_statements == self.commit_interval:
             self.dbcon.commit()
             self.uncommitted_rows = 0
-            
+
 
     def scan(self, path):
         """scan a directory (without recursion!) for changes
-        
+
         The database is also updated to reflect the new situation, of course.
 
         By design, so that this function can be used by scan_tree():
@@ -292,7 +299,7 @@ class PathScanner(object):
                 for (subpath, subfilename, submtime) in files_in_dir:
                     deleted_tree.add(os.path.join(subpath, subfilename)[len(path) + 1:])
         result["deleted"] = result["deleted"].union(deleted_tree)
-        
+
         return result
 
 

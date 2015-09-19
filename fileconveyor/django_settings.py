@@ -12,3 +12,6 @@ SFTP_STORAGE_HOST=''
 CUMULUS_API_KEY = '';
 CUMULUS_USERNAME = '';
 CUMULUS_CONTAINER = '';
+
+# SECRET_KEY is required for amazon s3 storage provider boto library
+SECRET_KEY = 'vETf-M2PJq9T';
