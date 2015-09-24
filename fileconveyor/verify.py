@@ -9,6 +9,13 @@ num_files_invalid = 0
 
 dbcon = sqlite3.connect(SYNCED_FILES_DB)
 dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
+if SYNCED_FILES_BACKEND == 'sqlite':
+    dbcon = sqlite3.connect(SYNCED_FILES_DB)
+elif SYNCED_FILES_BACKEND == 'mysql':
+    import MySQLdb
+    dbcon = MySQLdb.connect(host=SYNCED_FILES_HOST, user=SYNCED_FILES_USER, passwd=SYNCED_FILES_PASS, db=SYNCED_FILES_DB)
+else:
+    print "Unknown SYNCED_FILES_BACKEND value"
 dbcur = dbcon.cursor()
 num_files = dbcur.execute("SELECT COUNT(*) FROM synced_files").fetchone()[0]
 dbcur.execute("SELECT input_file, url, server FROM synced_files ORDER BY server")
