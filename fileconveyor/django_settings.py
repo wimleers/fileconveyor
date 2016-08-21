@@ -1,4 +1,5 @@
 # Dummy settings for `django-storages`.
+SECRET_KEY='random'
 MEDIA_URL=''
 MEDIA_ROOT=''
 # `backends/ftp.py`
