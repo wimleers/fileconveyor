@@ -18,7 +18,7 @@ FILE_CONVEYOR_PATH = os.path.abspath(os.path.dirname(__file__))
 # HACK to make sure that Django-related libraries can be loaded: include dummy
 # settings if necessary.
 if not 'DJANGO_SETTINGS_MODULE' in os.environ:
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'fileconveyor.django_settings'
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'django_settings'
 
 
 from settings import *
