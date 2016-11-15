@@ -1,6 +1,6 @@
-# 0.4-dev
+# 0.4-dev - November 15, 2016
 
-Nothing yet!
+Allow to set S3 bucket_access. Default to private.
 
 # 0.3-dev — October 24, 2012
 
