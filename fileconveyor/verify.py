@@ -3,6 +3,8 @@ import urlparse
 import sqlite3
 import sys
 from settings import *
+from persistent_queue import PersistentQueue
+from fsmonitor import FSMonitor
 
 num_files_checked = 0
 num_files_invalid = 0
@@ -12,6 +14,7 @@ dbcon.text_factory = unicode # This is the default, but we set it explicitly, ju
 dbcur = dbcon.cursor()
 num_files = dbcur.execute("SELECT COUNT(*) FROM synced_files").fetchone()[0]
 dbcur.execute("SELECT input_file, url, server FROM synced_files ORDER BY server")
+pipeline_queue = PersistentQueue("pipeline_queue", PERSISTENT_DATA_DB)
 
 for input_file, url, server in dbcur.fetchall():
     parsed = urlparse.urlparse(url)
@@ -22,6 +25,7 @@ for input_file, url, server in dbcur.fetchall():
     
     if not (response.status == 200 and response.reason == 'OK'):
         print "Missing: %s, which should be available at %s (server: %s)" % (input_file, url, server)
+        pipeline_queue.put(item=(input_file, FSMonitor.MODIFIED), key=input_file)
         num_files_invalid += 1
 
     num_files_checked += 1
