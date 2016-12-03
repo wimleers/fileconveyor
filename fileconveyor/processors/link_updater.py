@@ -14,9 +14,8 @@ from cssutils import replaceUrls
 
 import logging
 import sys
-import sqlite3
 from urlparse import urljoin
-from settings import SYNCED_FILES_DB
+from settings import *
 
 
 class CSSURLUpdater(Processor):
@@ -52,10 +51,15 @@ class CSSURLUpdater(Processor):
         replaceUrls(sheet, self.resolveToAbsolutePath)
 
         # Step 3: verify that each of these files has been synced.
-        synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
-        self.dbcon = sqlite3.connect(synced_files_db)
-        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
-        self.dbcur = self.dbcon.cursor()
+        if DB_SOURCE == 'sqlite':
+            import sqlite3
+            synced_files_db = urljoin(sys.path[0] + os.sep, SYNCED_FILES_DB)
+            self.dbcon = sqlite3.connect(synced_files_db)
+            self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure. 
+        elif DB_SOURCE == 'mysql':
+            import MySQLdb
+            self.dbcon = MySQLdb.connect(host=DB_HOST, port=DB_PORT, user=DB_USERNAME, passwd=DB_PASSWORD, db=DB_DATABASE, charset='utf8')
+        self.dbcur = self.dbcon.cursor()    
         all_synced = True
         for urlstring in getUrls(sheet):
             # Skip absolute URLs.
@@ -68,7 +72,10 @@ class CSSURLUpdater(Processor):
                 continue
 
             # Get the CDN URL for the given absolute path.
-            self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=?", (urlstring, ))
+            if DB_SOURCE == 'mysql':
+                self.dbcur.execute("SELECT url FROM synced_files WHERE input_file = %s", (urlstring, ))
+            elif DB_SOURCE == 'sqlite':
+                self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=?", (urlstring, ))
             result = self.dbcur.fetchone()
 
             if result == None:
@@ -130,5 +137,9 @@ class CSSURLUpdater(Processor):
             return urlstring
 
         # Get the CDN URL for the given absolute file path.
-        self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=? AND server=?", (urlstring, self.process_for_server))
+        self.dbcon.ping(True)
+        if DB_SOURCE == 'mysql':
+            self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=%s AND server=%s", (urlstring, self.process_for_server))
+        elif DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT url FROM synced_files WHERE input_file=? AND server=?", (urlstring, self.process_for_server))
         return self.dbcur.fetchone()[0]

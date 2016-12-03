@@ -47,7 +47,6 @@ __license__ = "GPL"
 
 
 import platform
-import sqlite3
 import threading
 import Queue
 import os
@@ -76,11 +75,11 @@ class FSMonitor(threading.Thread):
     EVENTNAMES = {}
     MERGE_EVENTS = {}
 
-    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbfile="fsmonitor.db", parent_logger=None):
+    def __init__(self, callback, persistent=False, trigger_events_for_initial_scan=False, ignored_dirs=[], dbdata=("sqlite", "fsmonitor.db", '', '', '', ''), parent_logger=None):
         self.persistent                      = persistent
         self.trigger_events_for_initial_scan = trigger_events_for_initial_scan
         self.monitored_paths                 = {}
-        self.dbfile                          = dbfile
+        (self.DB_SOURCE, self.DB_HOST, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, self.DB_DATABASE) = dbdata
         self.dbcon                           = None
         self.dbcur                           = None
         self.pathscanner                     = None
@@ -158,12 +157,19 @@ class FSMonitor(threading.Thread):
         """set up the database and pathscanner"""
         # Database.
         if self.dbcur is None:
-            self.dbcon = sqlite3.connect(self.dbfile)
-            self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
-            self.dbcur = self.dbcon.cursor()
+            if self.DB_SOURCE == 'sqlite':
+                import sqlite3
+                self.dbcon = sqlite3.connect(self.DB_HOST)
+                self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
+                self.dbcur = self.dbcon.cursor()
+            elif self.DB_SOURCE == 'mysql':
+                import MySQLdb
+                self.dbcon = MySQLdb.connect(host=self.DB_HOST, port=self.DB_PORT, user=self.DB_USERNAME, passwd=self.DB_PASSWORD, db=self.DB_DATABASE, charset='utf8')
+                self.dbcur = self.dbcon.cursor()
+            
         # PathScanner.
         if self.persistent == True and self.dbcur is not None:
-            self.pathscanner = PathScanner(self.dbcon, self.ignored_dirs, "pathscanner")
+            self.pathscanner = PathScanner(self.dbcon, self.DB_SOURCE, self.ignored_dirs, "pathscanner")
 
 
     def trigger_events_for_pathscanner_result(self, monitored_path, event_path, result, discovered_through=None, event_mask=None):

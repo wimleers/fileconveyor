@@ -10,6 +10,7 @@ __license__ = "GPL"
 import os
 import os.path
 import xml.etree.ElementTree as etree
+import xml.etree.ElementInclude as einclude
 from xml.parsers.expat import ExpatError
 import re
 import logging
@@ -51,6 +52,7 @@ class Config(object):
         try:
             doc = etree.parse(filename)
             root = doc.getroot()
+            einclude.include(root)
             self.logger.info("Parsing sources.")
             self.__parse_sources(root)
             self.logger.info("Parsing servers.")
@@ -65,7 +67,7 @@ class Config(object):
 
     def __parse_sources(self, root):
         sources = root.find("sources")
-
+        
         # Globally ignored directories.
         self.ignored_dirs = Config.__ensure_unicode(sources.get("ignoredDirs", ""))
 
@@ -82,98 +84,103 @@ class Config(object):
                 self.logger.error("Invalid ignoredDirs attribute for the sources node: %s (details: \"%s\")." % (e.__class__.__name__, message))
                 self.errors += 1
 
-        for source in sources:
-            name          = Config.__ensure_unicode(source.get("name"))
-            scan_path     = Config.__ensure_unicode(source.get("scanPath"))
-            document_root = Config.__ensure_unicode(source.get("documentRoot"))
-            base_path     = Config.__ensure_unicode(source.get("basePath"))
+        for source_set in sources:
+            for source in source_set:
+                name          = Config.__ensure_unicode(source.get("name"))
+                scan_path     = Config.__ensure_unicode(source.get("scanPath"))
+                document_root = Config.__ensure_unicode(source.get("documentRoot"))
+                base_path     = Config.__ensure_unicode(source.get("basePath"))
 
-            self.sources[name] = {
-                "name"          : name,
-                "scan_path"     : scan_path,
-                "document_root" : document_root,
-                "base_path"     : base_path,
-            }
+                self.sources[name] = {
+                    "name"          : name,
+                    "scan_path"     : scan_path,
+                    "document_root" : document_root,
+                    "base_path"     : base_path,
+                }
 
-            # Validate.
-            if not self.source_name_regex.match(name):
-                self.logger.error("The name '%s' for a source is invalid. Only use alphanumeric characters, the dash and the underscore." % (name))
-                self.errors += 1
-            if scan_path is None:
-                self.logger.error("The %s scan path is not configured." % (name))
-                self.errors += 1                
-            elif not os.path.exists(scan_path):
-                self.logger.error("The %s scan path ('%s') does not exist." % (name, scan_path))
-                self.errors += 1
-            if not document_root is None and not os.path.exists(document_root):
-                self.logger.error("The %s document root ('%s') does not exist." % (name, document_root))
-                self.errors += 1
-            if not base_path is None and (base_path[0] != "/" or base_path[-1] != "/"):
-                self.logger.error("The %s base path ('%s') is invalid. It should have both leading and trailing slashes." % (name, base_path))
-                self.errors += 1
-            if not document_root is None and not base_path is None:
-                site_path = os.path.join(document_root, base_path[1:])
-                if not os.path.exists(site_path):
-                    self.logger.warning("The %s site path (the base path within the document root, '%s') does not exist. It is assumed that this is a logical base path then, due to usage of symbolic links." % (name, site_path))
+                # Validate.
+                if not self.source_name_regex.match(name):
+                    self.logger.error("The name '%s' for a source is invalid. Only use alphanumeric characters, the dash and the underscore." % (name))
+                    self.errors += 1
+                if scan_path is None:
+                    self.logger.error("The %s scan path is not configured." % (name))
+                    self.errors += 1                
+                elif not os.path.exists(scan_path):
+                    self.logger.error("The %s scan path ('%s') does not exist." % (name, scan_path))
+                    self.errors += 1
+                if not document_root is None and not os.path.exists(document_root):
+                    self.logger.error("The %s document root ('%s') does not exist." % (name, document_root))
+                    self.errors += 1
+                if not base_path is None and (base_path[0] != "/" or base_path[-1] != "/"):
+                    self.logger.error("The %s base path ('%s') is invalid. It should have both leading and trailing slashes." % (name, base_path))
+                    self.errors += 1
+                if not document_root is None and not base_path is None:
+                    site_path = os.path.join(document_root, base_path[1:])
+                    if not os.path.exists(site_path):
+                        self.logger.warning("The %s site path (the base path within the document root, '%s') does not exist. It is assumed that this is a logical base path then, due to usage of symbolic links." % (name, site_path))
 
 
     def __parse_servers(self, root):
         servers_node = root.find("servers")
-        for server_node in servers_node:
-            settings = {}
-            name           = Config.__ensure_unicode(server_node.get("name"))
-            transporter    = Config.__ensure_unicode(server_node.get("transporter"))
-            maxConnections = server_node.get("maxConnections", 0)
-            for setting in server_node.getchildren():
-                settings[setting.tag] = Config.__ensure_unicode(setting.text)
-            self.servers[name] = {
-                "maxConnections" : int(maxConnections),
-                "transporter"    : transporter,
-                "settings"       : settings,
-            }
+        for server_set in servers_node:
+            for server_node in server_set:
+                self.logger.error("Server = %s", server_node.get("name"))
+                settings = {}
+                name           = Config.__ensure_unicode(server_node.get("name"))
+                transporter    = Config.__ensure_unicode(server_node.get("transporter"))
+                maxConnections = server_node.get("maxConnections", 0)
+                for setting in server_node.getchildren():
+                    settings[setting.tag] = Config.__ensure_unicode(setting.text)
+                self.servers[name] = {
+                    "maxConnections" : int(maxConnections),
+                    "transporter"    : transporter,
+                    "settings"       : settings,
+                }
 
 
     def __parse_rules(self, root):
         rules_node = root.find("rules")
-        for rule_node in rules_node:
-            for_source    = Config.__ensure_unicode(rule_node.get("for"))
-            label         = Config.__ensure_unicode(rule_node.get("label"))
-            deletion_delay = rule_node.get("fileDeletionDelayAfterSync", None)
-            if deletion_delay is not None:
-                deletion_delay = int(deletion_delay)
+        for rule_set in rules_node:
+            for rule_node in rule_set:
+                self.logger.error("Rule for = %s", rule_node.get("for"))
+                for_source    = Config.__ensure_unicode(rule_node.get("for"))
+                label         = Config.__ensure_unicode(rule_node.get("label"))
+                deletion_delay = rule_node.get("fileDeletionDelayAfterSync", None)
+                if deletion_delay is not None:
+                    deletion_delay = int(deletion_delay)
 
-            # 1: filter (optional)
-            conditions = None
-            filter_node = rule_node.find("filter")
-            if not filter_node is None:
-                conditions = self.__parse_filter(filter_node, label)
+                # 1: filter (optional)
+                conditions = None
+                filter_node = rule_node.find("filter")
+                if not filter_node is None:
+                    conditions = self.__parse_filter(filter_node, label)
 
-            # 2: processorChain (optional)
-            processor_chain = None
-            processor_chain_node = rule_node.find("processorChain")
-            if not processor_chain_node is None:
-                processor_chain = self.__parse_processor_chain(processor_chain_node, label)
+                # 2: processorChain (optional)
+                processor_chain = None
+                processor_chain_node = rule_node.find("processorChain")
+                if not processor_chain_node is None:
+                    processor_chain = self.__parse_processor_chain(processor_chain_node, label)
 
-            # 3: destinations (required)
-            destinations = {}
-            destinations_node = rule_node.find("destinations")
-            if destinations_node is None or len(destinations_node) == 0:
-                self.logger.error("In rule '%s': at least one destination must be configured." % (label))
-                self.errors += 1
-            else:
-                for destination_node in destinations_node:
-                    destination = self.__parse_destination(destination_node, label)
-                    destinations[destination["server"]] = {"path" : destination["path"]}
+                # 3: destinations (required)
+                destinations = {}
+                destinations_node = rule_node.find("destinations")
+                if destinations_node is None or len(destinations_node) == 0:
+                    self.logger.error("In rule '%s': at least one destination must be configured." % (label))
+                    self.errors += 1
+                else:
+                    for destination_node in destinations_node:
+                        destination = self.__parse_destination(destination_node, label)
+                        destinations[destination["server"]] = {"path" : destination["path"]}
 
-            if not self.rules.has_key(for_source):
-                self.rules[for_source] = []
-            self.rules[for_source].append({
-                "label"           : Config.__ensure_unicode(label),
-                "deletionDelay"   : deletion_delay,
-                "filterConditions": conditions,
-                "processorChain"  : processor_chain,
-                "destinations"    : destinations,
-            })
+                if not self.rules.has_key(for_source):
+                    self.rules[for_source] = []
+                self.rules[for_source].append({
+                    "label"           : Config.__ensure_unicode(label),
+                    "deletionDelay"   : deletion_delay,
+                    "filterConditions": conditions,
+                    "processorChain"  : processor_chain,
+                    "destinations"    : destinations,
+                })
 
 
     def __parse_filter(self, filter_node, rule_label):

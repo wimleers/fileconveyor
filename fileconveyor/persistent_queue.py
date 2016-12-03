@@ -20,12 +20,24 @@ __date__ = "$Date$"
 __license__ = "GPL"
 
 
-import sqlite3
 import cPickle
 import hashlib
 import types
 import threading
+import logging
+import base64
+import uuid
+import unicodedata
 
+try:
+    import MySQLdb
+except ImportError:
+    pass
+    
+try:
+    import sqlite3
+except ImportError:
+    pass
 
 # Define exceptions.
 class PersistentQueueError(Exception): pass
@@ -37,7 +49,7 @@ class UpdateForNonExistingKey(PersistentQueueError): pass
 class PersistentQueue(object):
     """a persistent queue with sqlite back-end designed for infinite queues"""
 
-    def __init__(self, table, dbfile="persistent_queue.db", max_in_memory=100, min_in_memory=50):
+    def __init__(self, table, dbfile=("sqlite", "persistent_queue.db", '', '', '', ''), max_in_memory=100, min_in_memory=50):
         self.size = 0
 
         # Initialize the database.
@@ -61,21 +73,46 @@ class PersistentQueue(object):
         # Update the size property.
         self.dbcur.execute("SELECT COUNT(id) FROM %s" % (self.table))
         self.size = self.dbcur.fetchone()[0]
+        
+        self.logger = logging.getLogger("Arbitrator")
 
 
     def __prepare_db(self, dbfile):
-        sqlite3.register_converter("pickle", cPickle.loads)
-        self.dbcon = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
-        self.dbcur = self.dbcon.cursor()
-        self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle, key CHAR(32))" % (self.table))
-        self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS unique_key ON %s (key)" % (self.table))
+        (DB_SOURCE, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE) = dbfile
+        self.DB_SOURCE = DB_SOURCE
+                
+        if DB_SOURCE == 'sqlite':
+            self.IntegrityError = sqlite3.IntegrityError
+            sqlite3.register_converter("pickle", cPickle.loads)
+            self.dbcon = sqlite3.connect(DB_HOST, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+            self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
+            self.dbcur = self.dbcon.cursor()
+            self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, item pickle, item_key CHAR(32))" % (self.table))
+            self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS unique_key ON %s (item_key)" % (self.table))
+        elif DB_SOURCE == 'mysql':
+            self.IntegrityError = MySQLdb.IntegrityError
+            self.dbcon = MySQLdb.connect(host=DB_HOST, port=DB_PORT, user=DB_USERNAME, passwd=DB_PASSWORD, db=DB_DATABASE, charset='utf8')
+            self.dbcur = self.dbcon.cursor()
+            self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(id INT NOT NULL AUTO_INCREMENT, item TEXT, item_key VARCHAR(32), PRIMARY KEY (id), UNIQUE INDEX unique_key (item_key))" % (self.table))
+        else:
+            self.logger.error("Invalid DB_SOURCE detected")
+            
         self.dbcon.commit()
 
 
     def __contains__(self, item):
-        return self.dbcur.execute("SELECT COUNT(item) FROM %s WHERE item=?" % (self.table), (cPickle.dumps(item), )).fetchone()[0]
-
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT COUNT(item) FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE item = %s", (base64.encodestring(cPickle.dumps(item)), ))
+            result = self.dbcur.fetchone()
+            if result is None:
+                return None
+            else:
+                return result[0]
+        elif self.DB_SOURCE == 'sqlite':
+            return self.dbcur.execute("SELECT COUNT(item) FROM %s WHERE item=?" % (self.table), (cPickle.dumps(item), )).fetchone()[0]
+        
 
     def qsize(self):
         return self.size
@@ -100,8 +137,13 @@ class PersistentQueue(object):
         self.lock.acquire()
         try:
             pickled_item = cPickle.dumps(item, cPickle.HIGHEST_PROTOCOL)
-            self.dbcur.execute("INSERT INTO %s (item, key) VALUES(?, ?)" % (self.table), (sqlite3.Binary(pickled_item), md5))
-        except sqlite3.IntegrityError:
+            self.dbcon.ping(True)
+            if self.DB_SOURCE == 'mysql':
+                stmt = "INSERT INTO %s (item, item_key)" % self.table
+                self.dbcur.execute(stmt + " VALUES(%s, %s)", (base64.encodestring(pickled_item), md5))
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("INSERT INTO %s (item, item_key) VALUES(?, ?)" % (self.table), (sqlite3.Binary(pickled_item), md5))
+        except self.IntegrityError:
             self.lock.release()
             raise AlreadyExists
         self.dbcon.commit()
@@ -137,12 +179,16 @@ class PersistentQueue(object):
             # Get the item from the memory queue and immediately delete it
             # from the database.
             (id, item) = self.memory_queue.pop(0)
-            self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
+            self.dbcon.ping(True)
+            if self.DB_SOURCE == 'mysql':
+                stmt = "DELETE FROM %s" % self.table
+                self.dbcur.execute(stmt + " WHERE id = %s", (id, ))
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("DELETE FROM %s WHERE id = ?" % (self.table), (id, ))
             self.dbcon.commit()
             self.size -= 1
 
             self.lock.release()
-
             return item
 
 
@@ -150,27 +196,46 @@ class PersistentQueue(object):
         """necessary to be able to do smart update()s"""
         md5 = PersistentQueue.__hash_key(key)
         self.lock.acquire()
-        self.dbcur.execute("SELECT item FROM %s WHERE key = ?" % (self.table), (md5, ))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT item FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE item_key = %s", (md5, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT item FROM %s WHERE item_key = ?" % (self.table), (md5, ))
         self.lock.release()
-
+        
         result = self.dbcur.fetchone()
         if result is None:
             return None
         else:
-            return result[0]
+            if self.DB_SOURCE == 'mysql':
+                data = base64.decodestring(result[0])
+                item = cPickle.loads(data)
+                return item
+            else:
+                return result[0]
 
 
     def remove_item_for_key(self, key):
         """necessary to be able to do smart update()s"""
         md5 = PersistentQueue.__hash_key(key)
         self.lock.acquire()
-        self.dbcur.execute("SELECT id FROM %s WHERE key = ?" % (self.table), (md5, ))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT id FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE item_key = %s", (md5, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT id FROM %s WHERE item_key = ?" % (self.table), (md5, ))
         result = self.dbcur.fetchone()
         if result is None:
             self.lock.release()
         else:
             id = result[0]
-            self.dbcur.execute("DELETE FROM %s WHERE key = ?" % (self.table), (md5, ))
+            if self.DB_SOURCE == 'mysql':
+                stmt = "DELETE FROM %s" % self.table
+                self.dbcur.execute(stmt + " WHERE item_key = %s", (md5, ))
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("DELETE FROM %s WHERE item_key = ?" % (self.table), (md5, ))
             self.dbcon.commit()
             self.size -= 1
             if id >= self.lowest_id_in_queue and id <= self.highest_id_in_queue:
@@ -184,7 +249,12 @@ class PersistentQueue(object):
         """update an item in the queue"""
         md5 = PersistentQueue.__hash_key(key)
         self.lock.acquire()
-        self.dbcur.execute("SELECT id FROM %s WHERE key = ?" % (self.table), (md5, ))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT id FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE item_key = %s", (md5, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT id FROM %s WHERE item_key = ?" % (self.table), (md5, ))
         result = self.dbcur.fetchone()
 
         if result is None:
@@ -193,7 +263,11 @@ class PersistentQueue(object):
         else:
             id = result[0]
             pickled_item = cPickle.dumps(item, cPickle.HIGHEST_PROTOCOL)
-            self.dbcur.execute("UPDATE %s SET item = ? WHERE key = ?" % (self.table), (sqlite3.Binary(pickled_item), md5))
+            if self.DB_SOURCE == 'mysql':
+                stmt = "UPDATE %s" % self.table
+                self.dbcur.execute(stmt + " SET item = %s WHERE item_key = %s", (base64.encodestring(pickled_item), md5))
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("UPDATE %s SET item = ? WHERE item_key = ?" % (self.table), (sqlite3.Binary(pickled_item), md5))
             self.dbcon.commit()
 
         if result is not None and id >= self.lowest_id_in_queue and id <= self.highest_id_in_queue:
@@ -206,11 +280,13 @@ class PersistentQueue(object):
 
     @classmethod
     def __hash_key(cls, key):
-        """calculate the md5 hash of the key"""
+        """generate a uuid key based on the key"""
         if not isinstance(key, types.StringTypes):
             key = str(key)
-        md5 = hashlib.md5(key.encode('utf-8')).hexdigest().decode('ascii')
-        return md5
+        
+        key = unicodedata.normalize('NFKD', key).encode('ascii', 'ignore')
+        ret = uuid.uuid5(uuid.NAMESPACE_URL, key)
+        return str(ret)
 
 
     def __update_memory_queue(self, refresh=False):
@@ -235,9 +311,18 @@ class PersistentQueue(object):
                 min_id = self.lowest_id_in_queue - 1
 
             # Do the actual update.
-            self.dbcur.execute("SELECT id, item FROM %s WHERE id > ? ORDER BY id ASC LIMIT 0,%d " % (self.table, self.max_in_memory - len(self.memory_queue)), (min_id, ))
+            upper_limit = self.max_in_memory - len(self.memory_queue)
+            self.dbcon.ping(True)
+            if self.DB_SOURCE == 'mysql':
+                stmt = "SELECT id, item FROM %s" % self.table
+                self.dbcur.execute(stmt + " WHERE id > %s ORDER BY id ASC LIMIT 0,%s", (min_id, upper_limit))
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("SELECT id, item FROM %s WHERE id > %s ORDER BY id ASC LIMIT 0,%s " % (self.table), (min_id, upper_limit))
             resultList = self.dbcur.fetchall()
             for id, item in resultList:
+                if self.DB_SOURCE == 'mysql':
+                    data = base64.decodestring(item)
+                    item = cPickle.loads(data)
                 self.memory_queue.append((id, item))
                 self.highest_id_in_queue = id
 
@@ -246,7 +331,7 @@ class PersistentQueue(object):
 
 
 class PersistentDataManager(object):
-    def __init__(self, dbfile="persistent_queue.db"):
+    def __init__(self, dbfile=("sqlite", "persistent_queue.db", '', '', '', '')):
         # Initialize the database.
         self.dbcon = None
         self.dbcur = None
@@ -254,13 +339,27 @@ class PersistentDataManager(object):
 
 
     def __prepare_db(self, dbfile):
-        self.dbcon = sqlite3.connect(dbfile)
-        self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
-        self.dbcur = self.dbcon.cursor()
+        (DB_SOURCE, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE) = dbfile
+        self.DB_SOURCE = DB_SOURCE
+                
+        if DB_SOURCE == 'sqlite':
+            self.dbcon = sqlite3.connect(DB_HOST, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+            self.dbcon.text_factory = unicode # This is the default, but we set it explicitly, just to be sure.
+            self.dbcur = self.dbcon.cursor()
+        elif DB_SOURCE == 'mysql':
+            self.dbcon = MySQLdb.connect(host=DB_HOST, port=DB_PORT, user=DB_USERNAME, passwd=DB_PASSWORD, db=DB_DATABASE, charset='utf8')
+            self.dbcur = self.dbcon.cursor()
+        else:
+            self.logger.error("Invalid DB_SOURCE detected")
+        
 
 
     def list(self, table):
-        self.dbcur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?", (table, ))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            self.dbcur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE %s", (table, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?", (table, ))
         resultList = self.dbcur.fetchall()
         tables = []
         for row in resultList:
@@ -269,5 +368,6 @@ class PersistentDataManager(object):
 
 
     def delete(self, table):
+        self.dbcon.ping(True)
         self.dbcur.execute("DROP TABLE '%s'" % (table))
         self.dbcon.commit()

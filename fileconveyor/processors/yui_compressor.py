@@ -28,8 +28,15 @@ class YUICompressor(Processor):
             os.remove(tmp_file)
 
         # Run YUI Compressor on the file.
-        yuicompressor_path = os.path.join(self.processors_path, "yuicompressor.jar")
-        (stdout, stderr) = self.run_command("java -jar %s %s -o %s" % (yuicompressor_path, self.input_file, tmp_file))
+        (yuicompressor_path, stderr) = self.run_command("which yui-compressor")
+        if not yuicompressor_path:
+            # If the yui-compressor command is not found, use the jar file
+            yuicompressor_path = os.path.join(self.processors_path, "yuicompressor.jar")
+            (stdout, stderr) = self.run_command("java -jar %s %s -o %s" % (yuicompressor_path, self.input_file, tmp_file))
+        else:
+            # Otherwise, use the yui-compressor command
+            (stdout, stderr) = self.run_command("%s %s -o %s" % (yuicompressor_path, self.input_file, tmp_file))
+        
 
         # Copy the temporary output file to the final output file and remove
         # the temporary output file.

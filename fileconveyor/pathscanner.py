@@ -27,13 +27,13 @@ __license__ = "GPL"
 
 import os
 import stat
-import sqlite3
 from sets import Set
 
 
 class PathScanner(object):
-    """scan paths for changes, persistent storage using SQLite"""
-    def __init__(self, dbcon, ignored_dirs=[], table="pathscanner", commit_interval=50):
+    """scan paths for changes, persistent storage using SQLite or MySQL"""
+    def __init__(self, dbcon, source, ignored_dirs=[], table="pathscanner", commit_interval=50):
+        self.DB_SOURCE              = source
         self.dbcon                  = dbcon
         self.dbcur                  = dbcon.cursor()
         self.ignored_dirs           = ignored_dirs
@@ -45,9 +45,12 @@ class PathScanner(object):
 
     def __prepare_db(self):
         """prepare the database (create the table structure)"""
-
-        self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(path text, filename text, mtime integer)" % (self.table))
-        self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS file_unique_per_path ON %s (path, filename)" % (self.table))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(path text, filename text, mtime integer)" % (self.table))
+            self.dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS file_unique_per_path ON %s (path, filename)" % (self.table))
+        elif self.DB_SOURCE == 'mysql':
+            self.dbcur.execute("CREATE TABLE IF NOT EXISTS %s(path TEXT, filename TEXT, mtime INTEGER, UNIQUE INDEX file_unique_per_path (path(128), filename(128)))" % (self.table))
         self.dbcon.commit()
 
 
@@ -102,7 +105,13 @@ class PathScanner(object):
         assert type(path) == type(u'.')
 
         # Check if there really isn't any data available for this path.
-        self.dbcur.execute("SELECT COUNT(filename) FROM %s WHERE path=?" % (self.table), (path,))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT COUNT(filename) FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE path = %s", (path, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT COUNT(filename) FROM %s WHERE path=?" % (self.table), (path,))
+            
         if self.dbcur.fetchone()[0] > 0:
             return False
         
@@ -114,7 +123,12 @@ class PathScanner(object):
         """purge the metadata for a given path and all its subdirectories"""
         assert type(path) == type(u'.')
 
-        self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "DELETE FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE path LIKE %s", (path + "%%", ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("DELETE FROM %s WHERE path LIKE ?" % (self.table), (path + "%",))
         self.dbcur.execute("VACUUM %s" % (self.table))
         self.dbcon.commit()
 
@@ -133,12 +147,17 @@ class PathScanner(object):
         Expected format: a set of (path, filename, mtime) tuples.
         """
 
+        self.dbcon.ping(True)
         for row in files:
             # Use INSERT OR REPLACE to let the OS's native file system monitor
             # (inotify on Linux, FSEvents on OS X) run *while* missed events
             # are being generated.
             # See https://github.com/wimleers/fileconveyor/issues/69.
-            self.dbcur.execute("INSERT OR REPLACE INTO %s VALUES(?, ?, ?)" % (self.table), row)
+            if self.DB_SOURCE == 'mysql':
+                stmt = "REPLACE INTO %s" % self.table
+                self.dbcur.execute(stmt + " VALUES(%s, %s, %s)", row)
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("INSERT OR REPLACE INTO %s VALUES(?, ?, ?)" % (self.table), row)
             self.__db_batched_commit()
         # Commit the remaining rows.
         self.__db_batched_commit(True)
@@ -150,8 +169,13 @@ class PathScanner(object):
         Expected format: a set of (path, filename) tuples.
         """
 
+        self.dbcon.ping(True)
         for row in files:
-            self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), row)
+            if self.DB_SOURCE == 'mysql':
+                stmt = "DELETE FROM %s" % self.table
+                self.dbcur.execute(stmt + " WHERE path = %s AND filename = %s", row)
+            elif self.DB_SOURCE == 'sqlite':
+                self.dbcur.execute("DELETE FROM %s WHERE path=? AND filename=?" % (self.table), row)
             self.__db_batched_commit()
         # Commit the remaining rows.
         self.__db_batched_commit(True)
@@ -180,7 +204,12 @@ class PathScanner(object):
 
         assert type(path) == type(u'.')
         # Fetch the old metadata from the DB.
-        self.dbcur.execute("SELECT filename, mtime FROM %s WHERE path=?" % (self.table), (path, ))
+        self.dbcon.ping(True)
+        if self.DB_SOURCE == 'mysql':
+            stmt = "SELECT filename, mtime FROM %s" % self.table
+            self.dbcur.execute(stmt + " WHERE path = %s", (path, ))
+        elif self.DB_SOURCE == 'sqlite':
+            self.dbcur.execute("SELECT filename, mtime FROM %s WHERE path=?" % (self.table), (path, ))
         old_files = {}
         for filename, mtime in self.dbcur.fetchall():
             old_files[filename] = (filename, mtime)
@@ -281,12 +310,17 @@ class PathScanner(object):
         # If a directory was deleted, we also need to retrieve the filenames
         # and paths of the files within that subtree.
         deleted_tree = Set()
+        self.dbcon.ping(True)
         for deleted_file in result["deleted"]:
             (filename, mtime) = old_files[deleted_file]
             # An mtime of -1 means that this is a directory.
             if mtime == -1:
                 dirpath = path + os.sep + filename
-                self.dbcur.execute("SELECT * FROM %s WHERE path LIKE ?" % (self.table), (dirpath + "%",))
+                if self.DB_SOURCE == 'mysql':
+                    stmt = "SELECT * FROM %s" % self.table
+                    self.dbcur.execute(stmt + " WHERE path LIKE %s", (dirpath + "%%",))
+                elif self.DB_SOURCE == 'sqlite':
+                    self.dbcur.execute("SELECT * FROM %s WHERE path LIKE ?" % (self.table), (dirpath + "%",))
                 files_in_dir = self.dbcur.fetchall()
                 # Mark all files below the deleted directory also as deleted.
                 for (subpath, subfilename, submtime) in files_in_dir:

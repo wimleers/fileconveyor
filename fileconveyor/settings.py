@@ -6,13 +6,24 @@ __license__ = "GPL"
 
 import logging
 
+# SQLite Database
+DB_SOURCE = 'sqlite'
+PERSISTENT_DATA_DB = './persistent_data.db'
+SYNCED_FILES_DB = './synced_files.db'
+FSMONITOR_DATA_DB = './fsmonitor.db'
+
+# MySQL Database
+# DB_SOURCE = 'mysql'
+# DB_HOST = 'localhost'
+# DB_PORT = 3306
+# DB_USERNAME = 'user'
+# DB_PASSWORD = 'pass'
+# DB_DATABASE = 'fileconveyor'
 
 RESTART_AFTER_UNHANDLED_EXCEPTION = True
 RESTART_INTERVAL = 10
 LOG_FILE = './fileconveyor.log'
 PID_FILE = '~/.fileconveyor.pid'
-PERSISTENT_DATA_DB = './persistent_data.db'
-SYNCED_FILES_DB = './synced_files.db'
 WORKING_DIR = '/tmp/fileconveyor'
 MAX_FILES_IN_PIPELINE = 50
 MAX_SIMULTANEOUS_PROCESSORCHAINS = 1
